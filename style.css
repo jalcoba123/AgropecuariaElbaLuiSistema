@@ -8,23 +8,16 @@
     --text-dark: #0f172a;
     --text-muted: #64748b;
     --border-light: #e2e8f0;
-    --amber-bg: #fef3c7;
-    --amber-text: #d97706;
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
 body { background-color: var(--bg-canvas); color: var(--text-dark); padding-bottom: 90px; }
 
-header {
-    background-color: var(--green-header);
-    color: white;
-    padding: 12px 20px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
-}
+/* Estilos de la Pantalla de Login */
+.login-container { display: flex; height: 100vh; justify-content: center; align-items: center; background: var(--bg-canvas); padding: 20px; }
+.login-box { background: white; padding: 40px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 100%; max-width: 400px; text-align: center; }
 
+header { background-color: var(--green-header); color: white; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
 .brand { display: flex; align-items: center; gap: 10px; }
 .brand-logo { background: var(--green-primary); border-radius: 50%; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; font-weight: bold; color: white; }
 .brand-title { font-size: 1.1rem; font-weight: 700; line-height: 1.1; }
@@ -35,47 +28,19 @@ header {
 .finca-btn.active { background-color: var(--green-primary); color: white; }
 
 .category-nav { background-color: white; display: flex; gap: 8px; padding: 10px 16px; overflow-x: auto; border-bottom: 1px solid var(--border-light); }
-.cat-chip { border: 1px solid var(--border-light); background: white; padding: 6px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: 500; white-space: nowrap; color: var(--text-muted); cursor: pointer; transition: all 0.2s; }
+.cat-chip { border: 1px solid var(--border-light); background: white; padding: 6px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: 500; white-space: nowrap; color: var(--text-muted); cursor: pointer; }
 .cat-chip.active { background: #ecfdf5; border-color: var(--green-primary); color: var(--green-dark); font-weight: 600; }
 
 .container { max-width: 1200px; margin: 0 auto; padding: 16px; }
 
 .finca-banner { background: linear-gradient(135deg, var(--green-dark), #065f46); color: white; border-radius: 12px; padding: 20px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; }
 .finca-tag { font-size: 0.7rem; letter-spacing: 1px; font-weight: 700; color: #a7f3d0; text-transform: uppercase; }
-.finca-banner h2 { font-size: 1.4rem; margin: 4px 0; }
-.finca-banner p { font-size: 0.85rem; color: #d1fae5; }
 .btn-action { background: var(--green-primary); color: white; border: none; padding: 10px 16px; border-radius: 8px; font-weight: 600; cursor: pointer; transition: background 0.2s; }
 .btn-action:hover { background: var(--green-accent); }
 
-.kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-bottom: 20px; }
-.kpi-card { background: white; padding: 16px; border-radius: 10px; border: 1px solid var(--border-light); }
-.kpi-label { font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; }
-.kpi-value { font-size: 1.8rem; font-weight: 800; color: var(--text-dark); margin: 4px 0; }
-.kpi-sub { font-size: 0.75rem; color: var(--text-muted); }
-
-.grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 16px; }
-.panel-card { background: white; border-radius: 12px; border: 1px solid var(--border-light); padding: 16px; margin-bottom: 16px; }
-.panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
-.panel-title { font-weight: 700; font-size: 0.95rem; display: flex; align-items: center; gap: 8px; }
-
-.alert-item { background: var(--amber-bg); border-left: 4px solid var(--amber-text); padding: 10px; border-radius: 6px; margin-bottom: 8px; font-size: 0.85rem; }
-
-table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 0.85rem; }
-th, td { padding: 10px; text-align: left; border-bottom: 1px solid var(--border-light); }
-th { background: #f1f5f9; color: var(--text-muted); font-weight: 600; }
-
-.section-view { display: none; }
-.section-view.active { display: block; }
-
-.form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-bottom: 12px; }
 .form-field { margin-bottom: 10px; }
 .form-field label { display: block; font-size: 0.8rem; font-weight: 600; margin-bottom: 4px; color: var(--text-dark); }
 .form-field input, .form-field select { width: 100%; padding: 8px 10px; border: 1px solid var(--border-light); border-radius: 6px; font-size: 0.85rem; }
 
-#map { height: 400px; width: 100%; border-radius: 10px; border: 1px solid var(--border-light); margin-top: 12px; z-index: 1; }
-
-.modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 1000; }
-.modal-content { background: white; padding: 24px; border-radius: 12px; width: 90%; max-width: 450px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
-.modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
-.modal-title { font-weight: 700; font-size: 1.1rem; color: var(--green-dark); }
-.close-btn { background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--text-muted); }
+.section-view { display: none; }
+.section-view.active { display: block; }
