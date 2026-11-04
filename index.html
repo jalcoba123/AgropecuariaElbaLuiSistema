@@ -1,179 +1,25 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GanadoControl ERP - Agropecuaria ElbaLui</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css">
-</head>
-<body>
-
-    <!-- 🔒 PANTALLA DE SEGURIDAD (LOGIN) -->
-    <div id="login-screen" class="login-container">
-        <div class="login-box">
-            <!-- LOGO INTEGRADO EN LOGIN -->
-            <img src="logo.jpg" alt="Agropecuaria ElbaLui" class="login-logo-img">
-            <h2 style="color: var(--green-dark); margin-bottom: 5px;">GanadoControl ERP</h2>
-            <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 25px;">Agropecuaria ElbaLui • Fincas El Sur & Agua Clara</p>
-            <form id="login-form">
-                <div class="form-field" style="text-align: left;"><label>Correo Electrónico</label><input type="email" id="login-email" placeholder="admin@elbalui.com" required></div>
-                <div class="form-field" style="text-align: left;"><label>Contraseña</label><input type="password" id="login-password" placeholder="••••••••" required></div>
-                <button type="submit" class="btn-action" style="width: 100%; margin-top: 15px; font-size: 1rem;">Ingresar al Sistema</button>
-            </form>
-            <p id="login-error" style="color: #ef4444; font-size: 0.85rem; margin-top: 15px; display: none;">Credenciales incorrectas.</p>
+<!-- MÓDULO 0: TORRE DE CONTROL (DASHBOARD GERENCIAL) -->
+<div id="tab-dashboard" class="section-view active">
+    <div style="background: white; border-radius: 12px; border: 1px solid var(--border-light); padding: 20px; margin-bottom: 20px;">
+        <h3 style="color: var(--green-dark); margin-bottom: 5px;">📊 Resumen General de Operaciones</h3>
+        <p style="font-size: 0.85rem; color: var(--text-muted);">Consolidado en tiempo real de Agropecuaria ElbaLui.</p>
+    </div>
+    
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px;">
+        <div style="background: white; padding: 16px; border-radius: 10px; border-left: 4px solid var(--green-primary); border-top: 1px solid var(--border-light); border-right: 1px solid var(--border-light); border-bottom: 1px solid var(--border-light);">
+            <div style="font-size: 0.75rem; color: var(--text-muted); font-weight: 700;">HATO REGISTRADO</div>
+            <div id="dash-total-hato" style="font-size: 1.8rem; font-weight: 800; color: var(--text-dark);">0</div>
+            <div style="font-size: 0.75rem; color: var(--green-accent);">Meta: 1,000 vientres</div>
+        </div>
+        <div style="background: white; padding: 16px; border-radius: 10px; border-left: 4px solid #3b82f6; border-top: 1px solid var(--border-light); border-right: 1px solid var(--border-light); border-bottom: 1px solid var(--border-light);">
+            <div style="font-size: 0.75rem; color: var(--text-muted); font-weight: 700;">ORDEÑO DIARIO</div>
+            <div id="dash-leche-diaria" style="font-size: 1.8rem; font-weight: 800; color: var(--text-dark);">0 L</div>
+            <div style="font-size: 0.75rem; color: var(--text-muted);">Agua Clara</div>
+        </div>
+        <div style="background: white; padding: 16px; border-radius: 10px; border-left: 4px solid #f59e0b; border-top: 1px solid var(--border-light); border-right: 1px solid var(--border-light); border-bottom: 1px solid var(--border-light);">
+            <div style="font-size: 0.75rem; color: var(--text-muted); font-weight: 700;">PALMA PLANTADA</div>
+            <div id="dash-palma-ha" style="font-size: 1.8rem; font-weight: 800; color: var(--text-dark);">0 ha</div>
+            <div style="font-size: 0.75rem; color: var(--text-muted);">Avalanche & Themba</div>
         </div>
     </div>
-
-    <!-- 📱 APLICACIÓN PRINCIPAL -->
-    <div id="app-container" style="display: none;">
-        <header>
-            <div class="brand">
-                <!-- LOGO INTEGRADO EN CABECERA -->
-                <img src="logo.jpg" alt="Agropecuaria ElbaLui" class="brand-logo-img">
-                <div>
-                    <div class="brand-title">GanadoControl ERP</div>
-                    <div class="brand-sub">Agropecuaria ElbaLui</div>
-                </div>
-            </div>
-            <div class="finca-toggle">
-                <button class="finca-btn active" onclick="setFinca('Agua Clara'); window.cargarHato && window.cargarHato();">💧 Agua Clara</button>
-                <button class="finca-btn" onclick="setFinca('El Sur'); window.cargarHato && window.cargarHato();">☀️ El Sur</button>
-            </div>
-            <button id="btn-logout" style="background: transparent; border: 1px solid white; color: white; padding: 5px 10px; border-radius: 6px; cursor: pointer; margin-left: 10px;">Salir</button>
-        </header>
-
-        <nav class="category-nav">
-            <button class="cat-chip active" onclick="switchTab('dashboard', this)">📊 Torre de Control</button>
-            <button class="cat-chip" onclick="switchTab('operaciones', this)">📅 Operaciones & Campo</button>
-            <button class="cat-chip" onclick="switchTab('hato', this)">🐮 Hato & Reproducción</button>
-            <button class="cat-chip" onclick="switchTab('lecheria', this)">🥛 Lechería & Alimentación</button>
-            <button class="cat-chip" onclick="switchTab('sanidad', this)">🩺 Sanidad & Activos</button>
-            <button class="cat-chip" onclick="switchTab('finanzas', this)">💰 Balance & Finanzas</button>
-        </nav>
-
-        <div class="container">
-            <div class="finca-banner">
-                <div>
-                    <span class="finca-tag" id="finca-tag">FINCA ACTIVA: AGUA CLARA</span>
-                    <h2 id="finca-title">Finca Agua Clara</h2>
-                    <p id="finca-desc">Manejo intensivo/extensivo, palma aceitera en establecimiento y áreas de siembra.</p>
-                </div>
-            </div>
-
-            <!-- MÓDULO 0: TORRE DE CONTROL (DASHBOARD GERENCIAL) -->
-            <div id="tab-dashboard" class="section-view active">
-                <div style="background: white; border-radius: 12px; border: 1px solid var(--border-light); padding: 20px; margin-bottom: 20px;">
-                    <h3 style="color: var(--green-dark); margin-bottom: 5px;">📊 Resumen General de Operaciones</h3>
-                    <p style="font-size: 0.85rem; color: var(--text-muted);">Consolidado en tiempo real de Agropecuaria ElbaLui.</p>
-                </div>
-                
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px;">
-                    <div style="background: white; padding: 16px; border-radius: 10px; border-left: 4px solid var(--green-primary); border-top: 1px solid var(--border-light); border-right: 1px solid var(--border-light); border-bottom: 1px solid var(--border-light);">
-                        <div style="font-size: 0.75rem; color: var(--text-muted); font-weight: 700;">HATO TOTAL</div>
-                        <div style="font-size: 1.8rem; font-weight: 800; color: var(--text-dark);">480</div>
-                        <div style="font-size: 0.75rem; color: var(--green-accent);">Meta: 1,000 vientres</div>
-                    </div>
-                    <div style="background: white; padding: 16px; border-radius: 10px; border-left: 4px solid #3b82f6; border-top: 1px solid var(--border-light); border-right: 1px solid var(--border-light); border-bottom: 1px solid var(--border-light);">
-                        <div style="font-size: 0.75rem; color: var(--text-muted); font-weight: 700;">ORDEÑO DIARIO</div>
-                        <div style="font-size: 1.8rem; font-weight: 800; color: var(--text-dark);">0 L</div>
-                        <div style="font-size: 0.75rem; color: var(--text-muted);">Agua Clara</div>
-                    </div>
-                    <div style="background: white; padding: 16px; border-radius: 10px; border-left: 4px solid #f59e0b; border-top: 1px solid var(--border-light); border-right: 1px solid var(--border-light); border-bottom: 1px solid var(--border-light);">
-                        <div style="font-size: 0.75rem; color: var(--text-muted); font-weight: 700;">COSECHA PALMA</div>
-                        <div style="font-size: 1.8rem; font-weight: 800; color: var(--text-dark);">25 ha</div>
-                        <div style="font-size: 0.75rem; color: var(--text-muted);">Avalanche & Themba</div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- MÓDULO 2: HATO Y REPRODUCCIÓN -->
-            <div id="tab-hato" class="section-view">
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-bottom: 20px;">
-                    <div style="background: white; padding: 15px; border-radius: 8px; border: 1px solid var(--border-light);">
-                        <div style="font-size: 0.75rem; color: var(--text-muted); font-weight: bold;">Hato Total</div>
-                        <div id="kpi-total" style="font-size: 1.8rem; font-weight: bold;">0</div>
-                    </div>
-                    <div style="background: white; padding: 15px; border-radius: 8px; border: 1px solid var(--border-light);">
-                        <div style="font-size: 0.75rem; color: var(--text-muted); font-weight: bold;">Mautes (ElbaLui)</div>
-                        <div id="kpi-mautes" style="font-size: 1.8rem; font-weight: bold;">0</div>
-                    </div>
-                    <div style="background: white; padding: 15px; border-radius: 8px; border: 1px solid var(--border-light);">
-                        <div style="font-size: 0.75rem; color: var(--text-muted); font-weight: bold;">Gestantes</div>
-                        <div id="kpi-gestantes" style="font-size: 1.8rem; font-weight: bold;">0</div>
-                    </div>
-                </div>
-
-                <div style="background: white; border-radius: 12px; border: 1px solid var(--border-light); padding: 16px;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                        <h3 style="font-size: 1rem; color: var(--green-dark);">🐮 Inventario de Hato</h3>
-                        <button class="btn-action" onclick="document.getElementById('modal-animal').style.display='flex'">+ Registrar Animal</button>
-                    </div>
-                    <div style="overflow-x: auto;">
-                        <table style="width: 100%; border-collapse: collapse; font-size: 0.85rem;">
-                            <thead style="background: #f1f5f9; text-align: left;">
-                                <tr>
-                                    <th style="padding: 10px; border-bottom: 1px solid var(--border-light);">Arete / ID</th>
-                                    <th style="padding: 10px; border-bottom: 1px solid var(--border-light);">Categoría</th>
-                                    <th style="padding: 10px; border-bottom: 1px solid var(--border-light);">Padres</th>
-                                    <th style="padding: 10px; border-bottom: 1px solid var(--border-light);">Peso (Kg)</th>
-                                    <th style="padding: 10px; border-bottom: 1px solid var(--border-light);">Estado</th>
-                                </tr>
-                            </thead>
-                            <tbody id="tabla-hato-body">
-                                <tr><td colspan="5" style="padding: 15px; text-align: center; color: var(--text-muted);">Cargando base de datos...</td></tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-
-            <!-- MÓDULOS RESTANTES -->
-            <div id="tab-operaciones" class="section-view"><div style="padding: 40px; text-align: center; color: var(--text-muted);">Módulo de Operaciones en construcción...</div></div>
-            <div id="tab-lecheria" class="section-view"><div style="padding: 40px; text-align: center; color: var(--text-muted);">Lechería en construcción...</div></div>
-            <div id="tab-sanidad" class="section-view"><div style="padding: 40px; text-align: center; color: var(--text-muted);">Sanidad en construcción...</div></div>
-            <div id="tab-finanzas" class="section-view"><div style="padding: 40px; text-align: center; color: var(--text-muted);">Finanzas en construcción...</div></div>
-        </div>
-    </div>
-
-    <!-- MODAL REGISTRO DE ANIMAL -->
-    <div id="modal-animal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 1000; padding: 20px;">
-        <div style="background: white; padding: 24px; border-radius: 12px; width: 100%; max-width: 400px;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                <h3 style="color: var(--green-dark);">Registrar Animal</h3>
-                <button onclick="document.getElementById('modal-animal').style.display='none'" style="background:none; border:none; font-size:1.5rem; cursor:pointer;">&times;</button>
-            </div>
-            <form id="form-animal">
-                <div class="form-field"><label>Arete / ID</label><input type="text" id="a-arete" required></div>
-                <div class="form-field"><label>Categoría</label>
-                    <select id="a-categoria">
-                        <option value="Vaca Ordeño">Vaca en Ordeño</option>
-                        <option value="Lote ElbaLui (Maute)">Lote ElbaLui (Maute)</option>
-                        <option value="Vaca Seca / Escampa">Vaca Seca / Escampa</option>
-                        <option value="Novilla">Novilla</option>
-                        <option value="Toro Reproductor">Toro Reproductor</option>
-                    </select>
-                </div>
-                <div class="form-field"><label>Peso Actual (Kg)</label><input type="number" id="a-peso" required></div>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                    <div class="form-field"><label>Padre</label><input type="text" id="a-padre" placeholder="Ej. Brahman 01"></div>
-                    <div class="form-field"><label>Madre</label><input type="text" id="a-madre" placeholder="Ej. Vaca 405"></div>
-                </div>
-                <div class="form-field"><label>Estado Reproductivo</label>
-                    <select id="a-estado">
-                        <option value="Activo/Creciendo">Activo / Creciendo</option>
-                        <option value="Vacía">Vacía</option>
-                        <option value="Gestante">Gestante</option>
-                    </select>
-                </div>
-                <button type="submit" class="btn-action" style="width:100%; margin-top:10px;">Guardar en Inventario</button>
-            </form>
-        </div>
-    </div>
-
-    <!-- Scripts -->
-    <script type="module" src="js/auth.js"></script>
-    <script type="module" src="js/ui.js"></script>
-    <script type="module" src="js/hato.js"></script>
-</body>
-</html>
+</div>
