@@ -8,10 +8,10 @@ const loginForm = document.getElementById('login-form');
 const loginError = document.getElementById('login-error');
 const btnLogout = document.getElementById('btn-logout');
 
-// Escuchar cambios de sesión
+// Escuchar si hay sesión activa
 onAuthStateChanged(auth, (user) => {
     if (user) {
-        console.log("Sesión autorizada:", user.email);
+        console.log("Sesión iniciada con éxito:", user.email);
         if (loginScreen) loginScreen.style.display = 'none';
         if (appContainer) appContainer.style.display = 'block';
     } else {
@@ -20,25 +20,36 @@ onAuthStateChanged(auth, (user) => {
     }
 });
 
-// Procesar formulario de ingreso
+// Enviar datos del formulario
 if (loginForm) {
     loginForm.addEventListener('submit', async (e) => {
         e.preventDefault();
-        if (loginError) loginError.style.display = 'none';
-
+        
         const email = document.getElementById('login-email').value.trim();
         const password = document.getElementById('login-password').value;
 
         try {
             await signInWithEmailAndPassword(auth, email, password);
-            loginForm.reset();
+            alert("¡Acceso concedido!");
         } catch (error) {
-            console.error("Error al autenticar:", error.code, error.message);
+            console.error("Error Auth detallado:", error);
+            
+            let mensaje = "Error: ";
+            if (error.code === 'auth/unauthorized-domain') {
+                mensaje = "Dominio no autorizado. Agrega sistema-rust-theta.vercel.app en Firebase Console.";
+            } else if (error.code === 'auth/invalid-credential' || error.code === 'auth/wrong-password') {
+                mensaje = "Correo o contraseña incorrectos.";
+            } else if (error.code === 'auth/user-not-found') {
+                mensaje = "El usuario no existe en Firebase.";
+            } else {
+                mensaje += error.message;
+            }
+
+            alert(mensaje);
             if (loginError) {
-                loginError.innerText = "Error: Credenciales no válidas (" + error.code + ")";
+                loginError.innerText = mensaje;
                 loginError.style.display = 'block';
             }
-            alert("No se pudo iniciar sesión. Revisa tu correo y contraseña.");
         }
     });
 }
