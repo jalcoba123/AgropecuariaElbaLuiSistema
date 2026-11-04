@@ -194,7 +194,7 @@
                 </div>
             </div>
 
-            <!-- MÓDULOS 3 AL 6 EN CONSTRUCCIÓN -->
+            <!-- MÓDULOS EN CONSTRUCCIÓN -->
             <div id="tab-lecheria" class="section-view"><div style="padding: 40px; text-align: center; color: var(--text-muted);">Módulo de Lechería & Raciones en construcción...</div></div>
             <div id="tab-palma" class="section-view"><div style="padding: 40px; text-align: center; color: var(--text-muted);">Módulo de Palma & Agronomía en construcción...</div></div>
             <div id="tab-operaciones" class="section-view"><div style="padding: 40px; text-align: center; color: var(--text-muted);">Módulo de Operaciones & Activos en construcción...</div></div>
@@ -275,7 +275,7 @@
             return 'Agua Clara';
         }
 
-        // LECTURA DE HATO
+        // LECTURA DE HATO CON DIAGNÓSTICO
         function cargarHato() {
             const tabla = document.getElementById('tabla-hato-body');
             if (!tabla) return;
@@ -285,66 +285,4 @@
             
             const q = (fincaActiva === 'Global')
                 ? collection(db, "animales")
-                : query(collection(db, "animales"), where("finca", "==", fincaActiva));
-
-            unsubHato = onSnapshot(q, (snapshot) => {
-                tabla.innerHTML = '';
-                let total = 0, mautes = 0, gestantes = 0;
-
-                snapshot.forEach((doc) => {
-                    const a = doc.data();
-                    total++;
-                    if (a.categoria === "Lote ElbaLui (Maute)") mautes++;
-                    if (a.estado === "Gestante") gestantes++;
-
-                    tabla.innerHTML += `
-                        <tr>
-                            <td style="padding: 10px; border-bottom: 1px solid var(--border-light);"><strong>${a.arete}</strong></td>
-                            <td style="padding: 10px; border-bottom: 1px solid var(--border-light);">${a.categoria}</td>
-                            <td style="padding: 10px; border-bottom: 1px solid var(--border-light);"><span style="font-size: 0.75rem; background: #e2e8f0; padding: 2px 6px; border-radius: 4px; font-weight: 600;">${a.finca || 'Agua Clara'}</span></td>
-                            <td style="padding: 10px; border-bottom: 1px solid var(--border-light);">${a.padre} / ${a.madre}</td>
-                            <td style="padding: 10px; border-bottom: 1px solid var(--border-light); font-weight: bold; color: var(--green-dark);">${a.peso} kg</td>
-                            <td style="padding: 10px; border-bottom: 1px solid var(--border-light);">${a.estado}</td>
-                        </tr>
-                    `;
-                });
-
-                if (document.getElementById('kpi-total')) document.getElementById('kpi-total').innerText = total;
-                if (document.getElementById('kpi-mautes')) document.getElementById('kpi-mautes').innerText = mautes;
-                if (document.getElementById('kpi-gestantes')) document.getElementById('kpi-gestantes').innerText = gestantes;
-
-                if (total === 0) {
-                    tabla.innerHTML = `<tr><td colspan="6" style="padding: 15px; text-align: center; color: var(--text-muted);">Sin animales registrados (${fincaActiva}).</td></tr>`;
-                }
-            }, (err) => console.error("Error Hato:", err));
-        }
-
-        // LECTURA DE DASHBOARD
-        function cargarDashboard() {
-            if (unsubDash) unsubDash();
-            const fincaActiva = obtenerFincaActual();
-
-            const q = (fincaActiva === 'Global')
-                ? collection(db, "animales")
-                : query(collection(db, "animales"), where("finca", "==", fincaActiva));
-
-            unsubDash = onSnapshot(q, (snapshot) => {
-                let total = 0, mautes = 0, ordeno = 0, secas = 0, novillas = 0, toros = 0;
-
-                snapshot.forEach((doc) => {
-                    const a = doc.data();
-                    total++;
-                    const cat = a.categoria || '';
-                    if (cat === "Lote ElbaLui (Maute)") mautes++;
-                    else if (cat === "Vaca Ordeño") ordeno++;
-                    else if (cat === "Vaca Seca / Escampa") secas++;
-                    else if (cat === "Novilla") novillas++;
-                    else if (cat === "Toro Reproductor") toros++;
-                });
-
-                const elemTotal = document.getElementById('dash-total-hato');
-                if (elemTotal) elemTotal.innerText = total;
-
-                const pct = Math.min(Math.round((total / 1000) * 100), 100);
-                const elemBar = document.getElementById('dash-progreso-bar');
-                const elemTxt = document
+                :
