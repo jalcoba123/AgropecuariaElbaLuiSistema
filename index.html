@@ -1,68 +1,350 @@
-// js/dashboard.js
-import { collection, query, where, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GanadoControl ERP - Agropecuaria ElbaLui</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
 
-function obtenerFincaActual() {
-    const tag = document.getElementById('finca-tag');
-    if (!tag) return 'Agua Clara';
-    const txt = tag.innerText;
-    if (txt.includes('CONSOLIDADO') || txt.includes('GLOBAL')) return 'Global';
-    if (txt.includes('EL SUR')) return 'El Sur';
-    return 'Agua Clara';
-}
+    <!-- 🔒 PANTALLA DE SEGURIDAD (LOGIN) -->
+    <div id="login-screen" class="login-container">
+        <div class="login-box">
+            <img src="logo.jpg" alt="Agropecuaria ElbaLui" class="login-logo-img">
+            <h2 style="color: var(--green-dark); margin-bottom: 5px;">GanadoControl ERP</h2>
+            <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 25px;">Agropecuaria ElbaLui • Fincas El Sur & Agua Clara</p>
+            
+            <form id="login-form">
+                <div class="form-field" style="text-align: left;">
+                    <label>Correo Electrónico</label>
+                    <input type="email" id="login-email" placeholder="ejemplo@gmail.com" required>
+                </div>
+                <div class="form-field" style="text-align: left;">
+                    <label>Contraseña</label>
+                    <input type="password" id="login-password" placeholder="••••••••" required>
+                </div>
+                <button type="submit" id="btn-submit-login" class="btn-action" style="width: 100%; margin-top: 15px; font-size: 1rem;">Ingresar al Sistema</button>
+            </form>
+            
+            <p id="login-error" style="color: #ef4444; font-size: 0.85rem; margin-top: 15px; display: none; font-weight: 600;"></p>
+        </div>
+    </div>
 
-let unsubHato = null;
+    <!-- 📱 APLICACIÓN PRINCIPAL -->
+    <div id="app-container" style="display: none;">
+        <header>
+            <div class="brand">
+                <img src="logo.jpg" alt="Agropecuaria ElbaLui" class="brand-logo-img">
+                <div>
+                    <div class="brand-title">GanadoControl ERP</div>
+                    <div class="brand-sub">Agropecuaria ElbaLui</div>
+                </div>
+            </div>
 
-window.cargarDashboard = function() {
-    if (!window.db) return;
+            <!-- CONMUTADOR DE VISTA: AGUA CLARA | EL SUR | CONSOLIDADO GLOBAL -->
+            <div class="finca-toggle">
+                <button class="finca-btn active" onclick="setFinca('Agua Clara')">💧 Agua Clara</button>
+                <button class="finca-btn" onclick="setFinca('El Sur')">☀️ El Sur</button>
+                <button class="finca-btn" onclick="setFinca('Global')">🌎 Consolidado</button>
+            </div>
+            
+            <button id="btn-logout" style="background: transparent; border: 1px solid white; color: white; padding: 5px 10px; border-radius: 6px; cursor: pointer; margin-left: 10px;">Salir</button>
+        </header>
 
-    const fincaActiva = obtenerFincaActual();
+        <!-- 🧭 NAVEGACIÓN MODULAR ERP (6 DOMINIOS) -->
+        <nav class="category-nav">
+            <button class="cat-chip active" onclick="switchTab('dashboard', this)">📊 Torre de Control</button>
+            <button class="cat-chip" onclick="switchTab('hato', this)">🐮 Hato & Sanidad</button>
+            <button class="cat-chip" onclick="switchTab('lecheria', this)">🥛 Lechería & Raciones</button>
+            <button class="cat-chip" onclick="switchTab('palma', this)">🌴 Palma & Agronomía</button>
+            <button class="cat-chip" onclick="switchTab('operaciones', this)">🚜 Operaciones & Activos</button>
+            <button class="cat-chip" onclick="switchTab('finanzas', this)">💰 Finanzas & Costos</button>
+        </nav>
 
-    // Cancelar listener previo si existe para liberar recursos
-    if (unsubHato) unsubHato();
+        <div class="container">
+            <div class="finca-banner">
+                <div>
+                    <span class="finca-tag" id="finca-tag">FINCA ACTIVA: AGUA CLARA</span>
+                    <h2 id="finca-title">Finca Agua Clara</h2>
+                    <p id="finca-desc">Manejo intensivo/extensivo, palma aceitera en establecimiento y áreas de siembra.</p>
+                </div>
+            </div>
 
-    let qHato;
-    if (fincaActiva === 'Global') {
-        qHato = collection(window.db, "animales");
-    } else {
-        qHato = query(collection(window.db, "animales"), where("finca", "==", fincaActiva));
-    }
+            <!-- MÓDULO 1: TORRE DE CONTROL (EXECUTIVE DASHBOARD) -->
+            <div id="tab-dashboard" class="section-view active">
+                <div style="background: white; border-radius: 12px; border: 1px solid var(--border-light); padding: 20px; margin-bottom: 20px;">
+                    <h3 style="color: var(--green-dark); margin-bottom: 4px;">📊 Torre de Control Operativa</h3>
+                    <p style="font-size: 0.85rem; color: var(--text-muted); margin: 0;">Consolidado analítico en tiempo real de Agropecuaria ElbaLui.</p>
+                </div>
+                
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 24px;">
+                    <div style="background: white; padding: 18px; border-radius: 10px; border-left: 4px solid var(--green-primary); border: 1px solid var(--border-light);">
+                        <div style="font-size: 0.72rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase;">Activo Biológico (Hato)</div>
+                        <div id="dash-total-hato" style="font-size: 2rem; font-weight: 800; color: var(--text-dark); margin: 4px 0;">0</div>
+                        <div style="background: #e2e8f0; border-radius: 6px; height: 6px; width: 100%; margin-top: 8px; overflow: hidden;">
+                            <div id="dash-progreso-bar" style="background: var(--green-primary); width: 0%; height: 100%; transition: width 0.4s ease;"></div>
+                        </div>
+                        <div id="dash-progreso-txt" style="font-size: 0.72rem; color: var(--text-muted); margin-top: 6px;">0% de la meta (1,000 vientres)</div>
+                    </div>
 
-    unsubHato = onSnapshot(qHato, (snapshot) => {
-        let total = 0, mautes = 0, ordeno = 0, secas = 0, novillas = 0, toros = 0;
+                    <div style="background: white; padding: 18px; border-radius: 10px; border-left: 4px solid #3b82f6; border: 1px solid var(--border-light);">
+                        <div style="font-size: 0.72rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase;">Producción Lechera</div>
+                        <div id="dash-leche-diaria" style="font-size: 2rem; font-weight: 800; color: var(--text-dark); margin: 4px 0;">0 L</div>
+                        <div style="font-size: 0.75rem; color: #2563eb; font-weight: 600;">Ordeño del día</div>
+                    </div>
 
-        snapshot.forEach((doc) => {
-            const a = doc.data();
-            total++;
-            const cat = a.categoria || '';
-            if (cat === "Lote ElbaLui (Maute)") mautes++;
-            else if (cat === "Vaca Ordeño") ordeno++;
-            else if (cat === "Vaca Seca / Escampa") secas++;
-            else if (cat === "Novilla") novillas++;
-            else if (cat === "Toro Reproductor") toros++;
-        });
+                    <div style="background: white; padding: 18px; border-radius: 10px; border-left: 4px solid #f59e0b; border: 1px solid var(--border-light);">
+                        <div style="font-size: 0.72rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase;">Superficie Palma</div>
+                        <div id="dash-palma-ha" style="font-size: 2rem; font-weight: 800; color: var(--text-dark); margin: 4px 0;">0 ha</div>
+                        <div style="font-size: 0.75rem; color: #d97706; font-weight: 600;">Avalanche / Themba</div>
+                    </div>
 
-        // Actualizar Tarjeta Principal
-        const elemTotal = document.getElementById('dash-total-hato');
-        if (elemTotal) elemTotal.innerText = total;
+                    <div style="background: white; padding: 18px; border-radius: 10px; border-left: 4px solid #ef4444; border: 1px solid var(--border-light);">
+                        <div style="font-size: 0.72rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase;">Alertas Sanitarias</div>
+                        <div id="dash-alertas-count" style="font-size: 2rem; font-weight: 800; color: #ef4444; margin: 4px 0;">0</div>
+                        <div style="font-size: 0.75rem; color: #dc2626; font-weight: 600;">En tiempo de retiro</div>
+                    </div>
+                </div>
 
-        // Barra de avance visual (Meta: 1,000 vientres)
-        const pct = Math.min(Math.round((total / 1000) * 100), 100);
-        const elemBar = document.getElementById('dash-progreso-bar');
-        const elemTxt = document.getElementById('dash-progreso-txt');
-        if (elemBar) elemBar.style.width = `${pct}%`;
-        if (elemTxt) elemTxt.innerText = `${pct}% de la meta (1,000 vientres)`;
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;">
+                    <div style="background: white; border-radius: 12px; border: 1px solid var(--border-light); padding: 20px;">
+                        <h4 style="color: var(--green-dark); margin-bottom: 15px; font-size: 0.95rem;">🐮 Censo por Categorías</h4>
+                        <div style="display: flex; flex-direction: column; gap: 10px; font-size: 0.85rem;">
+                            <div style="display: flex; justify-content: space-between; padding-bottom: 6px; border-bottom: 1px solid var(--border-light);">
+                                <span>🥛 Vacas en Ordeño</span>
+                                <strong id="dash-cat-ordeno" style="color: var(--green-dark);">0</strong>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; padding-bottom: 6px; border-bottom: 1px solid var(--border-light);">
+                                <span>🐂 Mautes (Lote ElbaLui)</span>
+                                <strong id="dash-cat-mautes" style="color: var(--green-dark);">0</strong>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; padding-bottom: 6px; border-bottom: 1px solid var(--border-light);">
+                                <span>🌱 Novillas</span>
+                                <strong id="dash-cat-novillas" style="color: var(--green-dark);">0</strong>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; padding-bottom: 6px; border-bottom: 1px solid var(--border-light);">
+                                <span>🌾 Vacas Secas / Escampa</span>
+                                <strong id="dash-cat-secas" style="color: var(--green-dark);">0</strong>
+                            </div>
+                            <div style="display: flex; justify-content: space-between;">
+                                <span>👑 Toros Reproductores</span>
+                                <strong id="dash-cat-toros" style="color: var(--green-dark);">0</strong>
+                            </div>
+                        </div>
+                    </div>
 
-        // Desglose por Categorías
-        if (document.getElementById('dash-cat-ordeno')) document.getElementById('dash-cat-ordeno').innerText = ordeno;
-        if (document.getElementById('dash-cat-mautes')) document.getElementById('dash-cat-mautes').innerText = mautes;
-        if (document.getElementById('dash-cat-novillas')) document.getElementById('dash-cat-novillas').innerText = novillas;
-        if (document.getElementById('dash-cat-secas')) document.getElementById('dash-cat-secas').innerText = secas;
-        if (document.getElementById('dash-cat-toros')) document.getElementById('dash-cat-toros').innerText = toros;
+                    <div style="background: white; border-radius: 12px; border: 1px solid var(--border-light); padding: 20px;">
+                        <h4 style="color: var(--green-dark); margin-bottom: 15px; font-size: 0.95rem;">⚡ Accesos Directos de Campo</h4>
+                        <div style="display: grid; grid-template-columns: 1fr; gap: 10px;">
+                            <button class="btn-action" onclick="document.getElementById('modal-animal').style.display='flex'" style="width: 100%; text-align: left; padding: 12px 16px; background: #f8fafc; color: var(--text-dark); border: 1px solid var(--border-light); font-weight: 600; cursor: pointer; border-radius: 8px;">
+                                ➕ Registrar Nuevo Animal (Hato)
+                            </button>
+                            <button onclick="switchTab('lecheria', document.querySelectorAll('.cat-chip')[2])" style="width: 100%; text-align: left; padding: 12px 16px; background: #f8fafc; color: var(--text-dark); border: 1px solid var(--border-light); font-weight: 600; cursor: pointer; border-radius: 8px;">
+                                🥛 Registrar Ordeño Diario
+                            </button>
+                            <button onclick="switchTab('palma', document.querySelectorAll('.cat-chip')[3])" style="width: 100%; text-align: left; padding: 12px 16px; background: #f8fafc; color: var(--text-dark); border: 1px solid var(--border-light); font-weight: 600; cursor: pointer; border-radius: 8px;">
+                                🌴 Cargar Cosecha de Palma (RFF)
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
-        // Configuración por omisión para Palma según finca
-        const elemPalma = document.getElementById('dash-palma-ha');
-        if (elemPalma) {
-            elemPalma.innerText = (fincaActiva === 'El Sur') ? '0 ha' : '25 ha';
+            <!-- MÓDULO 2: HATO, SANIDAD Y REPRODUCCIÓN -->
+            <div id="tab-hato" class="section-view">
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-bottom: 20px;">
+                    <div style="background: white; padding: 15px; border-radius: 8px; border: 1px solid var(--border-light);">
+                        <div style="font-size: 0.75rem; color: var(--text-muted); font-weight: bold;">Censo Local / Total</div>
+                        <div id="kpi-total" style="font-size: 1.8rem; font-weight: bold;">0</div>
+                    </div>
+                    <div style="background: white; padding: 15px; border-radius: 8px; border: 1px solid var(--border-light);">
+                        <div style="font-size: 0.75rem; color: var(--text-muted); font-weight: bold;">Mautes (Lote ElbaLui)</div>
+                        <div id="kpi-mautes" style="font-size: 1.8rem; font-weight: bold;">0</div>
+                    </div>
+                    <div style="background: white; padding: 15px; border-radius: 8px; border: 1px solid var(--border-light);">
+                        <div style="font-size: 0.75rem; color: var(--text-muted); font-weight: bold;">Gestantes</div>
+                        <div id="kpi-gestantes" style="font-size: 1.8rem; font-weight: bold;">0</div>
+                    </div>
+                </div>
+
+                <div style="background: white; border-radius: 12px; border: 1px solid var(--border-light); padding: 16px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                        <h3 style="font-size: 1rem; color: var(--green-dark);">🐮 Inventario de Hato & Sanidad</h3>
+                        <button class="btn-action" onclick="document.getElementById('modal-animal').style.display='flex'">+ Registrar Animal</button>
+                    </div>
+                    <div style="overflow-x: auto;">
+                        <table style="width: 100%; border-collapse: collapse; font-size: 0.85rem;">
+                            <thead style="background: #f1f5f9; text-align: left;">
+                                <tr>
+                                    <th style="padding: 10px; border-bottom: 1px solid var(--border-light);">Arete / ID</th>
+                                    <th style="padding: 10px; border-bottom: 1px solid var(--border-light);">Categoría</th>
+                                    <th style="padding: 10px; border-bottom: 1px solid var(--border-light);">Finca</th>
+                                    <th style="padding: 10px; border-bottom: 1px solid var(--border-light);">Padres</th>
+                                    <th style="padding: 10px; border-bottom: 1px solid var(--border-light);">Peso (Kg)</th>
+                                    <th style="padding: 10px; border-bottom: 1px solid var(--border-light);">Estado</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tabla-hato-body">
+                                <tr><td colspan="6" style="padding: 15px; text-align: center; color: var(--text-muted);">Cargando base de datos...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MÓDULOS 3 AL 6 EN CONSTRUCCIÓN -->
+            <div id="tab-lecheria" class="section-view"><div style="padding: 40px; text-align: center; color: var(--text-muted);">Módulo de Lechería & Raciones en construcción...</div></div>
+            <div id="tab-palma" class="section-view"><div style="padding: 40px; text-align: center; color: var(--text-muted);">Módulo de Palma & Agronomía en construcción...</div></div>
+            <div id="tab-operaciones" class="section-view"><div style="padding: 40px; text-align: center; color: var(--text-muted);">Módulo de Operaciones & Activos en construcción...</div></div>
+            <div id="tab-finanzas" class="section-view"><div style="padding: 40px; text-align: center; color: var(--text-muted);">Módulo de Finanzas & Costos en construcción...</div></div>
+        </div>
+    </div>
+
+    <!-- 🐄 MODAL: REGISTRO DE ANIMAL -->
+    <div id="modal-animal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 1000; padding: 20px;">
+        <div style="background: white; padding: 24px; border-radius: 12px; width: 100%; max-width: 400px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <h3 style="color: var(--green-dark);">Registrar Animal</h3>
+                <button onclick="document.getElementById('modal-animal').style.display='none'" style="background:none; border:none; font-size:1.5rem; cursor:pointer;">&times;</button>
+            </div>
+            <form id="form-animal">
+                <div class="form-field"><label>Finca de Ubicación</label>
+                    <select id="a-finca-select">
+                        <option value="Agua Clara">Agua Clara</option>
+                        <option value="El Sur">El Sur</option>
+                    </select>
+                </div>
+                <div class="form-field"><label>Arete / ID</label><input type="text" id="a-arete" required></div>
+                <div class="form-field"><label>Categoría</label>
+                    <select id="a-categoria">
+                        <option value="Vaca Ordeño">Vaca en Ordeño</option>
+                        <option value="Lote ElbaLui (Maute)">Lote ElbaLui (Maute)</option>
+                        <option value="Vaca Seca / Escampa">Vaca Seca / Escampa</option>
+                        <option value="Novilla">Novilla</option>
+                        <option value="Toro Reproductor">Toro Reproductor</option>
+                    </select>
+                </div>
+                <div class="form-field"><label>Peso Actual (Kg)</label><input type="number" id="a-peso" required></div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                    <div class="form-field"><label>Padre</label><input type="text" id="a-padre" placeholder="Ej. Brahman 01"></div>
+                    <div class="form-field"><label>Madre</label><input type="text" id="a-madre" placeholder="Ej. Vaca 405"></div>
+                </div>
+                <div class="form-field"><label>Estado Reproductivo</label>
+                    <select id="a-estado">
+                        <option value="Activo/Creciendo">Activo / Creciendo</option>
+                        <option value="Vacía">Vacía</option>
+                        <option value="Gestante">Gestante</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn-action" style="width:100%; margin-top:10px;">Guardar en Inventario</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- 🚀 MOTOR ERP COMPLETO EMBEDIDO -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+        import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, query, where, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+
+        // CONFIGURACIÓN FIREBASE
+        const firebaseConfig = {
+            apiKey: "AIzaSyBHKDSUWKYICbu6vJ1UKUuY8Y6tOfZkoKs",
+            authDomain: "finca-agropecuaria-elbalui.firebaseapp.com",
+            projectId: "finca-agropecuaria-elbalui",
+            storageBucket: "finca-agropecuaria-elbalui.firebasestorage.app",
+            messagingSenderId: "1047271470951",
+            appId: "1:1047271470951:web:380ff8c667dd7eab2221c2"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        let unsubHato = null;
+        let unsubDash = null;
+
+        function obtenerFincaActual() {
+            const tag = document.getElementById('finca-tag');
+            if (!tag) return 'Agua Clara';
+            const txt = tag.innerText;
+            if (txt.includes('CONSOLIDADO') || txt.includes('GLOBAL')) return 'Global';
+            if (txt.includes('EL SUR')) return 'El Sur';
+            return 'Agua Clara';
         }
-    }, (err) => console.error("Error Dashboard:", err));
-};
+
+        // LECTURA DE HATO
+        function cargarHato() {
+            const tabla = document.getElementById('tabla-hato-body');
+            if (!tabla) return;
+
+            if (unsubHato) unsubHato();
+            const fincaActiva = obtenerFincaActual();
+            
+            const q = (fincaActiva === 'Global')
+                ? collection(db, "animales")
+                : query(collection(db, "animales"), where("finca", "==", fincaActiva));
+
+            unsubHato = onSnapshot(q, (snapshot) => {
+                tabla.innerHTML = '';
+                let total = 0, mautes = 0, gestantes = 0;
+
+                snapshot.forEach((doc) => {
+                    const a = doc.data();
+                    total++;
+                    if (a.categoria === "Lote ElbaLui (Maute)") mautes++;
+                    if (a.estado === "Gestante") gestantes++;
+
+                    tabla.innerHTML += `
+                        <tr>
+                            <td style="padding: 10px; border-bottom: 1px solid var(--border-light);"><strong>${a.arete}</strong></td>
+                            <td style="padding: 10px; border-bottom: 1px solid var(--border-light);">${a.categoria}</td>
+                            <td style="padding: 10px; border-bottom: 1px solid var(--border-light);"><span style="font-size: 0.75rem; background: #e2e8f0; padding: 2px 6px; border-radius: 4px; font-weight: 600;">${a.finca || 'Agua Clara'}</span></td>
+                            <td style="padding: 10px; border-bottom: 1px solid var(--border-light);">${a.padre} / ${a.madre}</td>
+                            <td style="padding: 10px; border-bottom: 1px solid var(--border-light); font-weight: bold; color: var(--green-dark);">${a.peso} kg</td>
+                            <td style="padding: 10px; border-bottom: 1px solid var(--border-light);">${a.estado}</td>
+                        </tr>
+                    `;
+                });
+
+                if (document.getElementById('kpi-total')) document.getElementById('kpi-total').innerText = total;
+                if (document.getElementById('kpi-mautes')) document.getElementById('kpi-mautes').innerText = mautes;
+                if (document.getElementById('kpi-gestantes')) document.getElementById('kpi-gestantes').innerText = gestantes;
+
+                if (total === 0) {
+                    tabla.innerHTML = `<tr><td colspan="6" style="padding: 15px; text-align: center; color: var(--text-muted);">Sin animales registrados (${fincaActiva}).</td></tr>`;
+                }
+            }, (err) => console.error("Error Hato:", err));
+        }
+
+        // LECTURA DE DASHBOARD
+        function cargarDashboard() {
+            if (unsubDash) unsubDash();
+            const fincaActiva = obtenerFincaActual();
+
+            const q = (fincaActiva === 'Global')
+                ? collection(db, "animales")
+                : query(collection(db, "animales"), where("finca", "==", fincaActiva));
+
+            unsubDash = onSnapshot(q, (snapshot) => {
+                let total = 0, mautes = 0, ordeno = 0, secas = 0, novillas = 0, toros = 0;
+
+                snapshot.forEach((doc) => {
+                    const a = doc.data();
+                    total++;
+                    const cat = a.categoria || '';
+                    if (cat === "Lote ElbaLui (Maute)") mautes++;
+                    else if (cat === "Vaca Ordeño") ordeno++;
+                    else if (cat === "Vaca Seca / Escampa") secas++;
+                    else if (cat === "Novilla") novillas++;
+                    else if (cat === "Toro Reproductor") toros++;
+                });
+
+                const elemTotal = document.getElementById('dash-total-hato');
+                if (elemTotal) elemTotal.innerText = total;
+
+                const pct = Math.min(Math.round((total / 1000) * 100), 100);
+                const elemBar = document.getElementById('dash-progreso-bar');
+                const elemTxt = document
