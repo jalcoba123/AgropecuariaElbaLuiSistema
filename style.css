@@ -13,13 +13,34 @@
 * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
 body { background-color: var(--bg-canvas); color: var(--text-dark); padding-bottom: 90px; }
 
-/* Estilos de la Pantalla de Login */
+/* ESTILOS DEL LOGO INTEGRADO */
+.brand-logo-img {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid #a7f3d0;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+    flex-shrink: 0;
+}
+
+.login-logo-img {
+    width: 110px;
+    height: 110px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid var(--green-primary);
+    box-shadow: 0 6px 16px rgba(16, 185, 129, 0.25);
+    margin: 0 auto 15px auto;
+    display: block;
+}
+
+/* PANTALLA LOGIN */
 .login-container { display: flex; height: 100vh; justify-content: center; align-items: center; background: var(--bg-canvas); padding: 20px; }
 .login-box { background: white; padding: 40px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 100%; max-width: 400px; text-align: center; }
 
 header { background-color: var(--green-header); color: white; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
-.brand { display: flex; align-items: center; gap: 10px; }
-.brand-logo { background: var(--green-primary); border-radius: 50%; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; font-weight: bold; color: white; }
+.brand { display: flex; align-items: center; gap: 12px; }
 .brand-title { font-size: 1.1rem; font-weight: 700; line-height: 1.1; }
 .brand-sub { font-size: 0.75rem; color: #a7f3d0; }
 
@@ -32,7 +53,6 @@ header { background-color: var(--green-header); color: white; padding: 12px 20px
 .cat-chip.active { background: #ecfdf5; border-color: var(--green-primary); color: var(--green-dark); font-weight: 600; }
 
 .container { max-width: 1200px; margin: 0 auto; padding: 16px; }
-
 .finca-banner { background: linear-gradient(135deg, var(--green-dark), #065f46); color: white; border-radius: 12px; padding: 20px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; }
 .finca-tag { font-size: 0.7rem; letter-spacing: 1px; font-weight: 700; color: #a7f3d0; text-transform: uppercase; }
 .btn-action { background: var(--green-primary); color: white; border: none; padding: 10px 16px; border-radius: 8px; font-weight: 600; cursor: pointer; transition: background 0.2s; }
