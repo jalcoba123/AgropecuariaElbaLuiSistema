@@ -143,6 +143,22 @@ window.guardarTransaccion = async function(e) {
     } catch(error) { alert("Error al guardar transacción."); }
 };
 
+window.guardarEvento = async function(e) {
+    e.preventDefault();
+    try {
+        await addDoc(collection(db, "calendario"), {
+            finca: currentFinca,
+            fecha: document.getElementById('e-fecha').value,
+            tipo: document.getElementById('e-tipo').value,
+            descripcion: document.getElementById('e-desc').value,
+            estado: "Pendiente"
+        });
+        alert("¡Evento programado en el calendario!");
+        closeModal('eventoModal');
+        document.getElementById('eventoForm').reset();
+    } catch(error) { alert("Error al guardar evento."); }
+};
+
 function actualizarGraficaFinanciera(transacciones) {
     let totalIngresos = 0;
     let totalGastos = 0;
@@ -219,6 +235,17 @@ function escucharDatosFirebase() {
             tbody.innerHTML += `<tr><td>${item.fecha}</td><td>${item.vacas}</td><td><strong>${item.litros} L</strong></td><td>${item.promedio} L/v</td><td>${item.becerros} aparte</td></tr>`;
         });
         if(snapshot.docs.length === 0) tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:var(--text-muted); padding:20px;">Sin registros lecheros.</td></tr>`;
+    });
+
+    const qCal = query(collection(db, "calendario"), where("finca", "==", currentFinca));
+    onSnapshot(qCal, (snapshot) => {
+        const tbody = document.getElementById('tabla-calendario-body');
+        tbody.innerHTML = '';
+        snapshot.forEach(doc => {
+            const item = doc.data();
+            tbody.innerHTML += `<tr><td><strong>${item.fecha}</strong></td><td>${item.tipo}</td><td>${item.descripcion}</td><td><span style="color:var(--amber-text); font-weight:600;">${item.estado}</span></td></tr>`;
+        });
+        if(snapshot.docs.length === 0) tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:var(--text-muted); padding:20px;">Sin eventos programados en el calendario.</td></tr>`;
     });
 
     const qFin = query(collection(db, "finanzas"), where("finca", "==", currentFinca));
