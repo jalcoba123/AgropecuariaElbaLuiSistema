@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GanadoControl - Gestión Integral</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --green-dark: #064e3b;
+            --green-header: #043927;
+            --green-primary: #10b981;
+            --green-accent: #059669;
+            --bg-canvas: #f8fafc;
+            --card-bg: #ffffff;
+            --text-dark: #0f172a;
+            --text-muted: #64748b;
+            --border-light: #e2e8f0;
+            --amber-bg: #fef3c7;
+            --amber-text: #d97706;
+            --red-bg: #fee2e2;
+            --red-text: #dc2626;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
+        body { background-color: var(--bg-canvas); color: var(--text-dark); padding-bottom: 70px; }
+
+        /* Navigation Header */
+        header {
+            background-color: var(--green-header);
+            color: white;
+            padding: 12px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+        }
+
+        .brand { display: flex; align-items: center; gap: 10px; }
+        .brand-logo { background: var(--green-primary); border-radius: 50%; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; font-weight: bold; }
+        .brand-title { font-size: 1.1rem; font-weight: 700; line-height: 1.1; }
+        .brand-sub { font-size: 0.75rem; color: #a7f3d0; }
+
+        .finca-toggle {
+            display: flex;
+            background: rgba(0,0,0,0.3);
+            border-radius: 20px;
+            padding: 3px;
+        }
+
+        .finca-btn {
+            border: none;
+            background: transparent;
+            color: #a7f3d0;
+            padding: 6px 14px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            border-radius: 16px;
+            cursor: pointer;
+        }
+
+        .finca-btn.active {
+            background-color: var(--green-primary);
+            color: white;
+        }
+
+        /* Category Nav */
+        .category-nav {
+            background-color: white;
+            display: flex;
+            gap: 8px;
+            padding: 10px 16px;
+            overflow-x: auto;
+            border-bottom: 1px solid var(--border-light);
+        }
+
+        .cat-chip {
+            border: 1px solid var(--border-light);
+            background: white;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            white-space: nowrap;
+            color: var(--text-muted);
+        }
+
+        .cat-chip.active {
+            background: #ecfdf5;
+            border-color: var(--green-primary);
+            color: var(--green-dark);
+            font-weight: 600;
+        }
+
+        /* Container Layout */
+        .container { max-width: 1200px; margin: 0 auto; padding: 16px; }
+
+        /* Banner Finca Active */
+        .finca-banner {
+            background: linear-gradient(135deg, var(--green-dark), #065f46);
+            color: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .finca-tag { font-size: 0.7rem; letter-spacing: 1px; font-weight: 700; color: #a7f3d0; text-transform: uppercase; }
+        .finca-banner h2 { font-size: 1.4rem; margin: 4px 0; }
+        .finca-banner p { font-size: 0.85rem; color: #d1fae5; }
+        .btn-action { background: var(--green-primary); color: white; border: none; padding: 10px 16px; border-radius: 8px; font-weight: 600; cursor: pointer; }
+
+        /* KPI Dashboard Grid */
+        .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-bottom: 20px; }
+        .kpi-card { background: white; padding: 16px; border-radius: 10px; border: 1px solid var(--border-light); }
+        .kpi-label { font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; }
+        .kpi-value { font-size: 1.8rem; font-weight: 800; color: var(--text-dark); margin: 4px 0; }
+        .kpi-sub { font-size: 0.75rem; color: var(--text-muted); }
+
+        /* Modules Grid */
+        .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 16px; }
+
+        .panel-card { background: white; border-radius: 12px; border: 1px solid var(--border-light); padding: 16px; }
+        .panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+        .panel-title { font-weight: 700; font-size: 0.95rem; display: flex; align-items: center; gap: 8px; }
+
+        /* List Items */
+        .alert-item { background: var(--amber-bg); border-left: 4px solid var(--amber-text); padding: 10px; border-radius: 6px; margin-bottom: 8px; font-size: 0.85rem; display: flex; justify-content: space-between; align-items: center; }
+        .alert-item.danger { background: var(--red-bg); border-left-color: var(--red-text); }
+        .badge-date { background: white; padding: 2px 8px; border-radius: 4px; font-weight: 700; font-size: 0.75rem; }
+
+        /* Mobile Bottom Nav */
+        .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: white; border-top: 1px solid var(--border-light); display: flex; justify-content: space-around; padding: 8px 0; z-index: 100; }
+        .nav-item { text-align: center; font-size: 0.75rem; color: var(--text-muted); text-decoration: none; font-weight: 500; }
+        .nav-item.active { color: var(--green-primary); font-weight: 700; }
+    </style>
+
+    <!-- Firebase JS SDK -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-app.js";
+        import { getFirestore } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBHKDSUWKYICbu6vJ1UKUuY8Y6tOfZkoKs",
+            authDomain: "finca-agropecuaria-elbalui.firebaseapp.com",
+            projectId: "finca-agropecuaria-elbalui",
+            storageBucket: "finca-agropecuaria-elbalui.firebasestorage.app",
+            messagingSenderId: "1047271470951",
+            appId: "1:1047271470951:web:380ff8c667dd7eab2221c2",
+            measurementId: "G-ND79ESF8FM"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+    </script>
+</head>
+<body>
+
+    <!-- Header -->
+    <header>
+        <div class="brand">
+            <div class="brand-logo">G</div>
+            <div>
+                <div class="brand-title">GanadoControl</div>
+                <div class="brand-sub">Gestión Ganadera & Agrícola</div>
+            </div>
+        </div>
+        <div class="finca-toggle">
+            <button class="finca-btn active">💧 Agua Clara</button>
+            <button class="finca-btn">☀️ El Sur</button>
+        </div>
+    </header>
+
+    <!-- Category Chips -->
+    <nav class="category-nav">
+        <button class="cat-chip active">📋 Pendientes</button>
+        <button class="cat-chip">🐮 Inventario ( 89 )</button>
+        <button class="cat-chip">🌴 Palma Aceitera (25 ha)</button>
+        <button class="cat-chip">🌱 Potreros & Siembras</button>
+        <button class="cat-chip">🌾 Nutrición & CC</button>
+        <button class="cat-chip">🩺 Sanidad & Repro</button>
+    </nav>
+
+    <div class="container">
+        <!-- Active Finca Banner -->
+        <div class="finca-banner">
+            <div>
+                <span class="finca-tag">Finca Activa: Agua Clara</span>
+                <h2>Finca Agua Clara (Ganadería & Palma)</h2>
+                <p>Ordeño intensivo, recría y plantación de 25 ha de Palma Aceitera.</p>
+            </div>
+            <button class="btn-action">+ Registrar Animal</button>
+        </div>
+
+        <!-- KPI Summary Cards -->
+        <div class="kpi-grid">
+            <div class="kpi-card">
+                <div class="kpi-label">Hato Total</div>
+                <div class="kpi-value">89</div>
+                <div class="kpi-sub">animales en finca</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label">En Ordeño</div>
+                <div class="kpi-value">36</div>
+                <div class="kpi-sub">vacas activas</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label">Gestantes</div>
+                <div class="kpi-value">1</div>
+                <div class="kpi-sub">confirmada</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label">Palma Aceitera</div>
+                <div class="kpi-value">25 ha</div>
+                <div class="kpi-sub">Themba/Avalanche</div>
+            </div>
+        </div>
+
+        <!-- Detail Panels -->
+        <div class="grid-2">
+            <!-- Left Panel -->
+            <div class="panel-card">
+                <div class="panel-header">
+                    <span class="panel-title">🔔 Próximos Chequeos & Partos</span>
+                </div>
+                <div class="alert-item">
+                    <div>
+                        <strong>Vaca 7082 - Parto Estimado</strong><br>
+                        <small>Lote Agua Clara • Mudar a lote Maternidad en 15 días.</small>
+                    </div>
+                    <span class="badge-date" style="color: var(--amber-text);">18 Nov</span>
+                </div>
+                <div class="alert-item">
+                    <div>
+                        <strong>Mauta 1019 - Palpación Celo</strong><br>
+                        <small>Revisión post-inseminación.</small>
+                    </div>
+                    <span class="badge-date" style="color: var(--green-primary);">Mañana</span>
+                </div>
+            </div>
+
+            <!-- Right Panel -->
+            <div class="panel-card">
+                <div class="panel-header">
+                    <span class="panel-title">🛡️ Semáforo de Tiempo de Retiro Sanitario</span>
+                </div>
+                <div class="alert-item danger">
+                    <div>
+                        <strong>Vaca 61 - Oxitetraciclina</strong><br>
+                        <small>Tratamiento Mastitis • Leche restringida</small>
+                    </div>
+                    <span class="badge-date" style="color: var(--red-text);">Faltan 2 días</span>
+                </div>
+                <div class="alert-item" style="background:#ecfdf5; border-left-color:var(--green-primary);">
+                    <div>
+                        <strong>Vaca 47 - Desparasitación</strong><br>
+                        <small>Tratamiento preventivo liberado</small>
+                    </div>
+                    <span class="badge-date" style="color: var(--green-primary);">Liberada</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mobile Bottom Navigation Bar -->
+    <nav class="bottom-nav">
+        <a href="#" class="nav-item active">
+            <div>📱</div>
+            Inicio
+        </a>
+        <a href="#" class="nav-item">
+            <div>🐮</div>
+            Inventario
+        </a>
+        <a href="#" class="nav-item">
+            <div>🌴</div>
+            Palma
+        </a>
+        <a href="#" class="nav-item">
+            <div>🥛</div>
+            Ordeño
+        </a>
+    </nav>
+
+</body>
+</html>
