@@ -2,24 +2,23 @@
 import { db } from './firebase-config.js';
 import { collection, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
-export function cargarDashboard() {
-    // 1. Contar Hato Total en tiempo real
-    onSnapshot(collection(db, "animales"), (snapshot) => {
-        const total = snapshot.size;
-        const el = document.getElementById('dash-total-hato');
-        if (el) el.innerText = total;
-    });
+// Escuchar los registros reales de animales en la base de datos
+onSnapshot(collection(db, "animales"), (snapshot) => {
+    const totalAnimales = snapshot.size;
+    const elemHato = document.getElementById('dash-total-hato');
+    if (elemHato) {
+        elemHato.innerText = totalAnimales;
+    }
+});
 
-    // 2. Sumar Hectáreas de Palma en tiempo real
-    onSnapshot(collection(db, "palma_lotes"), (snapshot) => {
-        let totalHa = 0;
-        snapshot.forEach(doc => {
-            totalHa += Number(doc.data().hectareas || 0);
-        });
-        const el = document.getElementById('dash-palma-ha');
-        if (el) el.innerText = `${totalHa} ha`;
+// Escuchar los registros reales de hectáreas de palma
+onSnapshot(collection(db, "palma_lotes"), (snapshot) => {
+    let totalHa = 0;
+    snapshot.forEach((doc) => {
+        totalHa += Number(doc.data().hectareas || 0);
     });
-}
-
-// Inicializar al cargar
-setTimeout(cargarDashboard, 1000);
+    const elemPalma = document.getElementById('dash-palma-ha');
+    if (elemPalma) {
+        elemPalma.innerText = `${totalHa} ha`;
+    }
+});
