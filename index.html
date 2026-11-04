@@ -15,12 +15,20 @@
             <img src="logo.jpg" alt="Agropecuaria ElbaLui" class="login-logo-img">
             <h2 style="color: var(--green-dark); margin-bottom: 5px;">GanadoControl ERP</h2>
             <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 25px;">Agropecuaria ElbaLui • Fincas El Sur & Agua Clara</p>
+            
             <form id="login-form">
-                <div class="form-field" style="text-align: left;"><label>Correo Electrónico</label><input type="email" id="login-email" placeholder="admin@elbalui.com" required></div>
-                <div class="form-field" style="text-align: left;"><label>Contraseña</label><input type="password" id="login-password" placeholder="••••••••" required></div>
-                <button type="submit" class="btn-action" style="width: 100%; margin-top: 15px; font-size: 1rem;">Ingresar al Sistema</button>
+                <div class="form-field" style="text-align: left;">
+                    <label>Correo Electrónico</label>
+                    <input type="email" id="login-email" placeholder="ejemplo@gmail.com" required>
+                </div>
+                <div class="form-field" style="text-align: left;">
+                    <label>Contraseña</label>
+                    <input type="password" id="login-password" placeholder="••••••••" required>
+                </div>
+                <button type="submit" id="btn-submit-login" class="btn-action" style="width: 100%; margin-top: 15px; font-size: 1rem;">Ingresar al Sistema</button>
             </form>
-            <p id="login-error" style="color: #ef4444; font-size: 0.85rem; margin-top: 15px; display: none;">Credenciales incorrectas.</p>
+            
+            <p id="login-error" style="color: #ef4444; font-size: 0.85rem; margin-top: 15px; display: none; font-weight: 600;"></p>
         </div>
     </div>
 
@@ -35,13 +43,13 @@
                 </div>
             </div>
             <div class="finca-toggle">
-                <button class="finca-btn active" onclick="setFinca('Agua Clara'); window.cargarHato && window.cargarHato();">💧 Agua Clara</button>
-                <button class="finca-btn" onclick="setFinca('El Sur'); window.cargarHato && window.cargarHato();">☀️ El Sur</button>
+                <button class="finca-btn active" onclick="setFinca('Agua Clara')">💧 Agua Clara</button>
+                <button class="finca-btn" onclick="setFinca('El Sur')">☀️ El Sur</button>
             </div>
             <button id="btn-logout" style="background: transparent; border: 1px solid white; color: white; padding: 5px 10px; border-radius: 6px; cursor: pointer; margin-left: 10px;">Salir</button>
         </header>
 
-        <!-- 🧭 NAVEGACIÓN MODULAR ERP (6 DOMINIOS) -->
+        <!-- 🧭 NAVEGACIÓN MODULAR ERP -->
         <nav class="category-nav">
             <button class="cat-chip active" onclick="switchTab('dashboard', this)">📊 Torre de Control</button>
             <button class="cat-chip" onclick="switchTab('hato', this)">🐮 Hato & Sanidad</button>
@@ -60,24 +68,123 @@
                 </div>
             </div>
 
-            <!-- MÓDULO 1: TORRE DE CONTROL -->
+            <!-- TORRE DE CONTROL -->
             <div id="tab-dashboard" class="section-view active">
                 <div style="background: white; border-radius: 12px; border: 1px solid var(--border-light); padding: 20px; margin-bottom: 20px;">
                     <h3 style="color: var(--green-dark); margin-bottom: 5px;">📊 Resumen Ejecutivo</h3>
-                    <p style="font-size: 0.85rem; color: var(--text-muted);">Consolidado en tiempo real de operaciones agroindustriales.</p>
+                    <p style="font-size: 0.85rem; color: var(--text-muted);">Consolidado en tiempo real de Agropecuaria ElbaLui.</p>
                 </div>
                 
                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px;">
-                    <div style="background: white; padding: 16px; border-radius: 10px; border-left: 4px solid var(--green-primary); border: top: 1px solid var(--border-light); border-right: 1px solid var(--border-light); border-bottom: 1px solid var(--border-light); box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                    <div style="background: white; padding: 16px; border-radius: 10px; border-left: 4px solid var(--green-primary); border: 1px solid var(--border-light);">
                         <div style="font-size: 0.75rem; color: var(--text-muted); font-weight: 700;">HATO REGISTRADO</div>
                         <div id="dash-total-hato" style="font-size: 1.8rem; font-weight: 800; color: var(--text-dark);">0</div>
                         <div style="font-size: 0.75rem; color: var(--green-accent);">Meta global: 1,000 vientres</div>
                     </div>
-                    <div style="background: white; padding: 16px; border-radius: 10px; border-left: 4px solid #3b82f6; border: top: 1px solid var(--border-light); border-right: 1px solid var(--border-light); border-bottom: 1px solid var(--border-light); box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                    <div style="background: white; padding: 16px; border-radius: 10px; border-left: 4px solid #3b82f6; border: 1px solid var(--border-light);">
                         <div style="font-size: 0.75rem; color: var(--text-muted); font-weight: 700;">PRODUCCIÓN LECHERA</div>
                         <div id="dash-leche-diaria" style="font-size: 1.8rem; font-weight: 800; color: var(--text-dark);">0 L</div>
                         <div style="font-size: 0.75rem; color: var(--text-muted);">Ordeño del día (Agua Clara)</div>
                     </div>
-                    <div style="background: white; padding: 16px; border-radius: 10px; border-left: 4px solid #f59e0b; border: top: 1px solid var(--border-light); border-right: 1px solid var(--border-light); border-bottom: 1px solid var(--border-light); box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                    <div style="background: white; padding: 16px; border-radius: 10px; border-left: 4px solid #f59e0b; border: 1px solid var(--border-light);">
                         <div style="font-size: 0.75rem; color: var(--text-muted); font-weight: 700;">ÁREA DE PALMA</div>
-                        <div id="dash-palma-ha" style="font-size: 1.8rem; font-weight: 80
+                        <div id="dash-palma-ha" style="font-size: 1.8rem; font-weight: 800; color: var(--text-dark);">0 ha</div>
+                        <div style="font-size: 0.75rem; color: var(--text-muted);">Meta expansión: 100 ha</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SECCIONES EN CONSTRUCCIÓN -->
+            <div id="tab-hato" class="section-view"><div style="padding: 40px; text-align: center; color: var(--text-muted);">Módulo Hato & Sanidad listo para conectar.</div></div>
+            <div id="tab-lecheria" class="section-view"><div style="padding: 40px; text-align: center; color: var(--text-muted);">Lechería en construcción...</div></div>
+            <div id="tab-palma" class="section-view"><div style="padding: 40px; text-align: center; color: var(--text-muted);">Palma en construcción...</div></div>
+            <div id="tab-operaciones" class="section-view"><div style="padding: 40px; text-align: center; color: var(--text-muted);">Operaciones en construcción...</div></div>
+            <div id="tab-finanzas" class="section-view"><div style="padding: 40px; text-align: center; color: var(--text-muted);">Finanzas en construcción...</div></div>
+        </div>
+    </div>
+
+    <!-- SCRIPT DE AUTENTICACIÓN Y NAVEGACIÓN EMBEDIDO -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+        import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBHKDSUWKYICbu6vJ1UKUuY8Y6tOfZkoKs",
+            authDomain: "finca-agropecuaria-elbalui.firebaseapp.com",
+            projectId: "finca-agropecuaria-elbalui",
+            storageBucket: "finca-agropecuaria-elbalui.firebasestorage.app",
+            messagingSenderId: "1047271470951",
+            appId: "1:1047271470951:web:380ff8c667dd7eab2221c2"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+
+        const loginScreen = document.getElementById('login-screen');
+        const appContainer = document.getElementById('app-container');
+        const loginForm = document.getElementById('login-form');
+        const loginError = document.getElementById('login-error');
+        const btnLogout = document.getElementById('btn-logout');
+
+        // Escuchar estado de sesión
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                console.log("Sesión iniciada como:", user.email);
+                loginScreen.style.display = 'none';
+                appContainer.style.display = 'block';
+            } else {
+                loginScreen.style.display = 'flex';
+                appContainer.style.display = 'none';
+            }
+        });
+
+        // Evento Login
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            loginError.style.display = 'none';
+
+            const email = document.getElementById('login-email').value.trim();
+            const password = document.getElementById('login-password').value;
+            const btn = document.getElementById('btn-submit-login');
+
+            btn.innerText = "Verificando...";
+            btn.disabled = true;
+
+            try {
+                await signInWithEmailAndPassword(auth, email, password);
+                loginForm.reset();
+            } catch (error) {
+                console.error("Error Auth:", error);
+                loginError.innerText = "Error: " + (error.code || error.message);
+                loginError.style.display = 'block';
+            } finally {
+                btn.innerText = "Ingresar al Sistema";
+                btn.disabled = false;
+            }
+        });
+
+        // Evento Logout
+        btnLogout.addEventListener('click', () => signOut(auth));
+
+        // Navegación UI
+        window.switchTab = function(tabId, element) {
+            document.querySelectorAll('.section-view').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.cat-chip').forEach(c => c.classList.remove('active'));
+            const sec = document.getElementById('tab-' + tabId);
+            if (sec) sec.classList.add('active');
+            if (element) element.classList.add('active');
+        };
+
+        window.setFinca = function(fincaNombre) {
+            document.querySelectorAll('.finca-btn').forEach(b => {
+                b.classList.toggle('active', b.innerText.includes(fincaNombre));
+            });
+            document.getElementById('finca-tag').innerText = `FINCA ACTIVA: ${fincaNombre.toUpperCase()}`;
+            document.getElementById('finca-title').innerText = `Finca ${fincaNombre}`;
+            document.getElementById('finca-desc').innerText = fincaNombre === 'Agua Clara' 
+                ? 'Manejo intensivo/extensivo, palma aceitera en establecimiento y áreas de siembra.'
+                : 'Manejo extensivo de mautes de engorde (Lote ElbaLui) y potreros.';
+        };
+    </script>
+</body>
+</html>
