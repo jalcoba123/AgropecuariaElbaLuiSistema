@@ -3,405 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GanadoControl - Gestión Integral</title>
+    <title>GanadoControl - Gestión Agropecuaria Integral</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <!-- Leaflet CSS para Mapas -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <style>
-        :root {
-            --green-dark: #064e3b;
-            --green-header: #043927;
-            --green-primary: #10b981;
-            --green-accent: #059669;
-            --bg-canvas: #f8fafc;
-            --card-bg: #ffffff;
-            --text-dark: #0f172a;
-            --text-muted: #64748b;
-            --border-light: #e2e8f0;
-            --amber-bg: #fef3c7;
-            --amber-text: #d97706;
-            --red-bg: #fee2e2;
-            --red-text: #dc2626;
-        }
-
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
-        body { background-color: var(--bg-canvas); color: var(--text-dark); padding-bottom: 90px; }
-
-        header {
-            background-color: var(--green-header);
-            color: white;
-            padding: 12px 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
-        }
-
-        .brand { display: flex; align-items: center; gap: 10px; }
-        .brand-logo { background: var(--green-primary); border-radius: 50%; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; font-weight: bold; color: white; }
-        .brand-title { font-size: 1.1rem; font-weight: 700; line-height: 1.1; }
-        .brand-sub { font-size: 0.75rem; color: #a7f3d0; }
-
-        .finca-toggle {
-            display: flex;
-            background: rgba(0,0,0,0.3);
-            border-radius: 20px;
-            padding: 3px;
-        }
-
-        .finca-btn {
-            border: none;
-            background: transparent;
-            color: #a7f3d0;
-            padding: 6px 14px;
-            font-size: 0.8rem;
-            font-weight: 600;
-            border-radius: 16px;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .finca-btn.active {
-            background-color: var(--green-primary);
-            color: white;
-        }
-
-        .category-nav {
-            background-color: white;
-            display: flex;
-            gap: 8px;
-            padding: 10px 16px;
-            overflow-x: auto;
-            border-bottom: 1px solid var(--border-light);
-        }
-
-        .cat-chip {
-            border: 1px solid var(--border-light);
-            background: white;
-            padding: 6px 12px;
-            border-radius: 20px;
-            font-size: 0.8rem;
-            font-weight: 500;
-            white-space: nowrap;
-            color: var(--text-muted);
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .cat-chip.active {
-            background: #ecfdf5;
-            border-color: var(--green-primary);
-            color: var(--green-dark);
-            font-weight: 600;
-        }
-
-        .container { max-width: 1200px; margin: 0 auto; padding: 16px; }
-
-        .finca-banner {
-            background: linear-gradient(135deg, var(--green-dark), #065f46);
-            color: white;
-            border-radius: 12px;
-            padding: 20px;
-            margin-bottom: 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 12px;
-        }
-
-        .finca-tag { font-size: 0.7rem; letter-spacing: 1px; font-weight: 700; color: #a7f3d0; text-transform: uppercase; }
-        .finca-banner h2 { font-size: 1.4rem; margin: 4px 0; }
-        .finca-banner p { font-size: 0.85rem; color: #d1fae5; }
-        .btn-action { background: var(--green-primary); color: white; border: none; padding: 10px 16px; border-radius: 8px; font-weight: 600; cursor: pointer; transition: background 0.2s; }
-        .btn-action:hover { background: var(--green-accent); }
-
-        .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-bottom: 20px; }
-        .kpi-card { background: white; padding: 16px; border-radius: 10px; border: 1px solid var(--border-light); }
-        .kpi-label { font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; }
-        .kpi-value { font-size: 1.8rem; font-weight: 800; color: var(--text-dark); margin: 4px 0; }
-        .kpi-sub { font-size: 0.75rem; color: var(--text-muted); }
-
-        .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 16px; }
-
-        .panel-card { background: white; border-radius: 12px; border: 1px solid var(--border-light); padding: 16px; margin-bottom: 16px; }
-        .panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
-        .panel-title { font-weight: 700; font-size: 0.95rem; display: flex; align-items: center; gap: 8px; }
-
-        .alert-item { background: var(--amber-bg); border-left: 4px solid var(--amber-text); padding: 10px; border-radius: 6px; margin-bottom: 8px; font-size: 0.85rem; display: flex; justify-content: space-between; align-items: center; }
-        .alert-item.danger { background: var(--red-bg); border-left-color: var(--red-text); }
-        .badge-date { background: white; padding: 2px 8px; border-radius: 4px; font-weight: 700; font-size: 0.75rem; }
-
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 0.85rem; }
-        th, td { padding: 10px; text-align: left; border-bottom: 1px solid var(--border-light); }
-        th { background: #f1f5f9; color: var(--text-muted); font-weight: 600; }
-
-        .section-view { display: none; }
-        .section-view.active { display: block; }
-
-        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-bottom: 12px; }
-        .form-field { margin-bottom: 10px; }
-        .form-field label { display: block; font-size: 0.8rem; font-weight: 600; margin-bottom: 4px; color: var(--text-dark); }
-        .form-field input, .form-field select { width: 100%; padding: 8px 10px; border: 1px solid var(--border-light); border-radius: 6px; font-size: 0.85rem; }
-
-        /* Contenedor del Mapa */
-        #map { height: 400px; width: 100%; border-radius: 10px; border: 1px solid var(--border-light); margin-top: 12px; }
-
-        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 1000; }
-        .modal-content { background: white; padding: 24px; border-radius: 12px; width: 90%; max-width: 450px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
-        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
-        .modal-title { font-weight: 700; font-size: 1.1rem; color: var(--green-dark); }
-        .close-btn { background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--text-muted); }
-
-        .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: white; border-top: 1px solid var(--border-light); display: flex; justify-content: space-around; padding: 10px 0; z-index: 100; }
-        .nav-item { text-align: center; font-size: 0.75rem; color: var(--text-muted); text-decoration: none; font-weight: 500; cursor: pointer; }
-        .nav-item.active { color: var(--green-primary); font-weight: 700; }
-    </style>
-
-    <!-- Leaflet JS -->
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-
-    <!-- Firebase SDK -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-app.js";
-        import { getFirestore, collection, addDoc, query, where, onSnapshot } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-firestore.js";
-
-        const firebaseConfig = {
-            apiKey: "AIzaSyBHKDSUWKYICbu6vJ1UKUuY8Y6tOfZkoKs",
-            authDomain: "finca-agropecuaria-elbalui.firebaseapp.com",
-            projectId: "finca-agropecuaria-elbalui",
-            storageBucket: "finca-agropecuaria-elbalui.firebasestorage.app",
-            messagingSenderId: "1047271470951",
-            appId: "1:1047271470951:web:380ff8c667dd7eab2221c2",
-            measurementId: "G-ND79ESF8FM"
-        };
-
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-
-        let currentFinca = "Agua Clara";
-        let map = null;
-
-        const fincasData = {
-            "Agua Clara": {
-                tag: "FINCA ACTIVA: AGUA CLARA",
-                title: "Finca Agua Clara (Ganadería & Agricultura)",
-                desc: "Ordeño intensivo, recría y área de siembra por proyectar.",
-                palma: "0 ha"
-            },
-            "El Sur": {
-                tag: "FINCA ACTIVA: EL SUR",
-                title: "Finca El Sur (Ganadería de Carne & Extensivo)",
-                desc: "Lote principal de mautes, engorde y rotación de potreros extensivos.",
-                palma: "0 ha"
-            }
-        };
-
-        window.setFinca = function(fincaName) {
-            currentFinca = fincaName;
-            
-            document.querySelectorAll('.finca-btn').forEach(btn => {
-                btn.classList.toggle('active', btn.innerText.includes(fincaName));
-            });
-
-            const data = fincasData[fincaName];
-            document.getElementById('finca-tag').innerText = data.tag;
-            document.getElementById('finca-title').innerText = data.title;
-            document.getElementById('finca-desc').innerText = data.desc;
-            document.getElementById('kpi-palma').innerText = data.palma;
-
-            escucharDatosFirebase();
-        };
-
-        window.switchTab = function(tabName, element) {
-            document.querySelectorAll('.cat-chip').forEach(chip => chip.classList.remove('active'));
-            if(element) element.classList.add('active');
-
-            document.querySelectorAll('.section-view').forEach(view => view.classList.remove('active'));
-            document.getElementById(`tab-${tabName}`).classList.add('active');
-
-            if(tabName === 'potreros' && !map) {
-                setTimeout(initMap, 200);
-            }
-        };
-
-        function initMap() {
-            // Coordenadas base en Monagas
-            map = L.map('map').setView([9.745, -63.180], 13);
-
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                maxZoom: 19,
-                attribution: '© OpenStreetMap'
-            }).addTo(map);
-
-            L.marker([9.745, -63.180]).addTo(map)
-                .bindPopup('<b>Finca Agua Clara</b><br>Centro de operaciones.').openPopup();
-        }
-
-        window.openModal = function() { document.getElementById('animalModal').style.display = 'flex'; };
-        window.closeModal = function() { document.getElementById('animalModal').style.display = 'none'; };
-
-        // Guardar Animal
-        window.guardarAnimal = async function(e) {
-            e.preventDefault();
-            const arete = document.getElementById('input-arete').value;
-            const categoria = document.getElementById('input-categoria').value;
-            const peso = document.getElementById('input-peso').value;
-            const estado = document.getElementById('input-estado').value;
-
-            try {
-                await addDoc(collection(db, "animales"), {
-                    finca: currentFinca,
-                    arete: arete,
-                    categoria: categoria,
-                    peso: Number(peso),
-                    estado: estado,
-                    fechaRegistro: new Date().toISOString().split('T')[0]
-                });
-                alert(`¡Animal ${arete} registrado con éxito!`);
-                closeModal();
-                document.getElementById('animalForm').reset();
-            } catch (error) {
-                alert("Error al guardar en Firebase.");
-            }
-        };
-
-        // Guardar Ordeño
-        window.guardarOrdeno = async function(e) {
-            e.preventDefault();
-            const fecha = document.getElementById('ordeno-fecha').value;
-            const vacas = Number(document.getElementById('ordeno-vacas').value);
-            const litros = Number(document.getElementById('ordeno-litros').value);
-            const promedio = (litros / (vacas || 1)).toFixed(2);
-
-            try {
-                await addDoc(collection(db, "ordeno_diario"), {
-                    finca: currentFinca,
-                    fecha: fecha,
-                    vacas: vacas,
-                    litros: litros,
-                    promedio: Number(promedio)
-                });
-                alert(`¡Ordeño registrado correctamente!`);
-                document.getElementById('ordenoForm').reset();
-            } catch(error) {
-                alert("Error al guardar ordeño.");
-            }
-        };
-
-        // Guardar Palma
-        window.guardarPalma = async function(e) {
-            e.preventDefault();
-            const fecha = document.getElementById('palma-fecha').value;
-            const racimos = Number(document.getElementById('palma-racimos').value);
-            const toneladas = Number(document.getElementById('palma-toneladas').value);
-
-            try {
-                await addDoc(collection(db, "produccion_palma"), {
-                    finca: currentFinca,
-                    fecha: fecha,
-                    racimos: racimos,
-                    toneladas: toneladas
-                });
-                alert(`¡Registro de palma guardado!`);
-                document.getElementById('palmaForm').reset();
-            } catch(error) {
-                alert("Error al registrar palma.");
-            }
-        };
-
-        function escucharDatosFirebase() {
-            // Animales
-            const qAnim = query(collection(db, "animales"), where("finca", "==", currentFinca));
-            onSnapshot(qAnim, (snapshot) => {
-                const tbody = document.getElementById('tabla-inventario-body');
-                tbody.innerHTML = '';
-                let totalHato = snapshot.docs.length;
-                let totalGestantes = 0;
-                let totalOrdeño = 0;
-
-                document.getElementById('kpi-hato').innerText = totalHato;
-
-                snapshot.forEach(doc => {
-                    const item = doc.data();
-                    if(item.estado === "Gestante") totalGestantes++;
-                    if(item.categoria === "Vaca Ordeño") totalOrdeño++;
-
-                    tbody.innerHTML += `
-                        <tr>
-                            <td><strong>${item.arete}</strong></td>
-                            <td>${item.categoria}</td>
-                            <td>${item.peso} kg</td>
-                            <td>${item.estado}</td>
-                            <td>${item.fechaRegistro || 'Reciente'}</td>
-                        </tr>
-                    `;
-                });
-
-                if(totalHato === 0) {
-                    tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--text-muted); padding: 20px;">No hay animales registrados aún. Presiona "+ Registrar Animal".</td></tr>`;
-                }
-
-                document.getElementById('kpi-gestantes').innerText = totalGestantes;
-                document.getElementById('kpi-ordeno').innerText = totalOrdeño;
-            });
-
-            // Ordeño
-            const qOrd = query(collection(db, "ordeno_diario"), where("finca", "==", currentFinca));
-            onSnapshot(qOrd, (snapshot) => {
-                const tbody = document.getElementById('tabla-ordeno-body');
-                tbody.innerHTML = '';
-                snapshot.forEach(doc => {
-                    const item = doc.data();
-                    tbody.innerHTML += `
-                        <tr>
-                            <td>${item.fecha}</td>
-                            <td>${item.vacas}</td>
-                            <td><strong>${item.litros} L</strong></td>
-                            <td>${item.promedio} L/vaca</td>
-                        </tr>
-                    `;
-                });
-                if(snapshot.docs.length === 0) {
-                    tbody.innerHTML = `<tr><td colspan="4" style="text-align: center; color: var(--text-muted); padding: 20px;">Sin registros de ordeño todavía.</td></tr>`;
-                }
-            });
-
-            // Palma
-            const qPal = query(collection(db, "produccion_palma"), where("finca", "==", currentFinca));
-            onSnapshot(qPal, (snapshot) => {
-                const tbody = document.getElementById('tabla-palma-body');
-                tbody.innerHTML = '';
-                snapshot.forEach(doc => {
-                    const item = doc.data();
-                    tbody.innerHTML += `
-                        <tr>
-                            <td>${item.fecha}</td>
-                            <td>${item.racimos} racimos</td>
-                            <td><strong>${item.toneladas} Ton</strong></td>
-                        </tr>
-                    `;
-                });
-                if(snapshot.docs.length === 0) {
-                    tbody.innerHTML = `<tr><td colspan="3" style="text-align: center; color: var(--text-muted); padding: 20px;">Sin cosechas registradas. Establécelas cuando inicies el proyecto.</td></tr>`;
-                }
-            });
-        }
-
-        window.addEventListener('DOMContentLoaded', () => {
-            escucharDatosFirebase();
-        });
-    </script>
+    <!-- Chart.js para el tablero contable -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-    <!-- Header Navigation -->
     <header>
         <div class="brand">
             <div class="brand-logo">G</div>
             <div>
                 <div class="brand-title">GanadoControl</div>
-                <div class="brand-sub">Gestión Ganadera & Agrícola</div>
+                <div class="brand-sub">Sistema de Gestión Fincas El Sur & Agua Clara</div>
             </div>
         </div>
         <div class="finca-toggle">
@@ -410,137 +26,166 @@
         </div>
     </header>
 
-    <!-- Category Chips / Navigation -->
     <nav class="category-nav">
         <button class="cat-chip active" onclick="switchTab('pendientes', this)">📋 Pendientes</button>
-        <button class="cat-chip" onclick="switchTab('inventario', this)">🐮 Inventario Real</button>
-        <button class="cat-chip" onclick="switchTab('ordeno', this)">🥛 Ordeño Diario</button>
-        <button class="cat-chip" onclick="switchTab('palma', this)">🌴 Palma Aceitera</button>
-        <button class="cat-chip" onclick="switchTab('potreros', this)">🗺️ Potreros & Mapa</button>
+        <button class="cat-chip" onclick="switchTab('inventario', this)">🐮 Inventario & Genealogía</button>
+        <button class="cat-chip" onclick="switchTab('ordeno', this)">🥛 Ordeño & Becerrada</button>
+        <button class="cat-chip" onclick="switchTab('pesos', this)">⚖️ Pesos & GDP</button>
+        <button class="cat-chip" onclick="switchTab('alimentacion', this)">🌾 Alimentación</button>
+        <button class="cat-chip" onclick="switchTab('sanidad', this)">🩺 Sanidad & Bodega</button>
+        <button class="cat-chip" onclick="switchTab('palma', this)">🌴 Palma & Cultivos</button>
+        <button class="cat-chip" onclick="switchTab('potreros', this)">🗺️ Mapa & Movimientos</button>
+        <button class="cat-chip" onclick="switchTab('activos', this)">🏷️ Activos</button>
+        <button class="cat-chip" onclick="switchTab('balance', this)">💰 Balance & Contabilidad</button>
     </nav>
 
     <div class="container">
-        <!-- Active Finca Banner -->
         <div class="finca-banner">
             <div>
                 <span class="finca-tag" id="finca-tag">FINCA ACTIVA: AGUA CLARA</span>
-                <h2 id="finca-title">Finca Agua Clara (Ganadería & Agricultura)</h2>
-                <p id="finca-desc">Ordeño intensivo, recría y área de siembra por proyectar.</p>
+                <h2 id="finca-title">Finca Agua Clara (Lechería Extensiva & Recría)</h2>
+                <p id="finca-desc">Manejo intensivo/extensivo, palma aceitera en establecimiento y áreas de siembra.</p>
             </div>
-            <button class="btn-action" onclick="openModal()">+ Registrar Animal</button>
+            <button class="btn-action" onclick="openModal('animalModal')">+ Registrar Animal</button>
         </div>
 
-        <!-- KPI Summary Cards -->
         <div class="kpi-grid">
-            <div class="kpi-card">
-                <div class="kpi-label">Hato Total</div>
-                <div class="kpi-value" id="kpi-hato">0</div>
-                <div class="kpi-sub">animales en finca</div>
-            </div>
-            <div class="kpi-card">
-                <div class="kpi-label">En Ordeño</div>
-                <div class="kpi-value" id="kpi-ordeno">0</div>
-                <div class="kpi-sub">vacas activas</div>
-            </div>
-            <div class="kpi-card">
-                <div class="kpi-label">Gestantes</div>
-                <div class="kpi-value" id="kpi-gestantes">0</div>
-                <div class="kpi-sub">confirmada</div>
-            </div>
-            <div class="kpi-card">
-                <div class="kpi-label">Palma Aceitera</div>
-                <div class="kpi-value" id="kpi-palma">0 ha</div>
-                <div class="kpi-sub">Por establecer</div>
-            </div>
+            <div class="kpi-card"><div class="kpi-label">Hato Total</div><div class="kpi-value" id="kpi-hato">0</div><div class="kpi-sub">animales activos</div></div>
+            <div class="kpi-card"><div class="kpi-label">En Ordeño</div><div class="kpi-value" id="kpi-ordeno">0</div><div class="kpi-sub">vacas activas</div></div>
+            <div class="kpi-card"><div class="kpi-label">Gestantes</div><div class="kpi-value" id="kpi-gestantes">0</div><div class="kpi-sub">vientres confirmados</div></div>
+            <div class="kpi-card"><div class="kpi-label">Palma / Cultivos</div><div class="kpi-value" id="kpi-palma">25 ha</div><div class="kpi-sub">Themba & Avalanche</div></div>
         </div>
 
-        <!-- TAB 1: PENDIENTES & ALERTAS -->
+        <!-- MÓDULOS -->
         <div id="tab-pendientes" class="section-view active">
             <div class="grid-2">
-                <div class="panel-card">
-                    <div class="panel-header">
-                        <span class="panel-title">🔔 Próximos Chequeos & Partos</span>
-                    </div>
-                    <div class="alert-item">
-                        <div>
-                            <strong>Chequeos Sanitaros</strong><br>
-                            <small>Sin alertas programadas actualmente.</small>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="panel-card">
-                    <div class="panel-header">
-                        <span class="panel-title">🛡️ Semáforo de Tiempo de Retiro Sanitario</span>
-                    </div>
-                    <div class="alert-item" style="background:#ecfdf5; border-left-color:var(--green-primary);">
-                        <div>
-                            <strong>Hato Sanitario</strong><br>
-                            <small>Sin restricciones activas.</small>
-                        </div>
-                    </div>
-                </div>
+                <div class="panel-card"><div class="panel-header"><span class="panel-title">🔔 Próximos Partos & Chequeos</span></div><div class="alert-item">Sin alertas críticas programadas.</div></div>
+                <div class="panel-card"><div class="panel-header"><span class="panel-title">🛡️ Semáforo Sanitario de Retiro</span></div><div class="alert-item" style="background:#ecfdf5; border-left-color:var(--green-primary);">Hato libre de restricciones actuales.</div></div>
             </div>
         </div>
 
-        <!-- TAB 2: INVENTARIO DE ANIMALES -->
         <div id="tab-inventario" class="section-view">
             <div class="panel-card">
-                <div class="panel-header">
-                    <span class="panel-title">🐮 Registro General de Animales en la Nube</span>
-                    <button class="btn-action" onclick="openModal()">+ Agregar Animal</button>
-                </div>
+                <div class="panel-header"><span class="panel-title">🐮 Tabla Maestra de Animales & Genealogía</span><button class="btn-action" onclick="openModal('animalModal')">+ Agregar Animal</button></div>
                 <table>
-                    <thead>
-                        <tr>
-                            <th>Arete / ID</th>
-                            <th>Categoría</th>
-                            <th>Peso</th>
-                            <th>Estado</th>
-                            <th>Fecha</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tabla-inventario-body">
-                    </tbody>
+                    <thead><tr><th>Arete / ID</th><th>Categoría / Lote</th><th>Padre / Madre</th><th>Peso (Kg)</th><th>Estado</th><th>Registro</th></tr></thead>
+                    <tbody id="tabla-inventario-body"></tbody>
                 </table>
             </div>
         </div>
 
-        <!-- TAB 3: CONTROL DE ORDEÑO -->
         <div id="tab-ordeno" class="section-view">
             <div class="panel-card">
-                <div class="panel-header">
-                    <span class="panel-title">🥛 Planilla Diaria de Ordeño</span>
-                </div>
+                <div class="panel-header"><span class="panel-title">🥛 Planilla Diaria de Ordeño & Becerrada Nocturna</span></div>
                 <form id="ordenoForm" onsubmit="guardarOrdeno(event)">
                     <div class="form-grid">
-                        <div class="form-field">
-                            <label>Fecha</label>
-                            <input type="date" id="ordeno-fecha" required>
-                        </div>
-                        <div class="form-field">
-                            <label>Vacas en Ordeño</label>
-                            <input type="number" id="ordeno-vacas" placeholder="Ej. 20" required>
-                        </div>
-                        <div class="form-field">
-                            <label>Litros Totales</label>
-                            <input type="number" id="ordeno-litros" placeholder="Ej. 180" required>
-                        </div>
+                        <div class="form-field"><label>Fecha</label><input type="date" id="ordeno-fecha" required></div>
+                        <div class="form-field"><label>Vacas Ordeñadas</label><input type="number" id="ordeno-vacas" placeholder="Ej. 20" required></div>
+                        <div class="form-field"><label>Litros Totales</label><input type="number" id="ordeno-litros" placeholder="Ej. 180" required></div>
+                        <div class="form-field"><label>Becerros Aparte Nocturno</label><input type="number" id="ordeno-becerros" placeholder="Ej. 18"></div>
                     </div>
                     <button type="submit" class="btn-action">Guardar Registro Lechero</button>
                 </form>
-
-                <h4 style="margin-top: 20px; color: var(--green-dark);">Histórico de Registros</h4>
+                <h4 style="margin-top:20px; color:var(--green-dark);">Histórico Lechero</h4>
                 <table>
-                    <thead>
-                        <tr>
-                            <th>Fecha</th>
-                            <th>Vacas</th>
-                            <th>Total Litros</th>
-                            <th>Promedio / Vaca</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tabla-ordeno-body">
-                    </tbody>
+                    <thead><tr><th>Fecha</th><th>Vacas</th><th>Total Litros</th><th>Promedio</th><th>Aparte Becerros</th></tr></thead>
+                    <tbody id="tabla-ordeno-body"></tbody>
                 </table>
             </div>
+        </div>
+
+        <div id="tab-pesos" class="section-view"><div class="panel-card"><h3 class="panel-title">⚖️ Control de Pesajes & GDP</h3><p style="font-size:0.85rem; color:var(--text-muted);">Seguimiento de ganancia diaria de peso en mautes y recría.</p></div></div>
+        <div id="tab-alimentacion" class="section-view"><div class="panel-card"><h3 class="panel-title">🌾 Alimentación (Cuba 22, Nepe de Cervecería & Pasto Medícula)</h3></div></div>
+        <div id="tab-sanidad" class="section-view"><div class="panel-card"><h3 class="panel-title">🩺 Plan Sanitario & Bodega de Insumos</h3></div></div>
+
+        <div id="tab-palma" class="section-view">
+            <div class="panel-card">
+                <div class="panel-header"><span class="panel-title">🌴 Módulo Agrícola (Avalanche 15ha & Themba 10ha)</span></div>
+                <form id="palmaForm" onsubmit="guardarPalma(event)">
+                    <div class="form-grid">
+                        <div class="form-field"><label>Fecha</label><input type="date" id="palma-fecha" required></div>
+                        <div class="form-field"><label>Racimos (RFF)</label><input type="number" id="palma-racimos" placeholder="Ej. 0" required></div>
+                        <div class="form-field"><label>Toneladas</label><input type="number" step="0.1" id="palma-toneladas" placeholder="Ej. 0.0" required></div>
+                    </div>
+                    <button type="submit" class="btn-action">Guardar Cosecha</button>
+                </form>
+                <h4 style="margin-top:20px; color:var(--green-dark);">Histórico de Cosechas</h4>
+                <table>
+                    <thead><tr><th>Fecha</th><th>Racimos (RFF)</th><th>Toneladas</th></tr></thead>
+                    <tbody id="tabla-palma-body"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="tab-potreros" class="section-view">
+            <div class="panel-card">
+                <div class="panel-header"><span class="panel-title">🗺️ Mapa Satelital & Lotes (ElbaLui, Ordeño, Vacías, Preñadas)</span></div>
+                <div id="map"></div>
+            </div>
+        </div>
+
+        <div id="tab-activos" class="section-view"><div class="panel-card"><h3 class="panel-title">🏷️ Activos (Ford Super Duty, Fortaleza, Maquinaria e Infraestructura)</h3></div></div>
+
+        <!-- BALANCE CON GRÁFICA CONTABLE -->
+        <div id="tab-balance" class="section-view">
+            <div class="panel-card" style="margin-bottom: 20px;">
+                <div class="panel-header"><span class="panel-title">📊 Resumen Visual: Ingresos vs Gastos e Inversiones</span></div>
+                <div style="position: relative; height: 260px; width: 100%;">
+                    <canvas id="balanceChart"></canvas>
+                </div>
+            </div>
+            <div class="panel-card">
+                <div class="panel-header"><span class="panel-title">💰 Balance Contable & Transacciones</span><button class="btn-action" onclick="openModal('transaccionModal')">+ Registrar Gasto/Ingreso</button></div>
+                <table>
+                    <thead><tr><th>Fecha</th><th>Tipo</th><th>Categoría</th><th>Monto ($)</th><th>Finca</th></tr></thead>
+                    <tbody id="tabla-balance-body"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL ANIMAL -->
+    <div class="modal" id="animalModal">
+        <div class="modal-content">
+            <div class="modal-header"><span class="modal-title">Registrar Animal</span><button class="close-btn" onclick="closeModal('animalModal')">&times;</button></div>
+            <form id="animalForm" onsubmit="guardarAnimal(event)">
+                <div class="form-field"><label>Arete / ID</label><input type="text" id="input-arete" placeholder="Ej. Vaca-102" required></div>
+                <div class="form-field"><label>Categoría / Lote</label>
+                    <select id="input-categoria">
+                        <option value="Vaca Ordeño">Vaca en Ordeño</option>
+                        <option value="Vaca Escampa">Vaca Escampa / Seca</option>
+                        <option value="Lote ElbaLui (Mautes)">Lote ElbaLui (Mautes)</option>
+                        <option value="Lote Vacas Vacías">Lote Vacas Vacías</option>
+                        <option value="Lote Preñadas">Lote Preñadas</option>
+                        <option value="Toro">Toro Reproductor</option>
+                    </select>
+                </div>
+                <div class="form-field"><label>Padre (Toro)</label><input type="text" id="input-padre" placeholder="Opcional"></div>
+                <div class="form-field"><label>Madre</label><input type="text" id="input-madre" placeholder="Opcional"></div>
+                <div class="form-field"><label>Peso Actual (Kg)</label><input type="number" id="input-peso" placeholder="Ej. 420" required></div>
+                <div class="form-field"><label>Estado Reproductivo</label>
+                    <select id="input-estado"><option value="Vacía">Vacía</option><option value="Gestante">Gestante</option><option value="En Celo">En Celo</option></select>
+                </div>
+                <button type="submit" class="btn-action" style="width:100%; margin-top:10px;">Guardar Animal</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL TRANSACCIÓN -->
+    <div class="modal" id="transaccionModal">
+        <div class="modal-content">
+            <div class="modal-header"><span class="modal-title">Registrar Movimiento Financiero</span><button class="close-btn" onclick="closeModal('transaccionModal')">&times;</button></div>
+            <form id="transaccionForm" onsubmit="guardarTransaccion(event)">
+                <div class="form-field"><label>Fecha</label><input type="date" id="t-fecha" required></div>
+                <div class="form-field"><label>Tipo</label><select id="t-tipo"><option value="Gasto">Gasto</option><option value="Ingreso">Ingreso</option><option value="Inversión">Inversión</option></select></div>
+                <div class="form-field"><label>Categoría</label><input type="text" id="t-cat" placeholder="Ej. Nepe de cervecería / Venta Leche" required></div>
+                <div class="form-field"><label>Monto ($)</label><input type="number" step="0.01" id="t-monto" placeholder="Ej. 150.00" required></div>
+                <button type="submit" class="btn-action" style="width:100%; margin-top:10px;">Guardar Transacción</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script type="module" src="app.js"></script>
+</body>
+</html>
