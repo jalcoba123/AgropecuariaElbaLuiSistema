@@ -1,0 +1,76 @@
+// js/hato.js
+import { collection, addDoc, query, where, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+
+function obtenerFincaActual() {
+    const tag = document.getElementById('finca-tag');
+    return tag && tag.innerText.includes('AGUA CLARA') ? 'Agua Clara' : 'El Sur';
+}
+
+const formAnimal = document.getElementById('form-animal');
+if (formAnimal) {
+    formAnimal.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const fincaActiva = obtenerFincaActual();
+        const btn = formAnimal.querySelector('button[type="submit"]');
+        btn.innerText = "Guardando..."; btn.disabled = true;
+
+        try {
+            await addDoc(collection(window.db, "animales"), {
+                finca: fincaActiva,
+                arete: document.getElementById('a-arete').value.trim(),
+                categoria: document.getElementById('a-categoria').value,
+                peso: Number(document.getElementById('a-peso').value),
+                padre: document.getElementById('a-padre').value.trim() || 'N/D',
+                madre: document.getElementById('a-madre').value.trim() || 'N/D',
+                estado: document.getElementById('a-estado').value,
+                fechaRegistro: serverTimestamp()
+            });
+
+            formAnimal.reset();
+            document.getElementById('modal-animal').style.display = 'none';
+        } catch (err) {
+            console.error("Error al guardar animal:", err);
+            alert("Error al guardar en base de datos: " + err.message);
+        } finally {
+            btn.innerText = "Guardar en Inventario"; btn.disabled = false;
+        }
+    });
+}
+
+window.cargarHato = function() {
+    const tabla = document.getElementById('tabla-hato-body');
+    if (!tabla || !window.db) return;
+
+    const fincaActiva = obtenerFincaActual();
+    const q = query(collection(window.db, "animales"), where("finca", "==", fincaActiva));
+
+    onSnapshot(q, (snapshot) => {
+        tabla.innerHTML = '';
+        let total = 0, mautes = 0, gestantes = 0;
+
+        snapshot.forEach((doc) => {
+            const a = doc.data();
+            total++;
+            if (a.categoria === "Lote ElbaLui (Maute)") mautes++;
+            if (a.estado === "Gestante") gestantes++;
+
+            tabla.innerHTML += `
+                <tr>
+                    <td style="padding: 10px; border-bottom: 1px solid var(--border-light);"><strong>${a.arete}</strong></td>
+                    <td style="padding: 10px; border-bottom: 1px solid var(--border-light);">${a.categoria}</td>
+                    <td style="padding: 10px; border-bottom: 1px solid var(--border-light);">${a.padre} / ${a.madre}</td>
+                    <td style="padding: 10px; border-bottom: 1px solid var(--border-light); font-weight: bold; color: var(--green-dark);">${a.peso} kg</td>
+                    <td style="padding: 10px; border-bottom: 1px solid var(--border-light);">${a.estado}</td>
+                </tr>
+            `;
+        });
+
+        if (document.getElementById('kpi-total')) document.getElementById('kpi-total').innerText = total;
+        if (document.getElementById('kpi-mautes')) document.getElementById('kpi-mautes').innerText = mautes;
+        if (document.getElementById('kpi-gestantes')) document.getElementById('kpi-gestantes').innerText = gestantes;
+
+        if (total === 0) {
+            tabla.innerHTML = `<tr><td colspan="5" style="padding: 15px; text-align: center; color: var(--text-muted);">Sin animales registrados en ${fincaActiva}.</td></tr>`;
+        }
+    }, (err) => console.error("Error leyendo Hato:", err));
+};
