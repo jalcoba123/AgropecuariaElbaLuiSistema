@@ -1,195 +1,68 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GanadoControl ERP - Agropecuaria ElbaLui</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css">
-</head>
-<body>
+// js/dashboard.js
+import { collection, query, where, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
-    <!-- 🔒 PANTALLA DE SEGURIDAD (LOGIN) -->
-    <div id="login-screen" class="login-container">
-        <div class="login-box">
-            <img src="logo.jpg" alt="Agropecuaria ElbaLui" class="login-logo-img">
-            <h2 style="color: var(--green-dark); margin-bottom: 5px;">GanadoControl ERP</h2>
-            <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 25px;">Agropecuaria ElbaLui • Fincas El Sur & Agua Clara</p>
-            
-            <form id="login-form">
-                <div class="form-field" style="text-align: left;">
-                    <label>Correo Electrónico</label>
-                    <input type="email" id="login-email" placeholder="ejemplo@gmail.com" required>
-                </div>
-                <div class="form-field" style="text-align: left;">
-                    <label>Contraseña</label>
-                    <input type="password" id="login-password" placeholder="••••••••" required>
-                </div>
-                <button type="submit" id="btn-submit-login" class="btn-action" style="width: 100%; margin-top: 15px; font-size: 1rem;">Ingresar al Sistema</button>
-            </form>
-            
-            <p id="login-error" style="color: #ef4444; font-size: 0.85rem; margin-top: 15px; display: none; font-weight: 600;"></p>
-        </div>
-    </div>
+function obtenerFincaActual() {
+    const tag = document.getElementById('finca-tag');
+    if (!tag) return 'Agua Clara';
+    const txt = tag.innerText;
+    if (txt.includes('CONSOLIDADO') || txt.includes('GLOBAL')) return 'Global';
+    if (txt.includes('EL SUR')) return 'El Sur';
+    return 'Agua Clara';
+}
 
-    <!-- 📱 APLICACIÓN PRINCIPAL -->
-    <div id="app-container" style="display: none;">
-        <header>
-            <div class="brand">
-                <img src="logo.jpg" alt="Agropecuaria ElbaLui" class="brand-logo-img">
-                <div>
-                    <div class="brand-title">GanadoControl ERP</div>
-                    <div class="brand-sub">Agropecuaria ElbaLui</div>
-                </div>
-            </div>
+let unsubHato = null;
 
-            <!-- CONMUTADOR DE VISTA: AGUA CLARA | EL SUR | CONSOLIDADO GLOBAL -->
-            <div class="finca-toggle">
-                <button class="finca-btn active" onclick="setFinca('Agua Clara')">💧 Agua Clara</button>
-                <button class="finca-btn" onclick="setFinca('El Sur')">☀️ El Sur</button>
-                <button class="finca-btn" onclick="setFinca('Global')">🌎 Consolidado</button>
-            </div>
-            
-            <button id="btn-logout" style="background: transparent; border: 1px solid white; color: white; padding: 5px 10px; border-radius: 6px; cursor: pointer; margin-left: 10px;">Salir</button>
-        </header>
+window.cargarDashboard = function() {
+    if (!window.db) return;
 
-        <!-- 🧭 NAVEGACIÓN MODULAR ERP (6 DOMINIOS) -->
-        <nav class="category-nav">
-            <button class="cat-chip active" onclick="switchTab('dashboard', this)">📊 Torre de Control</button>
-            <button class="cat-chip" onclick="switchTab('hato', this)">🐮 Hato & Sanidad</button>
-            <button class="cat-chip" onclick="switchTab('lecheria', this)">🥛 Lechería & Raciones</button>
-            <button class="cat-chip" onclick="switchTab('palma', this)">🌴 Palma & Agronomía</button>
-            <button class="cat-chip" onclick="switchTab('operaciones', this)">🚜 Operaciones & Activos</button>
-            <button class="cat-chip" onclick="switchTab('finanzas', this)">💰 Finanzas & Costos</button>
-        </nav>
+    const fincaActiva = obtenerFincaActual();
 
-        <div class="container">
-            <div class="finca-banner">
-                <div>
-                    <span class="finca-tag" id="finca-tag">FINCA ACTIVA: AGUA CLARA</span>
-                    <h2 id="finca-title">Finca Agua Clara</h2>
-                    <p id="finca-desc">Manejo intensivo/extensivo, palma aceitera en establecimiento y áreas de siembra.</p>
-                </div>
-            </div>
+    // Cancelar listener previo si existe para liberar recursos
+    if (unsubHato) unsubHato();
 
-            <!-- MÓDULO 1: TORRE DE CONTROL (EXECUTIVE DASHBOARD) -->
-            <div id="tab-dashboard" class="section-view active">
-                
-                <!-- Capa 1: Encabezado Ejecutivo -->
-                <div style="background: white; border-radius: 12px; border: 1px solid var(--border-light); padding: 20px; margin-bottom: 20px;">
-                    <h3 style="color: var(--green-dark); margin-bottom: 4px;">📊 Torre de Control Operativa</h3>
-                    <p style="font-size: 0.85rem; color: var(--text-muted); margin: 0;">Consolidado analítico en tiempo real de Agropecuaria ElbaLui.</p>
-                </div>
-                
-                <!-- Capa 2: Tarjetas KPIs Principales -->
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 24px;">
-                    
-                    <!-- KPI 1: Hato y Progreso -->
-                    <div style="background: white; padding: 18px; border-radius: 10px; border-left: 4px solid var(--green-primary); border-top: 1px solid var(--border-light); border-right: 1px solid var(--border-light); border-bottom: 1px solid var(--border-light);">
-                        <div style="font-size: 0.72rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">Activo Biológico (Hato)</div>
-                        <div id="dash-total-hato" style="font-size: 2rem; font-weight: 800; color: var(--text-dark); margin: 4px 0;">0</div>
-                        <div style="background: #e2e8f0; border-radius: 6px; height: 6px; width: 100%; margin-top: 8px; overflow: hidden;">
-                            <div id="dash-progreso-bar" style="background: var(--green-primary); width: 0%; height: 100%; transition: width 0.4s ease;"></div>
-                        </div>
-                        <div id="dash-progreso-txt" style="font-size: 0.72rem; color: var(--text-muted); margin-top: 6px;">0% de la meta (1,000 vientres)</div>
-                    </div>
+    let qHato;
+    if (fincaActiva === 'Global') {
+        qHato = collection(window.db, "animales");
+    } else {
+        qHato = query(collection(window.db, "animales"), where("finca", "==", fincaActiva));
+    }
 
-                    <!-- KPI 2: Leche Día -->
-                    <div style="background: white; padding: 18px; border-radius: 10px; border-left: 4px solid #3b82f6; border-top: 1px solid var(--border-light); border-right: 1px solid var(--border-light); border-bottom: 1px solid var(--border-light);">
-                        <div style="font-size: 0.72rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">Producción Lechera</div>
-                        <div id="dash-leche-diaria" style="font-size: 2rem; font-weight: 800; color: var(--text-dark); margin: 4px 0;">0 L</div>
-                        <div style="font-size: 0.75rem; color: #2563eb; font-weight: 600;">Ordeño del día</div>
-                    </div>
+    unsubHato = onSnapshot(qHato, (snapshot) => {
+        let total = 0, mautes = 0, ordeno = 0, secas = 0, novillas = 0, toros = 0;
 
-                    <!-- KPI 3: Palma Aceitera -->
-                    <div style="background: white; padding: 18px; border-radius: 10px; border-left: 4px solid #f59e0b; border-top: 1px solid var(--border-light); border-right: 1px solid var(--border-light); border-bottom: 1px solid var(--border-light);">
-                        <div style="font-size: 0.72rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">Superficie Palma</div>
-                        <div id="dash-palma-ha" style="font-size: 2rem; font-weight: 800; color: var(--text-dark); margin: 4px 0;">0 ha</div>
-                        <div style="font-size: 0.75rem; color: #d97706; font-weight: 600;">Avalanche / Themba</div>
-                    </div>
+        snapshot.forEach((doc) => {
+            const a = doc.data();
+            total++;
+            const cat = a.categoria || '';
+            if (cat === "Lote ElbaLui (Maute)") mautes++;
+            else if (cat === "Vaca Ordeño") ordeno++;
+            else if (cat === "Vaca Seca / Escampa") secas++;
+            else if (cat === "Novilla") novillas++;
+            else if (cat === "Toro Reproductor") toros++;
+        });
 
-                    <!-- KPI 4: Alertas Sanitarias -->
-                    <div style="background: white; padding: 18px; border-radius: 10px; border-left: 4px solid #ef4444; border-top: 1px solid var(--border-light); border-right: 1px solid var(--border-light); border-bottom: 1px solid var(--border-light);">
-                        <div style="font-size: 0.72rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">Alertas Sanitarias</div>
-                        <div id="dash-alertas-count" style="font-size: 2rem; font-weight: 800; color: #ef4444; margin: 4px 0;">0</div>
-                        <div style="font-size: 0.75rem; color: #dc2626; font-weight: 600;">En tiempo de retiro</div>
-                    </div>
-                </div>
+        // Actualizar Tarjeta Principal
+        const elemTotal = document.getElementById('dash-total-hato');
+        if (elemTotal) elemTotal.innerText = total;
 
-                <!-- Capa 3: Desglose de Censo y Acciones Rápidas -->
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;">
-                    
-                    <!-- Panel Censo -->
-                    <div style="background: white; border-radius: 12px; border: 1px solid var(--border-light); padding: 20px;">
-                        <h4 style="color: var(--green-dark); margin-bottom: 15px; font-size: 0.95rem;">🐮 Censo por Categorías</h4>
-                        <div style="display: flex; flex-direction: column; gap: 10px; font-size: 0.85rem;">
-                            <div style="display: flex; justify-content: space-between; padding-bottom: 6px; border-bottom: 1px solid var(--border-light);">
-                                <span>🥛 Vacas en Ordeño</span>
-                                <strong id="dash-cat-ordeno" style="color: var(--green-dark);">0</strong>
-                            </div>
-                            <div style="display: flex; justify-content: space-between; padding-bottom: 6px; border-bottom: 1px solid var(--border-light);">
-                                <span>🐂 Mautes (Lote ElbaLui)</span>
-                                <strong id="dash-cat-mautes" style="color: var(--green-dark);">0</strong>
-                            </div>
-                            <div style="display: flex; justify-content: space-between; padding-bottom: 6px; border-bottom: 1px solid var(--border-light);">
-                                <span>🌱 Novillas</span>
-                                <strong id="dash-cat-novillas" style="color: var(--green-dark);">0</strong>
-                            </div>
-                            <div style="display: flex; justify-content: space-between; padding-bottom: 6px; border-bottom: 1px solid var(--border-light);">
-                                <span>🌾 Vacas Secas / Escampa</span>
-                                <strong id="dash-cat-secas" style="color: var(--green-dark);">0</strong>
-                            </div>
-                            <div style="display: flex; justify-content: space-between;">
-                                <span>👑 Toros Reproductores</span>
-                                <strong id="dash-cat-toros" style="color: var(--green-dark);">0</strong>
-                            </div>
-                        </div>
-                    </div>
+        // Barra de avance visual (Meta: 1,000 vientres)
+        const pct = Math.min(Math.round((total / 1000) * 100), 100);
+        const elemBar = document.getElementById('dash-progreso-bar');
+        const elemTxt = document.getElementById('dash-progreso-txt');
+        if (elemBar) elemBar.style.width = `${pct}%`;
+        if (elemTxt) elemTxt.innerText = `${pct}% de la meta (1,000 vientres)`;
 
-                    <!-- Panel Accesos Rápidos -->
-                    <div style="background: white; border-radius: 12px; border: 1px solid var(--border-light); padding: 20px;">
-                        <h4 style="color: var(--green-dark); margin-bottom: 15px; font-size: 0.95rem;">⚡ Accesos Directos de Campo</h4>
-                        <div style="display: grid; grid-template-columns: 1fr; gap: 10px;">
-                            <button class="btn-action" onclick="document.getElementById('modal-animal').style.display='flex'" style="width: 100%; text-align: left; padding: 12px 16px; background: #f8fafc; color: var(--text-dark); border: 1px solid var(--border-light); font-weight: 600; cursor: pointer; border-radius: 8px;">
-                                ➕ Registrar Nuevo Animal (Hato)
-                            </button>
-                            <button onclick="switchTab('lecheria', document.querySelectorAll('.cat-chip')[2])" style="width: 100%; text-align: left; padding: 12px 16px; background: #f8fafc; color: var(--text-dark); border: 1px solid var(--border-light); font-weight: 600; cursor: pointer; border-radius: 8px;">
-                                🥛 Registrar Ordeño Diario
-                            </button>
-                            <button onclick="switchTab('palma', document.querySelectorAll('.cat-chip')[3])" style="width: 100%; text-align: left; padding: 12px 16px; background: #f8fafc; color: var(--text-dark); border: 1px solid var(--border-light); font-weight: 600; cursor: pointer; border-radius: 8px;">
-                                🌴 Cargar Cosecha de Palma (RFF)
-                            </button>
-                        </div>
-                    </div>
+        // Desglose por Categorías
+        if (document.getElementById('dash-cat-ordeno')) document.getElementById('dash-cat-ordeno').innerText = ordeno;
+        if (document.getElementById('dash-cat-mautes')) document.getElementById('dash-cat-mautes').innerText = mautes;
+        if (document.getElementById('dash-cat-novillas')) document.getElementById('dash-cat-novillas').innerText = novillas;
+        if (document.getElementById('dash-cat-secas')) document.getElementById('dash-cat-secas').innerText = secas;
+        if (document.getElementById('dash-cat-toros')) document.getElementById('dash-cat-toros').innerText = toros;
 
-                </div>
-            </div>
-
-            <!-- MÓDULO 2: HATO, SANIDAD Y REPRODUCCIÓN -->
-            <div id="tab-hato" class="section-view">
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-bottom: 20px;">
-                    <div style="background: white; padding: 15px; border-radius: 8px; border: 1px solid var(--border-light);">
-                        <div style="font-size: 0.75rem; color: var(--text-muted); font-weight: bold;">Censo Local / Total</div>
-                        <div id="kpi-total" style="font-size: 1.8rem; font-weight: bold;">0</div>
-                    </div>
-                    <div style="background: white; padding: 15px; border-radius: 8px; border: 1px solid var(--border-light);">
-                        <div style="font-size: 0.75rem; color: var(--text-muted); font-weight: bold;">Mautes (Lote ElbaLui)</div>
-                        <div id="kpi-mautes" style="font-size: 1.8rem; font-weight: bold;">0</div>
-                    </div>
-                    <div style="background: white; padding: 15px; border-radius: 8px; border: 1px solid var(--border-light);">
-                        <div style="font-size: 0.75rem; color: var(--text-muted); font-weight: bold;">Gestantes</div>
-                        <div id="kpi-gestantes" style="font-size: 1.8rem; font-weight: bold;">0</div>
-                    </div>
-                </div>
-
-                <div style="background: white; border-radius: 12px; border: 1px solid var(--border-light); padding: 16px;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                        <h3 style="font-size: 1rem; color: var(--green-dark);">🐮 Inventario de Hato & Sanidad</h3>
-                        <button class="btn-action" onclick="document.getElementById('modal-animal').style.display='flex'">+ Registrar Animal</button>
-                    </div>
-                    <div style="overflow-x: auto;">
-                        <table style="width: 100%; border-collapse: collapse; font-size: 0.85rem;">
-                            <thead style="background: #f1f5f9; text-align: left;">
-                                <tr>
-                                    <th style="padding: 10px; border-bottom: 1px solid var(--border-light);">Arete / ID</th>
-                                    <th style="padding: 10px; border-bottom: 1px solid var(--border-light);">
+        // Configuración por omisión para Palma según finca
+        const elemPalma = document.getElementById('dash-palma-ha');
+        if (elemPalma) {
+            elemPalma.innerText = (fincaActiva === 'El Sur') ? '0 ha' : '25 ha';
+        }
+    }, (err) => console.error("Error Dashboard:", err));
+};
