@@ -49,7 +49,7 @@
             <button id="btn-logout" style="background: transparent; border: 1px solid white; color: white; padding: 5px 10px; border-radius: 6px; cursor: pointer; margin-left: 10px;">Salir</button>
         </header>
 
-        <!-- 🧭 NAVEGACIÓN MODULAR ERP -->
+        <!-- 🧭 NAVEGACIÓN MODULAR ERP (6 DOMINIOS) -->
         <nav class="category-nav">
             <button class="cat-chip active" onclick="switchTab('dashboard', this)">📊 Torre de Control</button>
             <button class="cat-chip" onclick="switchTab('hato', this)">🐮 Hato & Sanidad</button>
@@ -68,7 +68,7 @@
                 </div>
             </div>
 
-            <!-- TORRE DE CONTROL -->
+            <!-- MÓDULO 1: TORRE DE CONTROL -->
             <div id="tab-dashboard" class="section-view active">
                 <div style="background: white; border-radius: 12px; border: 1px solid var(--border-light); padding: 20px; margin-bottom: 20px;">
                     <h3 style="color: var(--green-dark); margin-bottom: 5px;">📊 Resumen Ejecutivo</h3>
@@ -94,19 +94,95 @@
                 </div>
             </div>
 
-            <!-- SECCIONES EN CONSTRUCCIÓN -->
-            <div id="tab-hato" class="section-view"><div style="padding: 40px; text-align: center; color: var(--text-muted);">Módulo Hato & Sanidad listo para conectar.</div></div>
-            <div id="tab-lecheria" class="section-view"><div style="padding: 40px; text-align: center; color: var(--text-muted);">Lechería en construcción...</div></div>
-            <div id="tab-palma" class="section-view"><div style="padding: 40px; text-align: center; color: var(--text-muted);">Palma en construcción...</div></div>
-            <div id="tab-operaciones" class="section-view"><div style="padding: 40px; text-align: center; color: var(--text-muted);">Operaciones en construcción...</div></div>
-            <div id="tab-finanzas" class="section-view"><div style="padding: 40px; text-align: center; color: var(--text-muted);">Finanzas en construcción...</div></div>
+            <!-- MÓDULO 2: HATO, SANIDAD Y REPRODUCCIÓN -->
+            <div id="tab-hato" class="section-view">
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-bottom: 20px;">
+                    <div style="background: white; padding: 15px; border-radius: 8px; border: 1px solid var(--border-light);">
+                        <div style="font-size: 0.75rem; color: var(--text-muted); font-weight: bold;">Censo Local</div>
+                        <div id="kpi-total" style="font-size: 1.8rem; font-weight: bold;">0</div>
+                    </div>
+                    <div style="background: white; padding: 15px; border-radius: 8px; border: 1px solid var(--border-light);">
+                        <div style="font-size: 0.75rem; color: var(--text-muted); font-weight: bold;">Mautes (Lote ElbaLui)</div>
+                        <div id="kpi-mautes" style="font-size: 1.8rem; font-weight: bold;">0</div>
+                    </div>
+                    <div style="background: white; padding: 15px; border-radius: 8px; border: 1px solid var(--border-light);">
+                        <div style="font-size: 0.75rem; color: var(--text-muted); font-weight: bold;">Gestantes</div>
+                        <div id="kpi-gestantes" style="font-size: 1.8rem; font-weight: bold;">0</div>
+                    </div>
+                </div>
+
+                <div style="background: white; border-radius: 12px; border: 1px solid var(--border-light); padding: 16px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                        <h3 style="font-size: 1rem; color: var(--green-dark);">🐮 Inventario de Hato & Sanidad</h3>
+                        <button class="btn-action" onclick="document.getElementById('modal-animal').style.display='flex'">+ Registrar Animal</button>
+                    </div>
+                    <div style="overflow-x: auto;">
+                        <table style="width: 100%; border-collapse: collapse; font-size: 0.85rem;">
+                            <thead style="background: #f1f5f9; text-align: left;">
+                                <tr>
+                                    <th style="padding: 10px; border-bottom: 1px solid var(--border-light);">Arete / ID</th>
+                                    <th style="padding: 10px; border-bottom: 1px solid var(--border-light);">Categoría</th>
+                                    <th style="padding: 10px; border-bottom: 1px solid var(--border-light);">Padres</th>
+                                    <th style="padding: 10px; border-bottom: 1px solid var(--border-light);">Peso (Kg)</th>
+                                    <th style="padding: 10px; border-bottom: 1px solid var(--border-light);">Estado</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tabla-hato-body">
+                                <tr><td colspan="5" style="padding: 15px; text-align: center; color: var(--text-muted);">Cargando base de datos...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- OTROS MÓDULOS (En Construcción) -->
+            <div id="tab-lecheria" class="section-view"><div style="padding: 40px; text-align: center; color: var(--text-muted);">Módulo de Lechería & Raciones en construcción...</div></div>
+            <div id="tab-palma" class="section-view"><div style="padding: 40px; text-align: center; color: var(--text-muted);">Módulo de Palma & Agronomía en construcción...</div></div>
+            <div id="tab-operaciones" class="section-view"><div style="padding: 40px; text-align: center; color: var(--text-muted);">Módulo de Operaciones & Activos en construcción...</div></div>
+            <div id="tab-finanzas" class="section-view"><div style="padding: 40px; text-align: center; color: var(--text-muted);">Módulo de Finanzas & Costos en construcción...</div></div>
         </div>
     </div>
 
-    <!-- SCRIPT DE AUTENTICACIÓN Y NAVEGACIÓN EMBEDIDO -->
+    <!-- 🐄 MODAL: REGISTRO DE ANIMAL -->
+    <div id="modal-animal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 1000; padding: 20px;">
+        <div style="background: white; padding: 24px; border-radius: 12px; width: 100%; max-width: 400px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <h3 style="color: var(--green-dark);">Registrar Animal</h3>
+                <button onclick="document.getElementById('modal-animal').style.display='none'" style="background:none; border:none; font-size:1.5rem; cursor:pointer;">&times;</button>
+            </div>
+            <form id="form-animal">
+                <div class="form-field"><label>Arete / ID</label><input type="text" id="a-arete" required></div>
+                <div class="form-field"><label>Categoría</label>
+                    <select id="a-categoria">
+                        <option value="Vaca Ordeño">Vaca en Ordeño</option>
+                        <option value="Lote ElbaLui (Maute)">Lote ElbaLui (Maute)</option>
+                        <option value="Vaca Seca / Escampa">Vaca Seca / Escampa</option>
+                        <option value="Novilla">Novilla</option>
+                        <option value="Toro Reproductor">Toro Reproductor</option>
+                    </select>
+                </div>
+                <div class="form-field"><label>Peso Actual (Kg)</label><input type="number" id="a-peso" required></div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                    <div class="form-field"><label>Padre</label><input type="text" id="a-padre" placeholder="Ej. Brahman 01"></div>
+                    <div class="form-field"><label>Madre</label><input type="text" id="a-madre" placeholder="Ej. Vaca 405"></div>
+                </div>
+                <div class="form-field"><label>Estado Reproductivo</label>
+                    <select id="a-estado">
+                        <option value="Activo/Creciendo">Activo / Creciendo</option>
+                        <option value="Vacía">Vacía</option>
+                        <option value="Gestante">Gestante</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn-action" style="width:100%; margin-top:10px;">Guardar en Inventario</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- SCRIPT PRINCIPAL DEL SISTEMA (FIREBASE + NAVEGACIÓN UI) -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
         import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+        import { getFirestore } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyBHKDSUWKYICbu6vJ1UKUuY8Y6tOfZkoKs",
@@ -118,7 +194,8 @@
         };
 
         const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
+        window.auth = getAuth(app);
+        window.db = getFirestore(app);
 
         const loginScreen = document.getElementById('login-screen');
         const appContainer = document.getElementById('app-container');
@@ -126,23 +203,22 @@
         const loginError = document.getElementById('login-error');
         const btnLogout = document.getElementById('btn-logout');
 
-        // Escuchar estado de sesión
-        onAuthStateChanged(auth, (user) => {
+        // Escuchar el estado de autenticación
+        onAuthStateChanged(window.auth, (user) => {
             if (user) {
-                console.log("Sesión iniciada como:", user.email);
                 loginScreen.style.display = 'none';
                 appContainer.style.display = 'block';
+                if (window.cargarHato) window.cargarHato();
             } else {
                 loginScreen.style.display = 'flex';
                 appContainer.style.display = 'none';
             }
         });
 
-        // Evento Login
+        // Enviar formulario de inicio de sesión
         loginForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             loginError.style.display = 'none';
-
             const email = document.getElementById('login-email').value.trim();
             const password = document.getElementById('login-password').value;
             const btn = document.getElementById('btn-submit-login');
@@ -151,10 +227,9 @@
             btn.disabled = true;
 
             try {
-                await signInWithEmailAndPassword(auth, email, password);
+                await signInWithEmailAndPassword(window.auth, email, password);
                 loginForm.reset();
             } catch (error) {
-                console.error("Error Auth:", error);
                 loginError.innerText = "Error: " + (error.code || error.message);
                 loginError.style.display = 'block';
             } finally {
@@ -163,10 +238,10 @@
             }
         });
 
-        // Evento Logout
-        btnLogout.addEventListener('click', () => signOut(auth));
+        // Botón de salir
+        btnLogout.addEventListener('click', () => signOut(window.auth));
 
-        // Navegación UI
+        // Conmutador de Pestañas / Módulos
         window.switchTab = function(tabId, element) {
             document.querySelectorAll('.section-view').forEach(s => s.classList.remove('active'));
             document.querySelectorAll('.cat-chip').forEach(c => c.classList.remove('active'));
@@ -175,6 +250,7 @@
             if (element) element.classList.add('active');
         };
 
+        // Conmutador de Fincas (Agua Clara / El Sur)
         window.setFinca = function(fincaNombre) {
             document.querySelectorAll('.finca-btn').forEach(b => {
                 b.classList.toggle('active', b.innerText.includes(fincaNombre));
@@ -184,7 +260,11 @@
             document.getElementById('finca-desc').innerText = fincaNombre === 'Agua Clara' 
                 ? 'Manejo intensivo/extensivo, palma aceitera en establecimiento y áreas de siembra.'
                 : 'Manejo extensivo de mautes de engorde (Lote ElbaLui) y potreros.';
+            if (window.cargarHato) window.cargarHato();
         };
     </script>
+
+    <!-- Script externo para la lógica del Hato -->
+    <script type="module" src="js/hato.js"></script>
 </body>
 </html>
