@@ -23,9 +23,8 @@
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
-        body { background-color: var(--bg-canvas); color: var(--text-dark); padding-bottom: 70px; }
+        body { background-color: var(--bg-canvas); color: var(--text-dark); padding-bottom: 90px; }
 
-        /* Navigation Header */
         header {
             background-color: var(--green-header);
             color: white;
@@ -37,7 +36,7 @@
         }
 
         .brand { display: flex; align-items: center; gap: 10px; }
-        .brand-logo { background: var(--green-primary); border-radius: 50%; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; font-weight: bold; }
+        .brand-logo { background: var(--green-primary); border-radius: 50%; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; font-weight: bold; color: white; }
         .brand-title { font-size: 1.1rem; font-weight: 700; line-height: 1.1; }
         .brand-sub { font-size: 0.75rem; color: #a7f3d0; }
 
@@ -57,6 +56,7 @@
             font-weight: 600;
             border-radius: 16px;
             cursor: pointer;
+            transition: all 0.2s;
         }
 
         .finca-btn.active {
@@ -64,7 +64,6 @@
             color: white;
         }
 
-        /* Category Nav */
         .category-nav {
             background-color: white;
             display: flex;
@@ -83,6 +82,8 @@
             font-weight: 500;
             white-space: nowrap;
             color: var(--text-muted);
+            cursor: pointer;
+            transition: all 0.2s;
         }
 
         .cat-chip.active {
@@ -92,10 +93,8 @@
             font-weight: 600;
         }
 
-        /* Container Layout */
         .container { max-width: 1200px; margin: 0 auto; padding: 16px; }
 
-        /* Banner Finca Active */
         .finca-banner {
             background: linear-gradient(135deg, var(--green-dark), #065f46);
             color: white;
@@ -105,42 +104,51 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
         }
 
         .finca-tag { font-size: 0.7rem; letter-spacing: 1px; font-weight: 700; color: #a7f3d0; text-transform: uppercase; }
         .finca-banner h2 { font-size: 1.4rem; margin: 4px 0; }
         .finca-banner p { font-size: 0.85rem; color: #d1fae5; }
-        .btn-action { background: var(--green-primary); color: white; border: none; padding: 10px 16px; border-radius: 8px; font-weight: 600; cursor: pointer; }
+        .btn-action { background: var(--green-primary); color: white; border: none; padding: 10px 16px; border-radius: 8px; font-weight: 600; cursor: pointer; transition: background 0.2s; }
+        .btn-action:hover { background: var(--green-accent); }
 
-        /* KPI Dashboard Grid */
         .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-bottom: 20px; }
         .kpi-card { background: white; padding: 16px; border-radius: 10px; border: 1px solid var(--border-light); }
         .kpi-label { font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; }
         .kpi-value { font-size: 1.8rem; font-weight: 800; color: var(--text-dark); margin: 4px 0; }
         .kpi-sub { font-size: 0.75rem; color: var(--text-muted); }
 
-        /* Modules Grid */
         .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 16px; }
 
-        .panel-card { background: white; border-radius: 12px; border: 1px solid var(--border-light); padding: 16px; }
+        .panel-card { background: white; border-radius: 12px; border: 1px solid var(--border-light); padding: 16px; margin-bottom: 16px; }
         .panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
         .panel-title { font-weight: 700; font-size: 0.95rem; display: flex; align-items: center; gap: 8px; }
 
-        /* List Items */
         .alert-item { background: var(--amber-bg); border-left: 4px solid var(--amber-text); padding: 10px; border-radius: 6px; margin-bottom: 8px; font-size: 0.85rem; display: flex; justify-content: space-between; align-items: center; }
         .alert-item.danger { background: var(--red-bg); border-left-color: var(--red-text); }
         .badge-date { background: white; padding: 2px 8px; border-radius: 4px; font-weight: 700; font-size: 0.75rem; }
 
-        /* Mobile Bottom Nav */
-        .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: white; border-top: 1px solid var(--border-light); display: flex; justify-content: space-around; padding: 8px 0; z-index: 100; }
-        .nav-item { text-align: center; font-size: 0.75rem; color: var(--text-muted); text-decoration: none; font-weight: 500; }
+        /* Modal Styles */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 1000; }
+        .modal-content { background: white; padding: 24px; border-radius: 12px; width: 90%; max-width: 450px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+        .modal-title { font-weight: 700; font-size: 1.1rem; color: var(--green-dark); }
+        .close-btn { background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--text-muted); }
+        .form-field { margin-bottom: 14px; }
+        .form-field label { display: block; font-size: 0.8rem; font-weight: 600; margin-bottom: 4px; color: var(--text-dark); }
+        .form-field input, .form-field select { width: 100%; padding: 10px; border: 1px solid var(--border-light); border-radius: 6px; font-size: 0.9rem; }
+
+        .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: white; border-top: 1px solid var(--border-light); display: flex; justify-content: space-around; padding: 10px 0; z-index: 100; }
+        .nav-item { text-align: center; font-size: 0.75rem; color: var(--text-muted); text-decoration: none; font-weight: 500; cursor: pointer; }
         .nav-item.active { color: var(--green-primary); font-weight: 700; }
     </style>
 
     <!-- Firebase JS SDK -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-app.js";
-        import { getFirestore } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, query, where, onSnapshot } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyBHKDSUWKYICbu6vJ1UKUuY8Y6tOfZkoKs",
@@ -154,6 +162,101 @@
 
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
+
+        let currentFinca = "Agua Clara";
+
+        const fincasData = {
+            "Agua Clara": {
+                tag: "FINCA ACTIVA: AGUA CLARA",
+                title: "Finca Agua Clara (Ganadería & Palma)",
+                desc: "Ordeño intensivo, recría y plantación de 25 ha de Palma Aceitera.",
+                hato: 89,
+                ordeno: 36,
+                gestantes: 1,
+                palma: "25 ha"
+            },
+            "El Sur": {
+                tag: "FINCA ACTIVA: EL SUR",
+                title: "Finca El Sur (Ganadería de Carne & Extensivo)",
+                desc: "Lote principal de mautes, engorde y rotación de potreros extensivos.",
+                hato: 142,
+                ordeno: 0,
+                gestantes: 18,
+                palma: "0 ha"
+            }
+        };
+
+        window.setFinca = function(fincaName) {
+            currentFinca = fincaName;
+            
+            document.querySelectorAll('.finca-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.innerText.includes(fincaName));
+            });
+
+            const data = fincasData[fincaName];
+            document.getElementById('finca-tag').innerText = data.tag;
+            document.getElementById('finca-title').innerText = data.title;
+            document.getElementById('finca-desc').innerText = data.desc;
+
+            document.getElementById('kpi-hato').innerText = data.hato;
+            document.getElementById('kpi-ordeno').innerText = data.ordeno;
+            document.getElementById('kpi-gestantes').innerText = data.gestantes;
+            document.getElementById('kpi-palma').innerText = data.palma;
+
+            actualizarContadorFirebase();
+        };
+
+        window.setCategory = function(element) {
+            document.querySelectorAll('.cat-chip').forEach(chip => chip.classList.remove('active'));
+            element.classList.add('active');
+        };
+
+        window.openModal = function() {
+            document.getElementById('animalModal').style.display = 'flex';
+        };
+
+        window.closeModal = function() {
+            document.getElementById('animalModal').style.display = 'none';
+        };
+
+        window.guardarAnimal = async function(e) {
+            e.preventDefault();
+            const arete = document.getElementById('input-arete').value;
+            const categoria = document.getElementById('input-categoria').value;
+            const peso = document.getElementById('input-peso').value;
+            const estado = document.getElementById('input-estado').value;
+
+            try {
+                await addDoc(collection(db, "animales"), {
+                    finca: currentFinca,
+                    arete: arete,
+                    categoria: categoria,
+                    peso: Number(peso),
+                    estado: estado,
+                    fechaRegistro: new Date().toISOString()
+                });
+                alert(`¡Animal ${arete} guardado con éxito en Firebase para ${currentFinca}!`);
+                closeModal();
+                document.getElementById('animalForm').reset();
+            } catch (error) {
+                console.error("Error guardando animal: ", error);
+                alert("Error al conectar con la base de datos.");
+            }
+        };
+
+        function actualizarContadorFirebase() {
+            const q = query(collection(db, "animales"), where("finca", "==", currentFinca));
+            onSnapshot(q, (snapshot) => {
+                let count = snapshot.docs.length;
+                const baseHato = fincasData[currentFinca].hato;
+                document.getElementById('kpi-hato').innerText = baseHato + count;
+            });
+        }
+
+        // Inicializar escucha al cargar
+        window.addEventListener('DOMContentLoaded', () => {
+            actualizarContadorFirebase();
+        });
     </script>
 </head>
 <body>
@@ -168,59 +271,58 @@
             </div>
         </div>
         <div class="finca-toggle">
-            <button class="finca-btn active">💧 Agua Clara</button>
-            <button class="finca-btn">☀️ El Sur</button>
+            <button class="finca-btn active" onclick="setFinca('Agua Clara')">💧 Agua Clara</button>
+            <button class="finca-btn" onclick="setFinca('El Sur')">☀️ El Sur</button>
         </div>
     </header>
 
-    <!-- Category Chips -->
+    <!-- Category Nav Chips -->
     <nav class="category-nav">
-        <button class="cat-chip active">📋 Pendientes</button>
-        <button class="cat-chip">🐮 Inventario ( 89 )</button>
-        <button class="cat-chip">🌴 Palma Aceitera (25 ha)</button>
-        <button class="cat-chip">🌱 Potreros & Siembras</button>
-        <button class="cat-chip">🌾 Nutrición & CC</button>
-        <button class="cat-chip">🩺 Sanidad & Repro</button>
+        <button class="cat-chip active" onclick="setCategory(this)">📋 Pendientes</button>
+        <button class="cat-chip" onclick="setCategory(this)">🐮 Inventario</button>
+        <button class="cat-chip" onclick="setCategory(this)">🌴 Palma Aceitera</button>
+        <button class="cat-chip" onclick="setCategory(this)">🌱 Potreros & Siembras</button>
+        <button class="cat-chip" onclick="setCategory(this)">🌾 Nutrición & CC</button>
+        <button class="cat-chip" onclick="setCategory(this)">🩺 Sanidad & Repro</button>
     </nav>
 
     <div class="container">
         <!-- Active Finca Banner -->
         <div class="finca-banner">
             <div>
-                <span class="finca-tag">Finca Activa: Agua Clara</span>
-                <h2>Finca Agua Clara (Ganadería & Palma)</h2>
-                <p>Ordeño intensivo, recría y plantación de 25 ha de Palma Aceitera.</p>
+                <span class="finca-tag" id="finca-tag">FINCA ACTIVA: AGUA CLARA</span>
+                <h2 id="finca-title">Finca Agua Clara (Ganadería & Palma)</h2>
+                <p id="finca-desc">Ordeño intensivo, recría y plantación de 25 ha de Palma Aceitera.</p>
             </div>
-            <button class="btn-action">+ Registrar Animal</button>
+            <button class="btn-action" onclick="openModal()">+ Registrar Animal</button>
         </div>
 
         <!-- KPI Summary Cards -->
         <div class="kpi-grid">
             <div class="kpi-card">
                 <div class="kpi-label">Hato Total</div>
-                <div class="kpi-value">89</div>
+                <div class="kpi-value" id="kpi-hato">89</div>
                 <div class="kpi-sub">animales en finca</div>
             </div>
             <div class="kpi-card">
                 <div class="kpi-label">En Ordeño</div>
-                <div class="kpi-value">36</div>
+                <div class="kpi-value" id="kpi-ordeno">36</div>
                 <div class="kpi-sub">vacas activas</div>
             </div>
             <div class="kpi-card">
                 <div class="kpi-label">Gestantes</div>
-                <div class="kpi-value">1</div>
+                <div class="kpi-value" id="kpi-gestantes">1</div>
                 <div class="kpi-sub">confirmada</div>
             </div>
             <div class="kpi-card">
                 <div class="kpi-label">Palma Aceitera</div>
-                <div class="kpi-value">25 ha</div>
+                <div class="kpi-value" id="kpi-palma">25 ha</div>
                 <div class="kpi-sub">Themba/Avalanche</div>
             </div>
         </div>
 
-        <!-- Detail Panels -->
+        <!-- Panels Grid -->
         <div class="grid-2">
-            <!-- Left Panel -->
             <div class="panel-card">
                 <div class="panel-header">
                     <span class="panel-title">🔔 Próximos Chequeos & Partos</span>
@@ -241,7 +343,6 @@
                 </div>
             </div>
 
-            <!-- Right Panel -->
             <div class="panel-card">
                 <div class="panel-header">
                     <span class="panel-title">🛡️ Semáforo de Tiempo de Retiro Sanitario</span>
@@ -264,23 +365,62 @@
         </div>
     </div>
 
-    <!-- Mobile Bottom Navigation Bar -->
+    <!-- Modal para Registrar Animal -->
+    <div class="modal" id="animalModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span class="modal-title">Registrar Nuevo Animal</span>
+                <button class="close-btn" onclick="closeModal()">&times;</button>
+            </div>
+            <form id="animalForm" onsubmit="guardarAnimal(event)">
+                <div class="form-field">
+                    <label>Número de Arete / ID</label>
+                    <input type="text" id="input-arete" placeholder="Ej. Vaca-504" required>
+                </div>
+                <div class="form-field">
+                    <label>Categoría</label>
+                    <select id="input-categoria">
+                        <option value="Vaca Ordeño">Vaca en Ordeño</option>
+                        <option value="Vaca Escampa">Vaca Escampa / Seca</option>
+                        <option value="Mauta">Mauta</option>
+                        <option value="Maute">Maute / Novillo</option>
+                        <option value="Toro">Toro Reproductor</option>
+                    </select>
+                </div>
+                <div class="form-field">
+                    <label>Peso Actual (Kg)</label>
+                    <input type="number" id="input-peso" placeholder="Ej. 420" required>
+                </div>
+                <div class="form-field">
+                    <label>Estado Reproductivo</label>
+                    <select id="input-estado">
+                        <option value="Vacía">Vacía</option>
+                        <option value="Gestante">Gestante</option>
+                        <option value="En Celo">En Celo</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn-action" style="width: 100%; margin-top: 10px;">Guardar en Firebase</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Mobile Bottom Navigation -->
     <nav class="bottom-nav">
-        <a href="#" class="nav-item active">
+        <a class="nav-item active" onclick="setFinca('Agua Clara')">
             <div>📱</div>
             Inicio
         </a>
-        <a href="#" class="nav-item">
-            <div>🐮</div>
-            Inventario
+        <a class="nav-item" onclick="openModal()">
+            <div>➕</div>
+            Nuevo
         </a>
-        <a href="#" class="nav-item">
-            <div>🌴</div>
-            Palma
+        <a class="nav-item" onclick="setFinca('Agua Clara')">
+            <div>💧</div>
+            Agua Clara
         </a>
-        <a href="#" class="nav-item">
-            <div>🥛</div>
-            Ordeño
+        <a class="nav-item" onclick="setFinca('El Sur')">
+            <div>☀️</div>
+            El Sur
         </a>
     </nav>
 
