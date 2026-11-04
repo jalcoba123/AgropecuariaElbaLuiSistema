@@ -1,27 +1,68 @@
 // js/dashboard.js
-import { db, auth } from './firebase-config.js';
-import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
-import { collection, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+import { collection, query, where, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
-export function iniciarDashboard() {
-    // Escuchar Hato en tiempo real
-    onSnapshot(collection(db, "animales"), (snapshot) => {
-        const elemHato = document.getElementById('dash-total-hato');
-        if (elemHato) elemHato.innerText = snapshot.size;
-    }, (error) => console.log("Dashboard Hato:", error.message));
-
-    // Escuchar hectáreas de Palma en tiempo real
-    onSnapshot(collection(db, "palma_lotes"), (snapshot) => {
-        let totalHa = 0;
-        snapshot.forEach((doc) => totalHa += Number(doc.data().hectareas || 0));
-        const elemPalma = document.getElementById('dash-palma-ha');
-        if (elemPalma) elemPalma.innerText = `${totalHa} ha`;
-    }, (error) => console.log("Dashboard Palma:", error.message));
+function obtenerFincaActual() {
+    const tag = document.getElementById('finca-tag');
+    if (!tag) return 'Agua Clara';
+    const txt = tag.innerText;
+    if (txt.includes('CONSOLIDADO') || txt.includes('GLOBAL')) return 'Global';
+    if (txt.includes('EL SUR')) return 'El Sur';
+    return 'Agua Clara';
 }
 
-// Activar la lectura solo tras autenticar al usuario
-onAuthStateChanged(auth, (user) => {
-    if (user) {
-        iniciarDashboard();
+let unsubHato = null;
+
+window.cargarDashboard = function() {
+    if (!window.db) return;
+
+    const fincaActiva = obtenerFincaActual();
+
+    // Cancelar listener previo si existe para liberar recursos
+    if (unsubHato) unsubHato();
+
+    let qHato;
+    if (fincaActiva === 'Global') {
+        qHato = collection(window.db, "animales");
+    } else {
+        qHato = query(collection(window.db, "animales"), where("finca", "==", fincaActiva));
     }
-});
+
+    unsubHato = onSnapshot(qHato, (snapshot) => {
+        let total = 0, mautes = 0, ordeno = 0, secas = 0, novillas = 0, toros = 0;
+
+        snapshot.forEach((doc) => {
+            const a = doc.data();
+            total++;
+            const cat = a.categoria || '';
+            if (cat === "Lote ElbaLui (Maute)") mautes++;
+            else if (cat === "Vaca Ordeño") ordeno++;
+            else if (cat === "Vaca Seca / Escampa") secas++;
+            else if (cat === "Novilla") novillas++;
+            else if (cat === "Toro Reproductor") toros++;
+        });
+
+        // Actualizar Tarjeta Principal
+        const elemTotal = document.getElementById('dash-total-hato');
+        if (elemTotal) elemTotal.innerText = total;
+
+        // Barra de avance visual (Meta: 1,000 vientres)
+        const pct = Math.min(Math.round((total / 1000) * 100), 100);
+        const elemBar = document.getElementById('dash-progreso-bar');
+        const elemTxt = document.getElementById('dash-progreso-txt');
+        if (elemBar) elemBar.style.width = `${pct}%`;
+        if (elemTxt) elemTxt.innerText = `${pct}% de la meta (1,000 vientres)`;
+
+        // Desglose por Categorías
+        if (document.getElementById('dash-cat-ordeno')) document.getElementById('dash-cat-ordeno').innerText = ordeno;
+        if (document.getElementById('dash-cat-mautes')) document.getElementById('dash-cat-mautes').innerText = mautes;
+        if (document.getElementById('dash-cat-novillas')) document.getElementById('dash-cat-novillas').innerText = novillas;
+        if (document.getElementById('dash-cat-secas')) document.getElementById('dash-cat-secas').innerText = secas;
+        if (document.getElementById('dash-cat-toros')) document.getElementById('dash-cat-toros').innerText = toros;
+
+        // Configuración por omisión para Palma según finca
+        const elemPalma = document.getElementById('dash-palma-ha');
+        if (elemPalma) {
+            elemPalma.innerText = (fincaActiva === 'El Sur') ? '0 ha' : '25 ha';
+        }
+    }, (err) => console.error("Error Dashboard:", err));
+};
