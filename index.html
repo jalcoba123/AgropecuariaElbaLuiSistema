@@ -26,8 +26,7 @@
     </header>
 
     <nav class="category-nav">
-        <button class="cat-chip active" onclick="switchTab('pendientes', this)">📋 Pendientes</button>
-        <button class="cat-chip" onclick="switchTab('calendario', this)">📅 Calendario</button>
+        <button class="cat-chip active" onclick="switchTab('calendario', this)">📅 Calendario & Pendientes</button>
         <button class="cat-chip" onclick="switchTab('inventario', this)">🐮 Inventario & Genealogía</button>
         <button class="cat-chip" onclick="switchTab('ordeno', this)">🥛 Ordeño & Becerrada</button>
         <button class="cat-chip" onclick="switchTab('pesos', this)">⚖️ Pesos & GDP</button>
@@ -56,33 +55,36 @@
             <div class="kpi-card"><div class="kpi-label">Palma / Cultivos</div><div class="kpi-value" id="kpi-palma">25 ha</div><div class="kpi-sub">Themba & Avalanche</div></div>
         </div>
 
-        <!-- MÓDULO PENDIENTES -->
-        <div id="tab-pendientes" class="section-view active">
+        <!-- MÓDULO UNIFICADO: CALENDARIO & PENDIENTES -->
+        <div id="tab-calendario" class="section-view active">
             <div class="grid-2">
-                <div class="panel-card"><div class="panel-header"><span class="panel-title">🔔 Próximos Partos & Chequeos</span></div><div class="alert-item">Sin alertas críticas programadas.</div></div>
-                <div class="panel-card"><div class="panel-header"><span class="panel-title">🛡️ Semáforo Sanitario de Retiro</span></div><div class="alert-item" style="background:#ecfdf5; border-left-color:var(--green-primary);">Hato libre de restricciones actuales.</div></div>
-            </div>
-        </div>
-
-        <!-- NUEVO MÓDULO CALENDARIO -->
-        <div id="tab-calendario" class="section-view">
-            <div class="panel-card">
-                <div class="panel-header">
-                    <span class="panel-title">📅 Calendario de Faenas, Partos & Eventos</span>
-                    <button class="btn-action" onclick="openModal('eventoModal')">+ Programar Evento</button>
+                <div class="panel-card">
+                    <div class="panel-header"><span class="panel-title">🛡️ Semáforo Sanitario & Retiros</span></div>
+                    <div class="alert-item" style="background:#ecfdf5; border-left-color:var(--green-primary);">Hato libre de restricciones de retiro actuales.</div>
                 </div>
-                <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 12px;">Agenda general de actividades operativas para la finca activa.</p>
+                <div class="panel-card">
+                    <div class="panel-header"><span class="panel-title">🔔 Alertas de Partos Próximos</span></div>
+                    <div class="alert-item">Sin partos críticos programados en los próximos días.</div>
+                </div>
+            </div>
+
+            <div class="panel-card" style="margin-top: 16px;">
+                <div class="panel-header">
+                    <span class="panel-title">📅 Agenda de Faenas, Maquinaria, Compras & Eventos</span>
+                    <button class="btn-action" onclick="openModal('eventoModal')">+ Programar Pendiente</button>
+                </div>
+                <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 12px;">Control total de actividades operativas, mantenimiento de máquinas, mercado y palma para la finca activa.</p>
                 <table>
                     <thead>
                         <tr>
                             <th>Fecha</th>
-                            <th>Tipo de Evento</th>
+                            <th>Categoría / Tipo</th>
                             <th>Descripción / Detalle</th>
                             <th>Estado</th>
                         </tr>
                     </thead>
                     <tbody id="tabla-calendario-body">
-                        <tr><td colspan="4" style="text-align:center; color:var(--text-muted); padding:20px;">Sin eventos programados.</td></tr>
+                        <tr><td colspan="4" style="text-align:center; color:var(--text-muted); padding:20px;">Sin pendientes o eventos registrados.</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -193,47 +195,4 @@
                 <div class="form-field"><label>Estado Reproductivo</label>
                     <select id="input-estado"><option value="Vacía">Vacía</option><option value="Gestante">Gestante</option><option value="En Celo">En Celo</option></select>
                 </div>
-                <button type="submit" class="btn-action" style="width:100%; margin-top:10px;">Guardar Animal</button>
-            </form>
-        </div>
-    </div>
-
-    <!-- MODAL EVENTO CALENDARIO -->
-    <div class="modal" id="eventoModal">
-        <div class="modal-content">
-            <div class="modal-header"><span class="modal-title">Programar Evento en Calendario</span><button class="close-btn" onclick="closeModal('eventoModal')">&times;</button></div>
-            <form id="eventoForm" onsubmit="guardarEvento(event)">
-                <div class="form-field"><label>Fecha del Evento</label><input type="date" id="e-fecha" required></div>
-                <div class="form-field"><label>Tipo de Evento</label>
-                    <select id="e-tipo">
-                        <option value="Parto Estimado">Parto Estimado</option>
-                        <option value="Chequeo Reproductivo">Chequeo Reproductivo</option>
-                        <option value="Vacunación / Tratamiento">Vacunación / Tratamiento</option>
-                        <option value="Fertilización / Palma">Fertilización / Palma</option>
-                        <option value="Rotación de Potrero">Rotación de Potrero</option>
-                    </select>
-                </div>
-                <div class="form-field"><label>Descripción / Detalle</label><input type="text" id="e-desc" placeholder="Ej. Palpación lote vacas vacías" required></div>
-                <button type="submit" class="btn-action" style="width:100%; margin-top:10px;">Guardar en Calendario</button>
-            </form>
-        </div>
-    </div>
-
-    <!-- MODAL TRANSACCIÓN -->
-    <div class="modal" id="transaccionModal">
-        <div class="modal-content">
-            <div class="modal-header"><span class="modal-title">Registrar Movimiento Financiero</span><button class="close-btn" onclick="closeModal('transaccionModal')">&times;</button></div>
-            <form id="transaccionForm" onsubmit="guardarTransaccion(event)">
-                <div class="form-field"><label>Fecha</label><input type="date" id="t-fecha" required></div>
-                <div class="form-field"><label>Tipo</label><select id="t-tipo"><option value="Gasto">Gasto</option><option value="Ingreso">Ingreso</option><option value="Inversión">Inversión</option></select></div>
-                <div class="form-field"><label>Categoría</label><input type="text" id="t-cat" placeholder="Ej. Nepe de cervecería / Venta Leche" required></div>
-                <div class="form-field"><label>Monto ($)</label><input type="number" step="0.01" id="t-monto" placeholder="Ej. 150.00" required></div>
-                <button type="submit" class="btn-action" style="width:100%; margin-top:10px;">Guardar Transacción</button>
-            </form>
-        </div>
-    </div>
-
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script type="module" src="app.js"></script>
-</body>
-</html>
+                <button
