@@ -3,196 +3,87 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GanadoControl - Gestión Agropecuaria Integral</title>
+    <title>GanadoControl ERP - El Sur & Agua Clara</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-    <header>
-        <div class="brand">
-            <div class="brand-logo">G</div>
-            <div>
-                <div class="brand-title">GanadoControl</div>
-                <div class="brand-sub">Sistema de Gestión Fincas El Sur & Agua Clara</div>
-            </div>
-        </div>
-        <div class="finca-toggle">
-            <button class="finca-btn active" onclick="setFinca('Agua Clara')">💧 Agua Clara</button>
-            <button class="finca-btn" onclick="setFinca('El Sur')">☀️ El Sur</button>
-        </div>
-    </header>
-
-    <nav class="category-nav">
-        <button class="cat-chip active" onclick="switchTab('calendario', this)">📅 Calendario & Pendientes</button>
-        <button class="cat-chip" onclick="switchTab('inventario', this)">🐮 Inventario & Genealogía</button>
-        <button class="cat-chip" onclick="switchTab('ordeno', this)">🥛 Ordeño & Becerrada</button>
-        <button class="cat-chip" onclick="switchTab('pesos', this)">⚖️ Pesos & GDP</button>
-        <button class="cat-chip" onclick="switchTab('alimentacion', this)">🌾 Alimentación</button>
-        <button class="cat-chip" onclick="switchTab('sanidad', this)">🩺 Sanidad & Bodega</button>
-        <button class="cat-chip" onclick="switchTab('palma', this)">🌴 Palma & Cultivos</button>
-        <button class="cat-chip" onclick="switchTab('potreros', this)">🗺️ Mapa & Movimientos</button>
-        <button class="cat-chip" onclick="switchTab('activos', this)">🏷️ Activos</button>
-        <button class="cat-chip" onclick="switchTab('balance', this)">💰 Balance & Contabilidad</button>
-    </nav>
-
-    <div class="container">
-        <div class="finca-banner">
-            <div>
-                <span class="finca-tag" id="finca-tag">FINCA ACTIVA: AGUA CLARA</span>
-                <h2 id="finca-title">Finca Agua Clara (Lechería Extensiva & Recría)</h2>
-                <p id="finca-desc">Manejo intensivo/extensivo, palma aceitera en establecimiento y áreas de siembra.</p>
-            </div>
-            <button class="btn-action" onclick="openModal('animalModal')">+ Registrar Animal</button>
-        </div>
-
-        <div class="kpi-grid">
-            <div class="kpi-card"><div class="kpi-label">Hato Total</div><div class="kpi-value" id="kpi-hato">0</div><div class="kpi-sub">animales activos</div></div>
-            <div class="kpi-card"><div class="kpi-label">En Ordeño</div><div class="kpi-value" id="kpi-ordeno">0</div><div class="kpi-sub">vacas activas</div></div>
-            <div class="kpi-card"><div class="kpi-label">Gestantes</div><div class="kpi-value" id="kpi-gestantes">0</div><div class="kpi-sub">vientres confirmados</div></div>
-            <div class="kpi-card"><div class="kpi-label">Palma / Cultivos</div><div class="kpi-value" id="kpi-palma">25 ha</div><div class="kpi-sub">Themba & Avalanche</div></div>
-        </div>
-
-        <!-- MÓDULO UNIFICADO: CALENDARIO & PENDIENTES -->
-        <div id="tab-calendario" class="section-view active">
-            <div class="grid-2">
-                <div class="panel-card">
-                    <div class="panel-header"><span class="panel-title">🛡️ Semáforo Sanitario & Retiros</span></div>
-                    <div class="alert-item" style="background:#ecfdf5; border-left-color:var(--green-primary);">Hato libre de restricciones de retiro actuales.</div>
+    <!-- 🔒 PANTALLA DE SEGURIDAD (LOGIN) -->
+    <div id="login-screen" class="login-container">
+        <div class="login-box">
+            <div class="brand-logo" style="margin: 0 auto 15px auto; width: 60px; height: 60px; font-size: 2rem;">G</div>
+            <h2 style="color: var(--green-dark); margin-bottom: 5px;">GanadoControl ERP</h2>
+            <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 25px;">Acceso restringido. Operaciones Agrícolas y Ganaderas.</p>
+            <form id="login-form">
+                <div class="form-field" style="text-align: left;">
+                    <label>Correo Electrónico</label>
+                    <input type="email" id="login-email" placeholder="ejemplo@finca.com" required>
                 </div>
-                <div class="panel-card">
-                    <div class="panel-header"><span class="panel-title">🔔 Alertas de Partos Próximos</span></div>
-                    <div class="alert-item">Sin partos críticos programados en los próximos días.</div>
+                <div class="form-field" style="text-align: left;">
+                    <label>Contraseña</label>
+                    <input type="password" id="login-password" placeholder="••••••••" required>
                 </div>
-            </div>
-
-            <div class="panel-card" style="margin-top: 16px;">
-                <div class="panel-header">
-                    <span class="panel-title">📅 Agenda de Faenas, Maquinaria, Compras & Eventos</span>
-                    <button class="btn-action" onclick="openModal('eventoModal')">+ Programar Pendiente</button>
-                </div>
-                <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 12px;">Control total de actividades operativas, mantenimiento de máquinas, mercado y palma para la finca activa.</p>
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Fecha</th>
-                            <th>Categoría / Tipo</th>
-                            <th>Descripción / Detalle</th>
-                            <th>Estado</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tabla-calendario-body">
-                        <tr><td colspan="4" style="text-align:center; color:var(--text-muted); padding:20px;">Sin pendientes o eventos registrados.</td></tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
-        <!-- MÓDULO INVENTARIO -->
-        <div id="tab-inventario" class="section-view">
-            <div class="panel-card">
-                <div class="panel-header"><span class="panel-title">🐮 Tabla Maestra de Animales & Genealogía</span><button class="btn-action" onclick="openModal('animalModal')">+ Agregar Animal</button></div>
-                <table>
-                    <thead><tr><th>Arete / ID</th><th>Categoría / Lote</th><th>Padre / Madre</th><th>Peso (Kg)</th><th>Estado</th><th>Registro</th></tr></thead>
-                    <tbody id="tabla-inventario-body"></tbody>
-                </table>
-            </div>
-        </div>
-
-        <!-- MÓDULO ORDEÑO -->
-        <div id="tab-ordeno" class="section-view">
-            <div class="panel-card">
-                <div class="panel-header"><span class="panel-title">🥛 Planilla Diaria de Ordeño & Becerrada Nocturna</span></div>
-                <form id="ordenoForm" onsubmit="guardarOrdeno(event)">
-                    <div class="form-grid">
-                        <div class="form-field"><label>Fecha</label><input type="date" id="ordeno-fecha" required></div>
-                        <div class="form-field"><label>Vacas Ordeñadas</label><input type="number" id="ordeno-vacas" placeholder="Ej. 20" required></div>
-                        <div class="form-field"><label>Litros Totales</label><input type="number" id="ordeno-litros" placeholder="Ej. 180" required></div>
-                        <div class="form-field"><label>Becerros Aparte Nocturno</label><input type="number" id="ordeno-becerros" placeholder="Ej. 18"></div>
-                    </div>
-                    <button type="submit" class="btn-action">Guardar Registro Lechero</button>
-                </form>
-                <h4 style="margin-top:20px; color:var(--green-dark);">Histórico Lechero</h4>
-                <table>
-                    <thead><tr><th>Fecha</th><th>Vacas</th><th>Total Litros</th><th>Promedio</th><th>Aparte Becerros</th></tr></thead>
-                    <tbody id="tabla-ordeno-body"></tbody>
-                </table>
-            </div>
-        </div>
-
-        <div id="tab-pesos" class="section-view"><div class="panel-card"><h3 class="panel-title">⚖️ Control de Pesajes & GDP</h3></div></div>
-        <div id="tab-alimentacion" class="section-view"><div class="panel-card"><h3 class="panel-title">🌾 Alimentación (Cuba 22, Nepe de Cervecería & Pasto Medícula)</h3></div></div>
-        <div id="tab-sanidad" class="section-view"><div class="panel-card"><h3 class="panel-title">🩺 Plan Sanitario & Bodega de Insumos</h3></div></div>
-
-        <!-- MÓDULO PALMA -->
-        <div id="tab-palma" class="section-view">
-            <div class="panel-card">
-                <div class="panel-header"><span class="panel-title">🌴 Módulo Agrícola (Avalanche 15ha & Themba 10ha)</span></div>
-                <form id="palmaForm" onsubmit="guardarPalma(event)">
-                    <div class="form-grid">
-                        <div class="form-field"><label>Fecha</label><input type="date" id="palma-fecha" required></div>
-                        <div class="form-field"><label>Racimos (RFF)</label><input type="number" id="palma-racimos" placeholder="Ej. 0" required></div>
-                        <div class="form-field"><label>Toneladas</label><input type="number" step="0.1" id="palma-toneladas" placeholder="Ej. 0.0" required></div>
-                    </div>
-                    <button type="submit" class="btn-action">Guardar Cosecha</button>
-                </form>
-                <h4 style="margin-top:20px; color:var(--green-dark);">Histórico de Cosechas</h4>
-                <table>
-                    <thead><tr><th>Fecha</th><th>Racimos (RFF)</th><th>Toneladas</th></tr></thead>
-                    <tbody id="tabla-palma-body"></tbody>
-                </table>
-            </div>
-        </div>
-
-        <div id="tab-potreros" class="section-view">
-            <div class="panel-card">
-                <div class="panel-header"><span class="panel-title">🗺️ Mapa Satelital & Lotes (ElbaLui, Ordeño, Vacías, Preñadas)</span></div>
-                <div id="map"></div>
-            </div>
-        </div>
-
-        <div id="tab-activos" class="section-view"><div class="panel-card"><h3 class="panel-title">🏷️ Activos (Ford Super Duty, Fortaleza, Maquinaria e Infraestructura)</h3></div></div>
-
-        <!-- BALANCE CON GRÁFICA -->
-        <div id="tab-balance" class="section-view">
-            <div class="panel-card" style="margin-bottom: 20px;">
-                <div class="panel-header"><span class="panel-title">📊 Resumen Visual: Ingresos vs Gastos e Inversiones</span></div>
-                <div style="position: relative; height: 260px; width: 100%;">
-                    <canvas id="balanceChart"></canvas>
-                </div>
-            </div>
-            <div class="panel-card">
-                <div class="panel-header"><span class="panel-title">💰 Balance Contable & Transacciones</span><button class="btn-action" onclick="openModal('transaccionModal')">+ Registrar Gasto/Ingreso</button></div>
-                <table>
-                    <thead><tr><th>Fecha</th><th>Tipo</th><th>Categoría</th><th>Monto ($)</th><th>Finca</th></tr></thead>
-                    <tbody id="tabla-balance-body"></tbody>
-                </table>
-            </div>
+                <button type="submit" class="btn-action" style="width: 100%; margin-top: 15px; font-size: 1rem;">Ingresar al Sistema</button>
+            </form>
+            <p id="login-error" style="color: #ef4444; font-size: 0.85rem; margin-top: 15px; display: none;">Credenciales incorrectas o sin autorización.</p>
         </div>
     </div>
 
-    <!-- MODAL ANIMAL -->
-    <div class="modal" id="animalModal">
-        <div class="modal-content">
-            <div class="modal-header"><span class="modal-title">Registrar Animal</span><button class="close-btn" onclick="closeModal('animalModal')">&times;</button></div>
-            <form id="animalForm" onsubmit="guardarAnimal(event)">
-                <div class="form-field"><label>Arete / ID</label><input type="text" id="input-arete" placeholder="Ej. Vaca-102" required></div>
-                <div class="form-field"><label>Categoría / Lote</label>
-                    <select id="input-categoria">
-                        <option value="Vaca Ordeño">Vaca en Ordeño</option>
-                        <option value="Vaca Escampa">Vaca Escampa / Seca</option>
-                        <option value="Lote ElbaLui (Mautes)">Lote ElbaLui (Mautes)</option>
-                        <option value="Lote Vacas Vacías">Lote Vacas Vacías</option>
-                        <option value="Lote Preñadas">Lote Preñadas</option>
-                        <option value="Toro">Toro Reproductor</option>
-                    </select>
+    <!-- 📱 APLICACIÓN PRINCIPAL (OCULTA HASTA INICIAR SESIÓN) -->
+    <div id="app-container" style="display: none;">
+        
+        <header>
+            <div class="brand">
+                <div class="brand-logo">G</div>
+                <div>
+                    <div class="brand-title">GanadoControl ERP</div>
+                    <div class="brand-sub">Sistema de Gestión Fincas El Sur & Agua Clara</div>
                 </div>
-                <div class="form-field"><label>Padre (Toro)</label><input type="text" id="input-padre" placeholder="Opcional"></div>
-                <div class="form-field"><label>Madre</label><input type="text" id="input-madre" placeholder="Opcional"></div>
-                <div class="form-field"><label>Peso Actual (Kg)</label><input type="number" id="input-peso" placeholder="Ej. 420" required></div>
-                <div class="form-field"><label>Estado Reproductivo</label>
-                    <select id="input-estado"><option value="Vacía">Vacía</option><option value="Gestante">Gestante</option><option value="En Celo">En Celo</option></select>
+            </div>
+            <div class="finca-toggle">
+                <button class="finca-btn active" onclick="setFinca('Agua Clara')">💧 Agua Clara</button>
+                <button class="finca-btn" onclick="setFinca('El Sur')">☀️ El Sur</button>
+            </div>
+            <button id="btn-logout" style="background: transparent; border: 1px solid white; color: white; padding: 5px 10px; border-radius: 6px; cursor: pointer; margin-left: 10px;">Salir</button>
+        </header>
+
+        <nav class="category-nav">
+            <button class="cat-chip active" onclick="switchTab('operaciones', this)">📅 Operaciones & Campo</button>
+            <button class="cat-chip" onclick="switchTab('hato', this)">🐮 Hato & Reproducción</button>
+            <button class="cat-chip" onclick="switchTab('lecheria', this)">🥛 Lechería & Alimentación</button>
+            <button class="cat-chip" onclick="switchTab('sanidad', this)">🩺 Sanidad & Activos</button>
+            <button class="cat-chip" onclick="switchTab('finanzas', this)">💰 Balance & Finanzas</button>
+        </nav>
+
+        <div class="container">
+            <div class="finca-banner">
+                <div>
+                    <span class="finca-tag" id="finca-tag">FINCA ACTIVA: AGUA CLARA</span>
+                    <h2 id="finca-title">Finca Agua Clara</h2>
+                    <p id="finca-desc">Manejo intensivo/extensivo, palma aceitera en establecimiento y áreas de siembra.</p>
                 </div>
-                <button
+            </div>
+            
+            <!-- Aquí iremos conectando cada módulo poco a poco -->
+            <div id="tab-operaciones" class="section-view active">
+                <div style="padding: 40px; text-align: center; color: var(--text-muted); border: 2px dashed var(--border-light); border-radius: 12px;">
+                    Módulo de Operaciones en construcción...
+                </div>
+            </div>
+            <div id="tab-hato" class="section-view">
+                <div style="padding: 40px; text-align: center; color: var(--text-muted); border: 2px dashed var(--border-light); border-radius: 12px;">
+                    Módulo de Hato y Reproducción en construcción...
+                </div>
+            </div>
+            <div id="tab-lecheria" class="section-view"><div style="padding: 40px; text-align: center; color: var(--text-muted);">Lechería en construcción...</div></div>
+            <div id="tab-sanidad" class="section-view"><div style="padding: 40px; text-align: center; color: var(--text-muted);">Sanidad en construcción...</div></div>
+            <div id="tab-finanzas" class="section-view"><div style="padding: 40px; text-align: center; color: var(--text-muted);">Finanzas en construcción...</div></div>
+        </div>
+    </div>
+
+    <!-- Motores JS de la nueva arquitectura -->
+    <script type="module" src="js/auth.js"></script>
+    <script type="module" src="js/ui.js"></script>
+</body>
+</html>
