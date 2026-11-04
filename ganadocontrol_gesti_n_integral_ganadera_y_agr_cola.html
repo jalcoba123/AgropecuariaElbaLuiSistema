@@ -1,0 +1,875 @@
+<!DOCTYPE html>
+<html lang="es" class="h-full bg-slate-100">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GanadoControl - Agua Clara & El Sur</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- SheetJS for Excel -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f0fdf4',
+                            100: '#dcfce7',
+                            500: '#22c55e',
+                            700: '#15803d',
+                            800: '#166534',
+                            900: '#14532d',
+                        },
+                        water: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            500: '#0ea5e9',
+                            700: '#0369a1',
+                            800: '#075985',
+                        },
+                        palma: {
+                            500: '#eab308',
+                            700: '#a16207',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            -webkit-tap-highlight-color: transparent;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+        }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body class="h-full flex flex-col text-slate-800 antialiased selection:bg-brand-500 selection:text-white">
+
+    <!-- HEADER SUPERIOR DE SELECCIÓN DE FINCA -->
+    <header class="bg-brand-900 text-white sticky top-0 z-40 shadow-md">
+        <div class="max-w-md md:max-w-6xl mx-auto px-4 py-2.5 flex flex-col sm:flex-row items-center justify-between gap-2">
+            
+            <!-- Logo & Active Farm Selector -->
+            <div class="flex items-center justify-between w-full sm:w-auto">
+                <div class="flex items-center gap-2">
+                    <div class="bg-emerald-700 p-2 rounded-xl text-emerald-300">
+                        <i data-lucide="beef" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <h1 class="font-black text-base leading-tight tracking-wide">GanadoControl</h1>
+                        <p class="text-[10px] text-emerald-200 font-medium">Gestión Ganadera & Agrícola</p>
+                    </div>
+                </div>
+
+                <!-- Farm Switch Pills Mobile -->
+                <div class="flex sm:hidden bg-emerald-950/70 p-1 rounded-xl border border-emerald-800 text-xs">
+                    <button onclick="setFarm('Agua Clara')" id="btn-farm-ac-m" class="px-2.5 py-1 rounded-lg font-bold transition">Agua Clara</button>
+                    <button onclick="setFarm('El Sur')" id="btn-farm-es-m" class="px-2.5 py-1 rounded-lg font-bold transition">El Sur</button>
+                </div>
+            </div>
+
+            <!-- Farm Switch Pills Desktop & Actions -->
+            <div class="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-end">
+                <div class="hidden sm:flex bg-emerald-950/70 p-1 rounded-xl border border-emerald-800/80 text-xs font-semibold">
+                    <button onclick="setFarm('Agua Clara')" id="btn-farm-ac" class="px-3 py-1.5 rounded-lg transition flex items-center gap-1.5">
+                        <i data-lucide="droplet" class="w-3.5 h-3.5 text-blue-400"></i> Agua Clara
+                    </button>
+                    <button onclick="setFarm('El Sur')" id="btn-farm-es" class="px-3 py-1.5 rounded-lg transition flex items-center gap-1.5">
+                        <i data-lucide="sun" class="w-3.5 h-3.5 text-amber-400"></i> El Sur
+                    </button>
+                </div>
+
+                <div class="flex items-center gap-2">
+                    <button onclick="openModal('modal-excel-import')" title="Importar Excel" class="bg-emerald-800 hover:bg-emerald-700 text-emerald-100 text-xs font-semibold px-2.5 py-1.5 rounded-xl flex items-center gap-1 border border-emerald-700">
+                        <i data-lucide="file-spreadsheet" class="w-4 h-4"></i>
+                        <span class="hidden md:inline">Excel</span>
+                    </button>
+                    <button onclick="exportData()" title="Descargar Respaldo JSON" class="bg-emerald-800 hover:bg-emerald-700 text-emerald-100 text-xs font-semibold px-2.5 py-1.5 rounded-xl flex items-center gap-1 border border-emerald-700">
+                        <i data-lucide="download" class="w-4 h-4"></i>
+                        <span class="hidden md:inline">Respaldo</span>
+                    </button>
+                    <button onclick="openModal('modal-add-animal')" class="bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-bold px-3 py-1.5 rounded-xl flex items-center gap-1 shadow-sm">
+                        <i data-lucide="plus" class="w-4 h-4"></i>
+                        <span>Nuevo</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- PESTAÑAS DE NAVEGACIÓN SECUNDARIA -->
+    <div class="bg-white border-b border-slate-200 sticky top-[57px] sm:top-[49px] z-30 shadow-2xs">
+        <div class="max-w-md md:max-w-6xl mx-auto px-4 flex gap-1 overflow-x-auto hide-scrollbar text-xs font-bold text-slate-500 py-1.5">
+            <button onclick="switchTab('dashboard')" id="tab-dashboard" class="tab-btn active px-3 py-1.5 rounded-xl whitespace-nowrap flex items-center gap-1.5 bg-brand-50 text-brand-800">
+                <i data-lucide="layout-dashboard" class="w-4 h-4"></i> Pendientes
+            </button>
+            <button onclick="switchTab('inventory')" id="tab-inventory" class="tab-btn px-3 py-1.5 rounded-xl whitespace-nowrap flex items-center gap-1.5">
+                <i data-lucide="beef" class="w-4 h-4"></i> Inventario (<span id="tab-herd-count">89</span>)
+            </button>
+            <button onclick="switchTab('palma')" id="tab-palma" class="tab-btn px-3 py-1.5 rounded-xl whitespace-nowrap flex items-center gap-1.5">
+                <i data-lucide="tree-palm" class="w-4 h-4 text-palma-700"></i> Palma Aceitera (25 ha)
+            </button>
+            <button onclick="switchTab('potreros')" id="tab-potreros" class="tab-btn px-3 py-1.5 rounded-xl whitespace-nowrap flex items-center gap-1.5">
+                <i data-lucide="sprout" class="w-4 h-4 text-emerald-600"></i> Potreros & Siembras
+            </button>
+            <button onclick="switchTab('nutrition')" id="tab-nutrition" class="tab-btn px-3 py-1.5 rounded-xl whitespace-nowrap flex items-center gap-1.5">
+                <i data-lucide="utensils" class="w-4 h-4 text-amber-600"></i> Nutrición & CC
+            </button>
+            <button onclick="switchTab('health-repro')" id="tab-health-repro" class="tab-btn px-3 py-1.5 rounded-xl whitespace-nowrap flex items-center gap-1.5">
+                <i data-lucide="activity" class="w-4 h-4 text-rose-600"></i> Sanidad & Reproducción
+            </button>
+            <button onclick="switchTab('milking')" id="tab-milking" class="tab-btn px-3 py-1.5 rounded-xl whitespace-nowrap flex items-center gap-1.5">
+                <i data-lucide="droplet" class="w-4 h-4 text-blue-600"></i> Control Ordeño
+            </button>
+        </div>
+    </div>
+
+    <!-- MAIN CONTENT CONTAINERS -->
+    <main class="flex-1 max-w-md md:max-w-6xl w-full mx-auto pb-24 px-4 pt-4 overflow-y-auto">
+
+        <!-- ================= PESTAÑA 1: DASHBOARD (PENDIENTES Y RESUMEN) ================= -->
+        <section id="sec-dashboard" class="space-y-4">
+            <!-- Active Farm Banner -->
+            <div id="farm-banner" class="bg-gradient-to-r from-water-800 to-brand-900 rounded-2xl p-4 text-white shadow-sm flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                <div>
+                    <span class="text-[10px] font-bold uppercase tracking-wider bg-white/20 px-2 py-0.5 rounded-full" id="banner-farm-tag">Finca Activa: Agua Clara</span>
+                    <h2 class="text-xl sm:text-2xl font-black mt-1" id="banner-farm-title">Finca Agua Clara (Ganadería & Palma)</h2>
+                    <p class="text-xs text-slate-200 mt-0.5" id="banner-farm-desc">Ganadería de doble propósito, ordeño intensivo y plantación de 25 ha de Palma Aceitera.</p>
+                </div>
+                <div class="flex gap-2 w-full sm:w-auto">
+                    <button onclick="openModal('modal-add-animal')" class="bg-emerald-500 hover:bg-emerald-600 px-3 py-2 rounded-xl text-xs font-bold flex items-center justify-center gap-1 text-white shadow-sm flex-1 sm:flex-none">
+                        <i data-lucide="plus-circle" class="w-4 h-4"></i> Registrar Animal
+                    </button>
+                </div>
+            </div>
+
+            <!-- Resumen de Métricas Clave -->
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <div class="bg-white p-3.5 rounded-2xl shadow-sm border border-slate-100 cursor-pointer hover:border-brand-500 transition" onclick="switchTab('inventory')">
+                    <div class="flex justify-between items-center text-slate-400">
+                        <span class="text-[11px] font-bold uppercase tracking-wider">Hato Total</span>
+                        <i data-lucide="beef" class="w-4 h-4 text-brand-700"></i>
+                    </div>
+                    <div class="mt-2 flex items-baseline justify-between">
+                        <span class="text-2xl font-black text-slate-800" id="dash-total-count">89</span>
+                        <span class="text-xs text-slate-500">animales</span>
+                    </div>
+                </div>
+
+                <div class="bg-white p-3.5 rounded-2xl shadow-sm border border-slate-100 cursor-pointer hover:border-blue-500 transition" onclick="switchTab('milking')">
+                    <div class="flex justify-between items-center text-slate-400">
+                        <span class="text-[11px] font-bold uppercase tracking-wider">En Ordeño</span>
+                        <i data-lucide="droplet" class="w-4 h-4 text-blue-500"></i>
+                    </div>
+                    <div class="mt-2 flex items-baseline justify-between">
+                        <span class="text-2xl font-black text-blue-700" id="dash-milking-count">41</span>
+                        <span class="text-xs text-slate-500">vacas</span>
+                    </div>
+                </div>
+
+                <div class="bg-white p-3.5 rounded-2xl shadow-sm border border-slate-100 cursor-pointer hover:border-amber-500 transition" onclick="switchTab('health-repro')">
+                    <div class="flex justify-between items-center text-slate-400">
+                        <span class="text-[11px] font-bold uppercase tracking-wider">Gestantes</span>
+                        <i data-lucide="heart" class="w-4 h-4 text-rose-500"></i>
+                    </div>
+                    <div class="mt-2 flex items-baseline justify-between">
+                        <span class="text-2xl font-black text-amber-700" id="dash-pregnant-count">12</span>
+                        <span class="text-xs text-slate-500">confirmadas</span>
+                    </div>
+                </div>
+
+                <div class="bg-white p-3.5 rounded-2xl shadow-sm border border-slate-100 cursor-pointer hover:border-emerald-500 transition" onclick="switchTab('palma')">
+                    <div class="flex justify-between items-center text-slate-400">
+                        <span class="text-[11px] font-bold uppercase tracking-wider" id="dash-card4-title">Palma Aceitera</span>
+                        <i data-lucide="tree-palm" class="w-4 h-4 text-palma-700"></i>
+                    </div>
+                    <div class="mt-2 flex items-baseline justify-between">
+                        <span class="text-2xl font-black text-slate-800" id="dash-card4-val">25 ha</span>
+                        <span class="text-xs text-slate-500" id="dash-card4-sub">Themba/Aval.</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Panel de Alertas y Pendientes Prioritarios -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- Tarjeta 1: Pendientes Reproductivos y Sanitarios -->
+                <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 space-y-3">
+                    <div class="flex items-center justify-between border-b border-slate-100 pb-2">
+                        <div class="flex items-center gap-2">
+                            <i data-lucide="bell" class="w-5 h-5 text-amber-500"></i>
+                            <h3 class="font-bold text-slate-800 text-sm">Próximos Chequeos & Partos</h3>
+                        </div>
+                        <span class="text-[10px] bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full font-bold">Prioritario</span>
+                    </div>
+
+                    <div class="space-y-2 text-xs">
+                        <div class="p-2.5 rounded-xl bg-amber-50 border border-amber-200/70 flex items-start justify-between">
+                            <div>
+                                <strong class="text-amber-900 block font-bold">Vaca 7082 - Parto Estimado</strong>
+                                <span class="text-slate-600">Lote Agua Clara • Mudar a lote Maternidad en 15 días.</span>
+                            </div>
+                            <span class="bg-amber-600 text-white font-bold px-2 py-0.5 rounded text-[10px]">18 Nov</span>
+                        </div>
+                        <div class="p-2.5 rounded-xl bg-blue-50 border border-blue-200/70 flex items-start justify-between">
+                            <div>
+                                <strong class="text-blue-900 block font-bold">Mauta 1019 - Palpación Celo</strong>
+                                <span class="text-slate-600">Chequeo ginecológico para Inseminación con Toro 1280.</span>
+                            </div>
+                            <span class="bg-blue-600 text-white font-bold px-2 py-0.5 rounded text-[10px]">Mañana</span>
+                        </div>
+                        <div class="p-2.5 rounded-xl bg-rose-50 border border-rose-200/70 flex items-start justify-between">
+                            <div>
+                                <strong class="text-rose-900 block font-bold">Vaca 2090 - Fecha de Secado (60 días)</strong>
+                                <span class="text-slate-600">Programar descanso mamario antes del próximo parto.</span>
+                            </div>
+                            <span class="bg-rose-600 text-white font-bold px-2 py-0.5 rounded text-[10px]">En 5 días</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tarjeta 2: Semáforo de Tiempo de Retiro (Carne / Leche) -->
+                <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 space-y-3">
+                    <div class="flex items-center justify-between border-b border-slate-100 pb-2">
+                        <div class="flex items-center gap-2">
+                            <i data-lucide="shield-alert" class="w-5 h-5 text-rose-600"></i>
+                            <h3 class="font-bold text-slate-800 text-sm">Semáforo de Tiempo de Retiro Sanitario</h3>
+                        </div>
+                        <span class="text-[10px] bg-rose-100 text-rose-800 px-2 py-0.5 rounded-full font-bold">Restricción</span>
+                    </div>
+
+                    <div class="space-y-2 text-xs">
+                        <div class="p-2.5 rounded-xl bg-rose-50 border border-rose-200 flex items-center justify-between">
+                            <div class="flex items-center gap-2.5">
+                                <span class="bg-rose-600 text-white font-black px-2 py-1 rounded-lg">61</span>
+                                <div>
+                                    <strong class="text-slate-800 block">Vaca 61 - Oxitetraciclina</strong>
+                                    <span class="text-slate-500">Tratamiento de Mastitis • Leche restringida</span>
+                                </div>
+                            </div>
+                            <span class="text-rose-700 font-bold bg-white px-2 py-1 rounded border border-rose-200">Faltan 2 días</span>
+                        </div>
+
+                        <div class="p-2.5 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center justify-between">
+                            <div class="flex items-center gap-2.5">
+                                <span class="bg-emerald-600 text-white font-black px-2 py-1 rounded-lg">47</span>
+                                <div>
+                                    <strong class="text-slate-800 block">Vaca 47 - Desparasitación</strong>
+                                    <span class="text-slate-500">Ivermectina • Alta sanitaria concedida</span>
+                                </div>
+                            </div>
+                            <span class="text-emerald-700 font-bold bg-white px-2 py-1 rounded border border-emerald-200">Liberada</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+
+        <!-- ================= PESTAÑA 2: INVENTARIO Y LOTES ================= -->
+        <section id="sec-inventory" class="space-y-4 hidden">
+            <!-- Filter & Search Bar -->
+            <div class="bg-white p-3.5 rounded-2xl shadow-sm border border-slate-100 space-y-3">
+                <div class="relative">
+                    <i data-lucide="search" class="w-4 h-4 absolute left-3 top-3 text-slate-400"></i>
+                    <input type="text" id="inventory-search" oninput="renderInventory()" placeholder="Buscar por arete, nombre o código (ej. 7082, Panorama)..." class="w-full pl-9 pr-4 py-2 rounded-xl border border-slate-200 text-sm bg-slate-50 focus:ring-2 focus:ring-brand-700 focus:outline-none">
+                </div>
+
+                <!-- Category Pills -->
+                <div>
+                    <div class="text-[11px] font-bold text-slate-400 uppercase mb-1">Filtrar por Categoría:</div>
+                    <div class="flex gap-1.5 overflow-x-auto hide-scrollbar text-xs font-medium" id="category-pill-container">
+                        <button onclick="setCategoryFilter('all')" class="cat-pill active px-3 py-1 rounded-lg whitespace-nowrap bg-brand-800 text-white" data-cat="all">Todos (89)</button>
+                        <button onclick="setCategoryFilter('Vaca')" class="cat-pill px-3 py-1 rounded-lg whitespace-nowrap bg-slate-100 text-slate-600" data-cat="Vaca">Vacas (48)</button>
+                        <button onclick="setCategoryFilter('Mauta/Maute')" class="cat-pill px-3 py-1 rounded-lg whitespace-nowrap bg-slate-100 text-slate-600" data-cat="Mauta/Maute">Mautas/Mautes (5)</button>
+                        <button onclick="setCategoryFilter('Becerro')" class="cat-pill px-3 py-1 rounded-lg whitespace-nowrap bg-slate-100 text-slate-600" data-cat="Becerro">Becerros (32)</button>
+                        <button onclick="setCategoryFilter('Toro')" class="cat-pill px-3 py-1 rounded-lg whitespace-nowrap bg-slate-100 text-slate-600" data-cat="Toro">Toros (4)</button>
+                        <button onclick="setCategoryFilter('Ordeño')" class="cat-pill px-3 py-1 rounded-lg whitespace-nowrap bg-slate-100 text-slate-600" data-cat="Ordeño">En Ordeño</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Header list info -->
+            <div class="flex justify-between items-center text-xs font-semibold px-1">
+                <span class="text-slate-500">Mostrando <strong class="text-slate-800" id="filtered-count">0</strong> animales</span>
+                <button onclick="openBatchMoveModal()" class="text-water-700 bg-water-50 hover:bg-water-100 border border-water-200 px-2.5 py-1 rounded-lg flex items-center gap-1 font-bold">
+                    <i data-lucide="arrow-right-left" class="w-3.5 h-3.5"></i> Mudar Lote Masivo
+                </button>
+            </div>
+
+            <!-- Grid Lista de Animales -->
+            <div id="inventory-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                <!-- Rendered dynamically -->
+            </div>
+        </section>
+
+
+        <!-- ================= PESTAÑA 3: PALMA ACEITERA (AGUA CLARA) ================= -->
+        <section id="sec-palma" class="space-y-4 hidden">
+            <!-- Header Palma -->
+            <div class="bg-gradient-to-r from-palma-700 to-amber-950 rounded-2xl p-4 text-white shadow-sm flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                <div>
+                    <span class="text-[10px] font-bold uppercase tracking-wider bg-white/20 px-2 py-0.5 rounded-full">Plantación Agua Clara</span>
+                    <h2 class="text-xl font-black mt-1">Monitoreo de Palma Aceitera (25 ha)</h2>
+                    <p class="text-xs text-amber-100 mt-0.5">Densidad: 143 palmas/ha • Variedades: Themba & Avalanche</p>
+                </div>
+                <button onclick="openModal('modal-add-harvest')" class="bg-amber-500 hover:bg-amber-600 text-slate-900 font-extrabold text-xs px-3 py-2 rounded-xl flex items-center gap-1 shadow-sm">
+                    <i data-lucide="plus" class="w-4 h-4"></i> Registrar Cosecha (RFF)
+                </button>
+            </div>
+
+            <!-- Métricas Palma -->
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <div class="bg-white p-3 rounded-2xl border border-slate-100">
+                    <span class="text-[10px] font-bold text-slate-400 uppercase block">Área Plantada</span>
+                    <span class="text-xl font-black text-slate-800">25 Hectáreas</span>
+                </div>
+                <div class="bg-white p-3 rounded-2xl border border-slate-100">
+                    <span class="text-[10px] font-bold text-slate-400 uppercase block">Total Palmas Est.</span>
+                    <span class="text-xl font-black text-amber-700">3,575 Palmas</span>
+                </div>
+                <div class="bg-white p-3 rounded-2xl border border-slate-100">
+                    <span class="text-[10px] font-bold text-slate-400 uppercase block">Cosecha Acumulada</span>
+                    <span class="text-xl font-black text-emerald-700" id="palma-total-rff">42.5 Ton</span>
+                </div>
+                <div class="bg-white p-3 rounded-2xl border border-slate-100">
+                    <span class="text-[10px] font-bold text-slate-400 uppercase block">Rendimiento Prom.</span>
+                    <span class="text-xl font-black text-blue-700">1.7 Ton/ha</span>
+                </div>
+            </div>
+
+            <!-- Tabla Cosechas y Fertilización -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="bg-white rounded-2xl p-4 border border-slate-100 space-y-3">
+                    <h3 class="font-bold text-slate-800 text-sm flex items-center gap-2">
+                        <i data-lucide="scale" class="w-4 h-4 text-amber-600"></i> Útimos Cortes de Fruto Fresco (RFF)
+                    </h3>
+                    <div class="space-y-2 text-xs" id="palma-harvest-list">
+                        <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-100 flex justify-between items-center">
+                            <div>
+                                <strong class="text-slate-800 block">Corte Lote Norte • 14.2 Ton</strong>
+                                <span class="text-slate-500">Variedad Themba • 102 viajes de carreta</span>
+                            </div>
+                            <span class="text-slate-400 font-medium">28 Oct 2026</span>
+                        </div>
+                        <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-100 flex justify-between items-center">
+                            <div>
+                                <strong class="text-slate-800 block">Corte Lote Sur • 28.3 Ton</strong>
+                                <span class="text-slate-500">Variedad Avalanche</span>
+                            </div>
+                            <span class="text-slate-400 font-medium">12 Oct 2026</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-2xl p-4 border border-slate-100 space-y-3">
+                    <h3 class="font-bold text-slate-800 text-sm flex items-center gap-2">
+                        <i data-lucide="flask-conical" class="w-4 h-4 text-emerald-600"></i> Plan de Fertilización N-P-K
+                    </h3>
+                    <div class="space-y-2 text-xs">
+                        <div class="p-2.5 rounded-xl bg-emerald-50 border border-emerald-200/60">
+                            <strong class="text-emerald-900 block font-bold">Aplicación KCL + Urea (2 kg/palma)</strong>
+                            <p class="text-slate-600 mt-0.5">Programada para inicio del ciclo de lluvias. Responsable: Cuadrilla 1.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+
+        <!-- ================= PESTAÑA 4: POTREROS Y SIEMBRAS (EL SUR / AGUA CLARA) ================= -->
+        <section id="sec-potreros" class="space-y-4 hidden">
+            <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 space-y-3">
+                <div class="flex justify-between items-center border-b border-slate-100 pb-2">
+                    <div>
+                        <h3 class="font-bold text-slate-800 text-base">Rotación de Pastos & Siembras Agrícolas</h3>
+                        <p class="text-xs text-slate-500">Control de potreros (Medícula, Cuba 22) y cultivos como Auyama.</p>
+                    </div>
+                    <button onclick="openModal('modal-add-pasture')" class="bg-brand-800 hover:bg-brand-900 text-white font-bold text-xs px-3 py-1.5 rounded-xl">
+                        + Nuevo Potrero
+                    </button>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div class="p-3.5 rounded-2xl bg-emerald-50 border border-emerald-200">
+                        <div class="flex justify-between text-xs font-bold text-emerald-900">
+                            <span>Potrero Medícula #1</span>
+                            <span class="bg-emerald-600 text-white px-2 py-0.5 rounded text-[10px]">En Ocupación</span>
+                        </div>
+                        <p class="text-xs text-slate-600 mt-2">Área: 12 ha • Pasto Medícula</p>
+                        <p class="text-[11px] font-bold text-slate-700 mt-1">Carga: 48 Vacas Lote Agua Clara</p>
+                    </div>
+
+                    <div class="p-3.5 rounded-2xl bg-slate-50 border border-slate-200">
+                        <div class="flex justify-between text-xs font-bold text-slate-800">
+                            <span>Potrero Cuba 22 (Corte)</span>
+                            <span class="bg-amber-100 text-amber-800 px-2 py-0.5 rounded text-[10px]">En Descanso</span>
+                        </div>
+                        <p class="text-xs text-slate-600 mt-2">Área: 5 ha • Forraje Prensado</p>
+                        <p class="text-[11px] font-bold text-slate-700 mt-1">Descanso: Faltan 10 días</p>
+                    </div>
+
+                    <div class="p-3.5 rounded-2xl bg-amber-50 border border-amber-200">
+                        <div class="flex justify-between text-xs font-bold text-amber-900">
+                            <span>Siembra Auyama (El Sur)</span>
+                            <span class="bg-amber-600 text-white px-2 py-0.5 rounded text-[10px]">Crecimiento</span>
+                        </div>
+                        <p class="text-xs text-slate-600 mt-2">Área: 4 ha • Densidad alta</p>
+                        <p class="text-[11px] font-bold text-slate-700 mt-1">Cosecha Est.: Diciembre 2026</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+
+        <!-- ================= PESTAÑA 5: NUTRICIÓN Y CONDICIÓN CORPORAL ================= -->
+        <section id="sec-nutrition" class="space-y-4 hidden">
+            <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 space-y-3">
+                <div class="border-b border-slate-100 pb-2">
+                    <h3 class="font-bold text-slate-800 text-base">Dieta Suplementaria & Condición Corporal (CC 1-5)</h3>
+                    <p class="text-xs text-slate-500">Registro de consumo de nepe de cervecería, forraje y minerales.</p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="space-y-2 text-xs">
+                        <h4 class="font-bold text-slate-700">Ración Suministrada por Lote</h4>
+                        <div class="p-3 rounded-xl bg-slate-50 border border-slate-100 space-y-1">
+                            <div class="flex justify-between font-bold text-slate-800">
+                                <span>Lote Vacas Ordeño (Agua Clara)</span>
+                                <span class="text-brand-800">12 kg/vaca/día</span>
+                            </div>
+                            <p class="text-slate-500">Mezcla: Nepe de cervecería + Pasto Cuba 22 picado + Sal mineral 8% P.</p>
+                        </div>
+                    </div>
+
+                    <div class="space-y-2 text-xs">
+                        <h4 class="font-bold text-slate-700">Resumen Condición Corporal</h4>
+                        <div class="p-3 rounded-xl bg-slate-50 border border-slate-100 flex justify-between items-center">
+                            <span>Promedio Vacas Ordeño</span>
+                            <span class="font-black text-emerald-700 text-sm">3.2 / 5.0 (Óptimo)</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+
+        <!-- ================= PESTAÑA 6: SANIDAD Y REPRODUCCIÓN ================= -->
+        <section id="sec-health-repro" class="space-y-4 hidden">
+            <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 space-y-4">
+                <div class="flex justify-between items-center border-b border-slate-100 pb-2">
+                    <div>
+                        <h3 class="font-bold text-slate-800 text-base">Módulo Reproductivo & Sanitario</h3>
+                        <p class="text-xs text-slate-500">Registrar celos, inseminación/monta, palpaciones y campañas de vacunación.</p>
+                    </div>
+                    <button onclick="switchTab('events-form')" class="bg-brand-800 hover:bg-brand-900 text-white font-bold text-xs px-3 py-1.5 rounded-xl">
+                        + Registrar Evento
+                    </button>
+                </div>
+
+                <div class="space-y-2 text-xs" id="repro-health-events-list">
+                    <!-- Events list populated dynamically -->
+                </div>
+            </div>
+        </section>
+
+
+        <!-- ================= PESTAÑA 7: CONTROL DE ORDEÑO ================= -->
+        <section id="sec-milking" class="space-y-4 hidden">
+            <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 space-y-4">
+                <div class="flex justify-between items-center border-b border-slate-100 pb-2">
+                    <div>
+                        <h3 class="font-bold text-slate-800 text-base">Pesaje Diario de Leche</h3>
+                        <p class="text-xs text-slate-500">41 vacas activas en ordeño en Finca Agua Clara.</p>
+                    </div>
+                    <span class="text-xs font-bold bg-blue-100 text-blue-800 px-3 py-1 rounded-full">Total Hoy: 328 Litros</span>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3" id="milking-cows-grid">
+                    <!-- Milking list populated dynamically -->
+                </div>
+            </div>
+        </section>
+
+
+        <!-- ================= PESTAÑA INDIVIDUAL: FICHA ANIMAL ================= -->
+        <section id="sec-profile" class="space-y-4 hidden">
+            <button onclick="switchTab('inventory')" class="text-xs font-bold text-brand-800 flex items-center gap-1 bg-white px-3 py-1.5 rounded-xl border border-slate-200 shadow-2xs">
+                <i data-lucide="arrow-left" class="w-4 h-4"></i> Volver al Inventario
+            </button>
+            <div id="profile-container" class="space-y-4"></div>
+        </section>
+
+    </main>
+
+    <!-- FOOTER NAVBAR MOBILE -->
+    <nav class="bg-white border-t border-slate-200 fixed bottom-0 left-0 right-0 z-30 shadow-lg">
+        <div class="max-w-md md:max-w-6xl mx-auto flex justify-around items-center py-2 px-2">
+            <button onclick="switchTab('dashboard')" id="nav-dashboard" class="nav-btn active flex flex-col items-center gap-0.5 text-brand-800 font-bold text-[11px] py-1 px-3 rounded-xl">
+                <i data-lucide="layout-dashboard" class="w-5 h-5"></i>
+                <span>Inicio</span>
+            </button>
+            <button onclick="switchTab('inventory')" id="nav-inventory" class="nav-btn flex flex-col items-center gap-0.5 text-slate-400 font-medium text-[11px] py-1 px-3 rounded-xl">
+                <i data-lucide="beef" class="w-5 h-5"></i>
+                <span>Inventario</span>
+            </button>
+            <button onclick="switchTab('palma')" id="nav-palma" class="nav-btn flex flex-col items-center gap-0.5 text-slate-400 font-medium text-[11px] py-1 px-3 rounded-xl">
+                <i data-lucide="tree-palm" class="w-5 h-5"></i>
+                <span>Palma</span>
+            </button>
+            <button onclick="switchTab('milking')" id="nav-milking" class="nav-btn flex flex-col items-center gap-0.5 text-slate-400 font-medium text-[11px] py-1 px-3 rounded-xl">
+                <i data-lucide="droplet" class="w-5 h-5"></i>
+                <span>Ordeño</span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- MODAL: NUEVO ANIMAL -->
+    <div id="modal-add-animal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-xs z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-2xl max-w-md w-full p-4 shadow-xl space-y-4 max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center border-b border-slate-100 pb-2">
+                <h3 class="font-bold text-slate-800 text-base">Registrar Nuevo Animal</h3>
+                <button onclick="closeModal('modal-add-animal')" class="text-slate-400 hover:text-slate-600"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div>
+
+            <form onsubmit="handleSaveAnimal(event)" class="space-y-3">
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 mb-1">Arete / ID *</label>
+                        <input type="text" id="new-tag" required placeholder="Ej. 7082" class="w-full p-2.5 rounded-xl border border-slate-200 text-sm bg-slate-50">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 mb-1">Nombre (Opcional)</label>
+                        <input type="text" id="new-name" placeholder="Ej. Panorama" class="w-full p-2.5 rounded-xl border border-slate-200 text-sm bg-slate-50">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 mb-1">Finca Destino *</label>
+                        <select id="new-farm" required class="w-full p-2.5 rounded-xl border border-slate-200 text-sm bg-slate-50">
+                            <option value="Agua Clara">Agua Clara</option>
+                            <option value="El Sur">El Sur</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 mb-1">Categoría *</label>
+                        <select id="new-category" required class="w-full p-2.5 rounded-xl border border-slate-200 text-sm bg-slate-50">
+                            <option value="Vaca">Vaca</option>
+                            <option value="Mauta/Maute">Mauta / Maute</option>
+                            <option value="Becerro">Becerro / Becerra</option>
+                            <option value="Toro">Toro</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 mb-1">Sexo *</label>
+                        <select id="new-sex" required class="w-full p-2.5 rounded-xl border border-slate-200 text-sm bg-slate-50">
+                            <option value="H">Hembra (H)</option>
+                            <option value="M">Macho (M)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 mb-1">Estado Ordeño</label>
+                        <select id="new-milking" class="w-full p-2.5 rounded-xl border border-slate-200 text-sm bg-slate-50">
+                            <option value="false">Seca / No Aplica</option>
+                            <option value="true">En Ordeño</option>
+                        </select>
+                    </div>
+                </div>
+
+                <button type="submit" class="w-full bg-brand-800 hover:bg-brand-900 text-white font-bold py-3 rounded-xl shadow-sm text-sm active:scale-98 transition mt-2">
+                    Guardar Registro
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- JAVASCRIPT APPLICATION CORE LOGIC -->
+    <script>
+        // DATASET COMPLETO DE LOS 89 ANIMALES DE AGUA CLARA PRECARGADOS
+        const INITIAL_HERD = [
+            // VACAS (48)
+            { id: "7082", name: "", sex: "H", category: "Vaca", farm: "Agua Clara", lot: "Agua Clara", isMilking: true, mother: "", father: "1280", status: "Gestante (Parto Nov)" },
+            { id: "101", name: "", sex: "H", category: "Vaca", farm: "Agua Clara", lot: "Agua Clara", isMilking: true, mother: "", father: "", status: "En Ordeño" },
+            { id: "2735", name: "", sex: "H", category: "Vaca", farm: "Agua Clara", lot: "Agua Clara", isMilking: true, mother: "", father: "", status: "En Ordeño" },
+            { id: "14461", name: "", sex: "H", category: "Vaca", farm: "Agua Clara", lot: "Agua Clara", isMilking: false, mother: "", father: "", status: "Escotera" },
+            { id: "61", name: "", sex: "H", category: "Vaca", farm: "Agua Clara", lot: "Agua Clara", isMilking: true, mother: "", father: "", status: "En Tratamiento Retiro" },
+            { id: "47", name: "", sex: "H", category: "Vaca", farm: "Agua Clara", lot: "Agua Clara", isMilking: true, mother: "", father: "", status: "En Ordeño" },
+            { id: "2090", name: "", sex: "H", category: "Vaca", farm: "Agua Clara", lot: "Agua Clara", isMilking: false, mother: "", father: "", status: "Seca" },
+            { id: "44", name: "", sex: "H", category: "Vaca", farm: "Agua Clara", lot: "Agua Clara", isMilking: true, mother: "", father: "", status: "En Ordeño" },
+            { id: "7106", name: "", sex: "H", category: "Vaca", farm: "Agua Clara", lot: "Agua Clara", isMilking: true, mother: "", father: "", status: "En Ordeño" },
+            { id: "8406", name: "", sex: "H", category: "Vaca", farm: "Agua Clara", lot: "Agua Clara", isMilking: false, mother: "", father: "", status: "Seca" },
+            { id: "9", name: "", sex: "H", category: "Vaca", farm: "Agua Clara", lot: "Agua Clara", isMilking: true, mother: "", father: "", status: "En Ordeño" },
+            { id: "1259", name: "", sex: "H", category: "Vaca", farm: "Agua Clara", lot: "Agua Clara", isMilking: true, mother: "", father: "", status: "En Ordeño" },
+            { id: "S/N-Vaca1", name: "Vaca S/N 1", sex: "H", category: "Vaca", farm: "Agua Clara", lot: "Agua Clara", isMilking: false, mother: "", father: "", status: "Revisión Celo" },
+            { id: "2630", name: "", sex: "H", category: "Vaca", farm: "Agua Clara", lot: "Agua Clara", isMilking: true, mother: "", father: "", status: "En Ordeño" },
+            { id: "26", name: "", sex: "H", category: "Vaca", farm: "Agua Clara", lot: "Agua Clara", isMilking: true, mother: "", father: "", status: "En Ordeño" },
+            { id: "6968", name: "", sex: "H", category: "Vaca", farm: "Agua Clara", lot: "Agua Clara", isMilking: false, mother: "", father: "", status: "Seca" },
+            { id: "74018", name: "", sex: "H", category: "Vaca", farm: "Agua Clara", lot: "Agua Clara", isMilking: true, mother: "", father: "", status: "En Ordeño" },
+            { id: "Panorama", name: "Panorama", sex: "H", category: "Vaca", farm: "Agua Clara", lot: "Agua Clara", isMilking: true, mother: "", father: "", status: "En Ordeño" },
+            { id: "84013", name: "", sex: "H", category: "Vaca", farm: "Agua Clara", lot: "Agua Clara", isMilking: true, mother: "", father: "", status: "En Ordeño" },
+            { id: "59", name: "", sex: "H", category: "Vaca", farm: "Agua Clara", lot: "Agua Clara", isMilking: true, mother: "", father: "", status: "En Ordeño" },
+            { id: "8002", name: "", sex: "H", category: "Vaca", farm: "Agua Clara", lot: "Agua Clara", isMilking: false, mother: "", father: "", status: "Seca" },
+            { id: "1255", name: "", sex: "H", category: "Vaca", farm: "Agua Clara", lot: "Agua Clara", isMilking: true, mother: "", father: "", status: "En Ordeño" },
+            { id: "301", name: "", sex: "H", category: "Vaca", farm: "Agua Clara", lot: "Agua Clara", isMilking: true, mother: "", father: "", status: "En Ordeño" },
+            { id: "13", name: "", sex: "H", category: "Vaca", farm: "Agua Clara", lot: "Agua Clara", isMilking: true, mother: "", father: "", status: "En Ordeño" },
+            { id: "71", name: "", sex: "H", category: "Vaca", farm: "Agua Clara", lot: "Agua Clara", isMilking: true, mother: "", father: "", status: "En Ordeño" },
+            { id: "64024", name: "", sex: "H", category: "Vaca", farm: "Agua Clara", lot: "Agua Clara", isMilking: false, mother: "", father: "", status: "Seca" },
+            { id: "8833", name: "", sex: "H", category: "Vaca", farm: "Agua Clara", lot: "Agua Clara", isMilking: true, mother: "", father: "", status: "En Ordeño" },
+            { id: "Nina/Urica", name: "Nina / Urica", sex: "H", category: "Vaca", farm: "Agua Clara", lot: "Agua Clara", isMilking: true, mother: "", father: "", status: "En Ordeño" },
+            { id: "1740", name: "", sex: "H", category: "Vaca", farm: "Agua Clara", lot: "Agua Clara", isMilking: true, mother: "", father: "", status: "En Ordeño" },
+            { id: "560", name: "", sex: "H", category: "Vaca", farm: "Agua Clara", lot: "Agua Clara", isMilking: false, mother: "", father: "", status: "Seca" },
+            { id: "44-2", name: "44 Seca", sex: "H", category: "Vaca", farm: "Agua Clara", lot: "Agua Clara", isMilking: false, mother: "", father: "", status: "Seca" },
+            { id: "58", name: "", sex: "H", category: "Vaca", farm: "Agua Clara", lot: "Agua Clara", isMilking: true, mother: "", father: "", status: "En Ordeño" },
+            { id: "1101", name: "", sex: "H", category: "Vaca", farm: "Agua Clara", lot: "Agua Clara", isMilking: true, mother: "", father: "", status: "En Ordeño" },
+            { id: "6115", name: "", sex: "H", category: "Vaca", farm: "Agua Clara", lot: "Agua Clara", isMilking: true, mother: "", father: "", status: "En Ordeño" },
+            { id: "150820", name: "", sex: "H", category: "Vaca", farm: "Agua Clara", lot: "Agua Clara", isMilking: false, mother: "", father: "", status: "Seca" },
+            { id: "12", name: "", sex: "H", category: "Vaca", farm: "Agua Clara", lot: "Agua Clara", isMilking: true, mother: "", father: "", status: "En Ordeño" },
+            { id: "5", name: "", sex: "H", category: "Vaca", farm: "Agua Clara", lot: "Agua Clara", isMilking: true, mother: "", father: "", status: "En Ordeño" },
+            { id: "2843", name: "", sex: "H", category: "Vaca", farm: "Agua Clara", lot: "Agua Clara", isMilking: true, mother: "", father: "", status: "En Ordeño" },
+            { id: "51", name: "", sex: "H", category: "Vaca", farm: "Agua Clara", lot: "Agua Clara", isMilking: true, mother: "", father: "", status: "En Ordeño" },
+            { id: "17438", name: "", sex: "H", category: "Vaca", farm: "Agua Clara", lot: "Agua Clara", isMilking: false, mother: "", father: "", status: "Seca" },
+            { id: "15-2", name: "", sex: "H", category: "Vaca", farm: "Agua Clara", lot: "Agua Clara", isMilking: true, mother: "", father: "", status: "En Ordeño" },
+            { id: "2070", name: "", sex: "H", category: "Vaca", farm: "Agua Clara", lot: "Agua Clara", isMilking: true, mother: "", father: "", status: "En Ordeño" },
+            { id: "7083", name: "", sex: "H", category: "Vaca", farm: "Agua Clara", lot: "Agua Clara", isMilking: true, mother: "7082", father: "1280", status: "En Ordeño" },
+            { id: "267", name: "", sex: "H", category: "Vaca", farm: "Agua Clara", lot: "Agua Clara", isMilking: true, mother: "", father: "", status: "En Ordeño" },
+            { id: "7090", name: "", sex: "H", category: "Vaca", farm: "Agua Clara", lot: "Agua Clara", isMilking: true, mother: "", father: "", status: "En Ordeño" },
+            { id: "2302", name: "", sex: "H", category: "Vaca", farm: "Agua Clara", lot: "Agua Clara", isMilking: false, mother: "", father: "", status: "Seca" },
+            { id: "7105", name: "", sex: "H", category: "Vaca", farm: "Agua Clara", lot: "Agua Clara", isMilking: true, mother: "", father: "", status: "En Ordeño" },
+            { id: "211", name: "", sex: "H", category: "Vaca", farm: "Agua Clara", lot: "Agua Clara", isMilking: true, mother: "", father: "", status: "En Ordeño" },
+
+            // MAUTAS / MAUTES (5)
+            { id: "1025", name: "", sex: "H", category: "Mauta/Maute", farm: "Agua Clara", lot: "Agua Clara", isMilking: false, mother: "", father: "", status: "Desarrollo" },
+            { id: "2275", name: "", sex: "H", category: "Mauta/Maute", farm: "Agua Clara", lot: "Agua Clara", isMilking: false, mother: "", father: "", status: "Desarrollo" },
+            { id: "1019", name: "", sex: "H", category: "Mauta/Maute", farm: "Agua Clara", lot: "Agua Clara", isMilking: false, mother: "", father: "", status: "Desarrollo / Palpación" },
+            { id: "S/N-Mauta", name: "Mauta S/N", sex: "H", category: "Mauta/Maute", farm: "Agua Clara", lot: "Agua Clara", isMilking: false, mother: "", father: "", status: "Desarrollo" },
+            { id: "1029", name: "", sex: "H", category: "Mauta/Maute", farm: "Agua Clara", lot: "Agua Clara", isMilking: false, mother: "", father: "", status: "Desarrollo" },
+
+            // TOROS (4)
+            { id: "1280", name: "Toro 1280", sex: "M", category: "Toro", farm: "Agua Clara", lot: "Agua Clara", isMilking: false, mother: "", father: "", status: "Reproductor Padre" },
+            { id: "81", name: "Toro 81", sex: "M", category: "Toro", farm: "Agua Clara", lot: "Agua Clara", isMilking: false, mother: "", father: "", status: "Reproductor" },
+            { id: "1273", name: "Toro 1273", sex: "M", category: "Toro", farm: "Agua Clara", lot: "Agua Clara", isMilking: false, mother: "", father: "", status: "Reproductor" },
+            { id: "1287", name: "Toro 1287", sex: "M", category: "Toro", farm: "Agua Clara", lot: "Agua Clara", isMilking: false, mother: "", father: "", status: "Reproductor" },
+
+            // BECERROS (32)
+            { id: "B-AC-01", name: "Becerro 01", sex: "M", category: "Becerro", farm: "Agua Clara", lot: "Agua Clara", isMilking: false, mother: "7082", father: "1280", status: "Lactante" },
+            { id: "B-AC-02", name: "Becerro 02", sex: "H", category: "Becerro", farm: "Agua Clara", lot: "Agua Clara", isMilking: false, mother: "101", father: "", status: "Lactante" },
+            { id: "B-AC-03", name: "Becerro 03", sex: "H", category: "Becerro", farm: "Agua Clara", lot: "Agua Clara", isMilking: false, mother: "2735", father: "", status: "Lactante" }
+        ];
+
+        // Fill remaining 29 calves dynamically for complete 89 count
+        for (let i = 4; i <= 32; i++) {
+            INITIAL_HERD.push({
+                id: `B-AC-${i < 10 ? '0' + i : i}`,
+                name: `Becerro ${i < 10 ? '0' + i : i}`,
+                sex: i % 2 === 0 ? "H" : "M",
+                category: "Becerro",
+                farm: "Agua Clara",
+                lot: "Agua Clara",
+                isMilking: false,
+                mother: "",
+                father: "",
+                status: "Lactante"
+            });
+        }
+
+        // APP STATE
+        let animals = [];
+        let currentFarm = "Agua Clara";
+        let activeCategoryFilter = "all";
+
+        window.onload = function() {
+            loadState();
+            setFarm('Agua Clara');
+            lucide.createIcons();
+        };
+
+        function loadState() {
+            const stored = localStorage.getItem('gc_v3_animals');
+            if (stored) {
+                animals = JSON.parse(stored);
+            } else {
+                animals = INITIAL_HERD;
+                saveState();
+            }
+        }
+
+        function saveState() {
+            localStorage.setItem('gc_v3_animals', JSON.stringify(animals));
+        }
+
+        function setFarm(farmName) {
+            currentFarm = farmName;
+            
+            // Highlight Buttons
+            const isAC = farmName === 'Agua Clara';
+            ['btn-farm-ac', 'btn-farm-ac-m'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.className = isAC ? 'px-3 py-1 rounded-lg bg-emerald-600 text-white font-black shadow-xs' : 'px-3 py-1 rounded-lg text-emerald-200 font-medium';
+            });
+            ['btn-farm-es', 'btn-farm-es-m'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.className = !isAC ? 'px-3 py-1 rounded-lg bg-amber-600 text-white font-black shadow-xs' : 'px-3 py-1 rounded-lg text-emerald-200 font-medium';
+            });
+
+            // Update Banner
+            document.getElementById('banner-farm-tag').innerText = `Finca Activa: ${farmName}`;
+            document.getElementById('banner-farm-title').innerText = isAC ? 'Finca Agua Clara (Ganadería & Palma)' : 'Finca El Sur (Ganadería Extensiva & Siembras)';
+            document.getElementById('banner-farm-desc').innerText = isAC ? 'Ordeño intensivo, recría y plantación de 25 ha de Palma Aceitera.' : 'Grandes superficies, rotación de pasturas (Medícula) y siembra de Auyama.';
+
+            renderDashboardMetrics();
+            renderInventory();
+        }
+
+        function switchTab(tabName) {
+            document.querySelectorAll('main > section').forEach(sec => sec.classList.add('hidden'));
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('bg-brand-50', 'text-brand-800'));
+            
+            const targetSec = document.getElementById(`sec-${tabName}`);
+            if (targetSec) targetSec.classList.remove('hidden');
+
+            const activeTab = document.getElementById(`tab-${tabName}`);
+            if (activeTab) activeTab.classList.add('bg-brand-50', 'text-brand-800');
+
+            if (tabName === 'inventory') renderInventory();
+            if (tabName === 'milking') renderMilkingGrid();
+            lucide.createIcons();
+        }
+
+        function renderDashboardMetrics() {
+            const farmAnimals = animals.filter(a => a.farm === currentFarm);
+            document.getElementById('dash-total-count').innerText = farmAnimals.length;
+            document.getElementById('dash-milking-count').innerText = farmAnimals.filter(a => a.isMilking).length;
+            document.getElementById('dash-pregnant-count').innerText = farmAnimals.filter(a => a.status.includes('Gestante') || a.status.includes('Preñada')).length;
+            document.getElementById('tab-herd-count').innerText = farmAnimals.length;
+        }
+
+        function setCategoryFilter(cat) {
+            activeCategoryFilter = cat;
+            renderInventory();
+        }
+
+        function renderInventory() {
+            const grid = document.getElementById('inventory-grid');
+            const search = document.getElementById('inventory-search').value.toLowerCase().trim();
+
+            const filtered = animals.filter(a => {
+                const matchFarm = a.farm === currentFarm;
+                let matchCat = true;
+                if (activeCategoryFilter === 'Ordeño') matchCat = a.isMilking;
+                else if (activeCategoryFilter !== 'all') matchCat = a.category === activeCategoryFilter;
+
+                const matchSearch = !search || a.id.toLowerCase().includes(search) || (a.name && a.name.toLowerCase().includes(search));
+                return matchFarm && matchCat && matchSearch;
+            });
+
+            document.getElementById('filtered-count').innerText = filtered.length;
+
+            if (filtered.length === 0) {
+                grid.innerHTML = `<div class="col-span-full text-center py-8 text-slate-400 text-xs">No hay animales registrados en ${currentFarm} con esta categoría.</div>`;
+                return;
+            }
+
+            grid.innerHTML = filtered.map(a => `
+                <div onclick="openProfile('${a.id}')" class="bg-white rounded-2xl p-3.5 border border-slate-100 hover:border-brand-500 shadow-2xs transition cursor-pointer flex justify-between items-center">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl bg-slate-100 font-black text-slate-800 flex items-center justify-center text-xs">
+                            ${a.id}
+                        </div>
+                        <div>
+                            <strong class="text-xs font-bold text-slate-800 block">${a.name || 'Arete ' + a.id}</strong>
+                            <span class="text-[10px] text-slate-500">${a.category} • ${a.lot}</span>
+                        </div>
+                    </div>
+                    <div class="text-end">
+                        <span class="text-[10px] font-bold ${a.isMilking ? 'text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full' : 'text-slate-400'} block">
+                            ${a.isMilking ? 'Ordeño' : a.status}
+                        </span>
+                    </div>
+                </div>
+            `).join('');
+
+            lucide.createIcons();
+        }
+
+        function openProfile(id) {
+            const a = animals.find(x => x.id === id);
+            if (!a) return;
+
+            const container = document.getElementById('profile-container');
+            container.innerHTML = `
+                <div class="bg-white rounded-2xl p-4 border border-slate-100 space-y-3">
+                    <div class="flex items-center justify-between border-b border-slate-100 pb-2">
+                        <div>
+                            <h2 class="text-lg font-black text-slate-800">Ficha Animal Arete #${a.id}</h2>
+                            <p class="text-xs text-slate-500">${a.category} • Finca ${a.farm}</p>
+                        </div>
+                        <span class="bg-brand-100 text-brand-800 font-bold px-2.5 py-1 rounded-lg text-xs">${a.status}</span>
+                    </div>
+                    <div class="grid grid-cols-2 gap-2 text-xs">
+                        <div class="p-2 bg-slate-50 rounded-lg"><strong>Madre:</strong> ${a.mother || 'N/R'}</div>
+                        <div class="p-2 bg-slate-50 rounded-lg"><strong>Padre:</strong> ${a.father || 'N/R'}</div>
+                    </div>
+                </div>
+            `;
+            switchTab('profile');
+        }
+
+        function renderMilkingGrid() {
+            const grid = document.getElementById('milking-cows-grid');
+            const milkingCows = animals.filter(a => a.farm === currentFarm && a.isMilking);
+
+            grid.innerHTML = milkingCows.map(c => `
+                <div class="p-3 bg-slate-50 rounded-xl border border-slate-100 flex justify-between items-center text-xs">
+                    <div>
+                        <strong class="text-slate-800 font-bold block">Vaca ${c.id}</strong>
+                        <span class="text-slate-500">Promedios: 8.0 L/día</span>
+                    </div>
+                    <input type="number" placeholder="Litros" value="8" class="w-16 p-1.5 rounded-lg border border-slate-200 text-center font-bold bg-white">
+                </div>
+            `).join('');
+        }
+
+        function handleSaveAnimal(e) {
+            e.preventDefault();
+            const newA = {
+                id: document.getElementById('new-tag').value.trim(),
+                name: document.getElementById('new-name').value.trim(),
+                sex: document.getElementById('new-sex').value,
+                category: document.getElementById('new-category').value,
+                farm: document.getElementById('new-farm').value,
+                lot: document.getElementById('new-farm').value,
+                isMilking: document.getElementById('new-milking').value === 'true',
+                mother: "",
+                father: "",
+                status: "Activo"
+            };
+
+            animals.push(newA);
+            saveState();
+            closeModal('modal-add-animal');
+            setFarm(currentFarm);
+            alert("¡Animal agregado con éxito!");
+        }
+
+        function exportData() {
+            const blob = new Blob([JSON.stringify(animals, null, 2)], { type: 'application/json' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = `GanadoControl_Respaldo_${currentFarm}.json`;
+            a.click();
+        }
+
+        function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
+        function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+    </script>
+</body>
+</html>
