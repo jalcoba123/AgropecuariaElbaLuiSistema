@@ -6,7 +6,6 @@
     <title>GanadoControl - Gestión Agropecuaria Integral</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <!-- Chart.js para el tablero contable -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="stylesheet" href="style.css">
 </head>
@@ -28,6 +27,7 @@
 
     <nav class="category-nav">
         <button class="cat-chip active" onclick="switchTab('pendientes', this)">📋 Pendientes</button>
+        <button class="cat-chip" onclick="switchTab('calendario', this)">📅 Calendario</button>
         <button class="cat-chip" onclick="switchTab('inventario', this)">🐮 Inventario & Genealogía</button>
         <button class="cat-chip" onclick="switchTab('ordeno', this)">🥛 Ordeño & Becerrada</button>
         <button class="cat-chip" onclick="switchTab('pesos', this)">⚖️ Pesos & GDP</button>
@@ -56,7 +56,7 @@
             <div class="kpi-card"><div class="kpi-label">Palma / Cultivos</div><div class="kpi-value" id="kpi-palma">25 ha</div><div class="kpi-sub">Themba & Avalanche</div></div>
         </div>
 
-        <!-- MÓDULOS -->
+        <!-- MÓDULO PENDIENTES -->
         <div id="tab-pendientes" class="section-view active">
             <div class="grid-2">
                 <div class="panel-card"><div class="panel-header"><span class="panel-title">🔔 Próximos Partos & Chequeos</span></div><div class="alert-item">Sin alertas críticas programadas.</div></div>
@@ -64,6 +64,31 @@
             </div>
         </div>
 
+        <!-- NUEVO MÓDULO CALENDARIO -->
+        <div id="tab-calendario" class="section-view">
+            <div class="panel-card">
+                <div class="panel-header">
+                    <span class="panel-title">📅 Calendario de Faenas, Partos & Eventos</span>
+                    <button class="btn-action" onclick="openModal('eventoModal')">+ Programar Evento</button>
+                </div>
+                <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 12px;">Agenda general de actividades operativas para la finca activa.</p>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Fecha</th>
+                            <th>Tipo de Evento</th>
+                            <th>Descripción / Detalle</th>
+                            <th>Estado</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabla-calendario-body">
+                        <tr><td colspan="4" style="text-align:center; color:var(--text-muted); padding:20px;">Sin eventos programados.</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- MÓDULO INVENTARIO -->
         <div id="tab-inventario" class="section-view">
             <div class="panel-card">
                 <div class="panel-header"><span class="panel-title">🐮 Tabla Maestra de Animales & Genealogía</span><button class="btn-action" onclick="openModal('animalModal')">+ Agregar Animal</button></div>
@@ -74,6 +99,7 @@
             </div>
         </div>
 
+        <!-- MÓDULO ORDEÑO -->
         <div id="tab-ordeno" class="section-view">
             <div class="panel-card">
                 <div class="panel-header"><span class="panel-title">🥛 Planilla Diaria de Ordeño & Becerrada Nocturna</span></div>
@@ -94,10 +120,11 @@
             </div>
         </div>
 
-        <div id="tab-pesos" class="section-view"><div class="panel-card"><h3 class="panel-title">⚖️ Control de Pesajes & GDP</h3><p style="font-size:0.85rem; color:var(--text-muted);">Seguimiento de ganancia diaria de peso en mautes y recría.</p></div></div>
+        <div id="tab-pesos" class="section-view"><div class="panel-card"><h3 class="panel-title">⚖️ Control de Pesajes & GDP</h3></div></div>
         <div id="tab-alimentacion" class="section-view"><div class="panel-card"><h3 class="panel-title">🌾 Alimentación (Cuba 22, Nepe de Cervecería & Pasto Medícula)</h3></div></div>
         <div id="tab-sanidad" class="section-view"><div class="panel-card"><h3 class="panel-title">🩺 Plan Sanitario & Bodega de Insumos</h3></div></div>
 
+        <!-- MÓDULO PALMA -->
         <div id="tab-palma" class="section-view">
             <div class="panel-card">
                 <div class="panel-header"><span class="panel-title">🌴 Módulo Agrícola (Avalanche 15ha & Themba 10ha)</span></div>
@@ -126,7 +153,7 @@
 
         <div id="tab-activos" class="section-view"><div class="panel-card"><h3 class="panel-title">🏷️ Activos (Ford Super Duty, Fortaleza, Maquinaria e Infraestructura)</h3></div></div>
 
-        <!-- BALANCE CON GRÁFICA CONTABLE -->
+        <!-- BALANCE CON GRÁFICA -->
         <div id="tab-balance" class="section-view">
             <div class="panel-card" style="margin-bottom: 20px;">
                 <div class="panel-header"><span class="panel-title">📊 Resumen Visual: Ingresos vs Gastos e Inversiones</span></div>
@@ -167,6 +194,27 @@
                     <select id="input-estado"><option value="Vacía">Vacía</option><option value="Gestante">Gestante</option><option value="En Celo">En Celo</option></select>
                 </div>
                 <button type="submit" class="btn-action" style="width:100%; margin-top:10px;">Guardar Animal</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL EVENTO CALENDARIO -->
+    <div class="modal" id="eventoModal">
+        <div class="modal-content">
+            <div class="modal-header"><span class="modal-title">Programar Evento en Calendario</span><button class="close-btn" onclick="closeModal('eventoModal')">&times;</button></div>
+            <form id="eventoForm" onsubmit="guardarEvento(event)">
+                <div class="form-field"><label>Fecha del Evento</label><input type="date" id="e-fecha" required></div>
+                <div class="form-field"><label>Tipo de Evento</label>
+                    <select id="e-tipo">
+                        <option value="Parto Estimado">Parto Estimado</option>
+                        <option value="Chequeo Reproductivo">Chequeo Reproductivo</option>
+                        <option value="Vacunación / Tratamiento">Vacunación / Tratamiento</option>
+                        <option value="Fertilización / Palma">Fertilización / Palma</option>
+                        <option value="Rotación de Potrero">Rotación de Potrero</option>
+                    </select>
+                </div>
+                <div class="form-field"><label>Descripción / Detalle</label><input type="text" id="e-desc" placeholder="Ej. Palpación lote vacas vacías" required></div>
+                <button type="submit" class="btn-action" style="width:100%; margin-top:10px;">Guardar en Calendario</button>
             </form>
         </div>
     </div>
