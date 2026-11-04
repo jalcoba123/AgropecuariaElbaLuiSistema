@@ -10,15 +10,14 @@ function obtenerFincaActual() {
     return 'Agua Clara';
 }
 
+// 1. Registro de animales desde el modal
 const formAnimal = document.getElementById('form-animal');
 if (formAnimal) {
     formAnimal.addEventListener('submit', async (e) => {
         e.preventDefault();
-        
         const fincaSelect = document.getElementById('a-finca-select');
         const fincaDestino = fincaSelect ? fincaSelect.value : 'Agua Clara';
         const btn = formAnimal.querySelector('button[type="submit"]');
-        
         btn.innerText = "Guardando..."; btn.disabled = true;
 
         try {
@@ -44,6 +43,7 @@ if (formAnimal) {
     });
 }
 
+// 2. Lectura en tiempo real (Actualiza Hato y Torre de Control simultáneamente)
 window.cargarHato = function() {
     const tabla = document.getElementById('tabla-hato-body');
     if (!tabla || !window.db) return;
@@ -79,9 +79,16 @@ window.cargarHato = function() {
             `;
         });
 
+        // Actualizar contadores del módulo Hato
         if (document.getElementById('kpi-total')) document.getElementById('kpi-total').innerText = total;
         if (document.getElementById('kpi-mautes')) document.getElementById('kpi-mautes').innerText = mautes;
         if (document.getElementById('kpi-gestantes')) document.getElementById('kpi-gestantes').innerText = gestantes;
+
+        // Actualizar contadores de la Torre de Control (Dashboard)
+        if (document.getElementById('dash-total-hato')) document.getElementById('dash-total-hato').innerText = total;
+        if (document.getElementById('dash-palma-ha')) {
+            document.getElementById('dash-palma-ha').innerText = (fincaActiva === 'El Sur') ? '0 ha' : '25 ha';
+        }
 
         if (total === 0) {
             tabla.innerHTML = `<tr><td colspan="6" style="padding: 15px; text-align: center; color: var(--text-muted);">Sin animales registrados (${fincaActiva}).</td></tr>`;
