@@ -8,10 +8,10 @@ const loginForm = document.getElementById('login-form');
 const loginError = document.getElementById('login-error');
 const btnLogout = document.getElementById('btn-logout');
 
-// 1. Escuchar el estado de autenticación
+// Escuchar cambios de sesión
 onAuthStateChanged(auth, (user) => {
     if (user) {
-        console.log("Sesión activa detectada:", user.email);
+        console.log("Sesión autorizada:", user.email);
         if (loginScreen) loginScreen.style.display = 'none';
         if (appContainer) appContainer.style.display = 'block';
     } else {
@@ -20,40 +20,29 @@ onAuthStateChanged(auth, (user) => {
     }
 });
 
-// 2. Procesar inicio de sesión
+// Procesar formulario de ingreso
 if (loginForm) {
-    loginForm.addEventListener('submit', (e) => {
+    loginForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         if (loginError) loginError.style.display = 'none';
 
         const email = document.getElementById('login-email').value.trim();
         const password = document.getElementById('login-password').value;
 
-        signInWithEmailAndPassword(auth, email, password)
-            .then((userCredential) => {
-                alert("¡Bienvenido! Acceso autorizado.");
-                loginForm.reset();
-            })
-            .catch((error) => {
-                console.error("Error Auth:", error.code);
-                let mensaje = "Error de acceso: ";
-                if (error.code === 'auth/invalid-credential' || error.code === 'auth/wrong-password') {
-                    mensaje += "Correo o contraseña incorrectos.";
-                } else if (error.code === 'auth/user-not-found') {
-                    mensaje += "El correo no está registrado en Firebase.";
-                } else {
-                    mensaje += error.message;
-                }
-                alert(mensaje);
-                if (loginError) {
-                    loginError.innerText = mensaje;
-                    loginError.style.display = 'block';
-                }
-            });
+        try {
+            await signInWithEmailAndPassword(auth, email, password);
+            loginForm.reset();
+        } catch (error) {
+            console.error("Error al autenticar:", error.code, error.message);
+            if (loginError) {
+                loginError.innerText = "Error: Credenciales no válidas (" + error.code + ")";
+                loginError.style.display = 'block';
+            }
+            alert("No se pudo iniciar sesión. Revisa tu correo y contraseña.");
+        }
     });
 }
 
-// 3. Cerrar sesión
 if (btnLogout) {
     btnLogout.addEventListener('click', () => {
         signOut(auth);
