@@ -12,7 +12,6 @@
     <!-- 🔒 PANTALLA DE SEGURIDAD (LOGIN) -->
     <div id="login-screen" class="login-container">
         <div class="login-box">
-            <!-- LOGO INTEGRADO EN LOGIN -->
             <img src="logo.jpg" alt="Agropecuaria ElbaLui" class="login-logo-img">
             <h2 style="color: var(--green-dark); margin-bottom: 5px;">GanadoControl ERP</h2>
             <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 25px;">Agropecuaria ElbaLui • Fincas El Sur & Agua Clara</p>
@@ -29,7 +28,6 @@
     <div id="app-container" style="display: none;">
         <header>
             <div class="brand">
-                <!-- LOGO INTEGRADO EN CABECERA -->
                 <img src="logo.jpg" alt="Agropecuaria ElbaLui" class="brand-logo-img">
                 <div>
                     <div class="brand-title">GanadoControl ERP</div>
@@ -61,7 +59,7 @@
                 </div>
             </div>
 
-            <!-- MÓDULO 0: TORRE DE CONTROL (DASHBOARD GERENCIAL) -->
+            <!-- MÓDULO 0: TORRE DE CONTROL (DASHBOARD DINÁMICO) -->
             <div id="tab-dashboard" class="section-view active">
                 <div style="background: white; border-radius: 12px; border: 1px solid var(--border-light); padding: 20px; margin-bottom: 20px;">
                     <h3 style="color: var(--green-dark); margin-bottom: 5px;">📊 Resumen General de Operaciones</h3>
@@ -70,18 +68,18 @@
                 
                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px;">
                     <div style="background: white; padding: 16px; border-radius: 10px; border-left: 4px solid var(--green-primary); border-top: 1px solid var(--border-light); border-right: 1px solid var(--border-light); border-bottom: 1px solid var(--border-light);">
-                        <div style="font-size: 0.75rem; color: var(--text-muted); font-weight: 700;">HATO TOTAL</div>
-                        <div style="font-size: 1.8rem; font-weight: 800; color: var(--text-dark);">480</div>
+                        <div style="font-size: 0.75rem; color: var(--text-muted); font-weight: 700;">HATO REGISTRADO</div>
+                        <div id="dash-total-hato" style="font-size: 1.8rem; font-weight: 800; color: var(--text-dark);">0</div>
                         <div style="font-size: 0.75rem; color: var(--green-accent);">Meta: 1,000 vientres</div>
                     </div>
                     <div style="background: white; padding: 16px; border-radius: 10px; border-left: 4px solid #3b82f6; border-top: 1px solid var(--border-light); border-right: 1px solid var(--border-light); border-bottom: 1px solid var(--border-light);">
                         <div style="font-size: 0.75rem; color: var(--text-muted); font-weight: 700;">ORDEÑO DIARIO</div>
-                        <div style="font-size: 1.8rem; font-weight: 800; color: var(--text-dark);">0 L</div>
+                        <div id="dash-leche-diaria" style="font-size: 1.8rem; font-weight: 800; color: var(--text-dark);">0 L</div>
                         <div style="font-size: 0.75rem; color: var(--text-muted);">Agua Clara</div>
                     </div>
                     <div style="background: white; padding: 16px; border-radius: 10px; border-left: 4px solid #f59e0b; border-top: 1px solid var(--border-light); border-right: 1px solid var(--border-light); border-bottom: 1px solid var(--border-light);">
-                        <div style="font-size: 0.75rem; color: var(--text-muted); font-weight: 700;">COSECHA PALMA</div>
-                        <div style="font-size: 1.8rem; font-weight: 800; color: var(--text-dark);">25 ha</div>
+                        <div style="font-size: 0.75rem; color: var(--text-muted); font-weight: 700;">PALMA PLANTADA</div>
+                        <div id="dash-palma-ha" style="font-size: 1.8rem; font-weight: 800; color: var(--text-dark);">0 ha</div>
                         <div style="font-size: 0.75rem; color: var(--text-muted);">Avalanche & Themba</div>
                     </div>
                 </div>
@@ -171,10 +169,10 @@
         </div>
     </div>
 
-    <!-- Scripts -->
+    <!-- Scripts de la arquitectura modular -->
     <script type="module" src="js/auth.js"></script>
     <script type="module" src="js/ui.js"></script>
     <script type="module" src="js/hato.js"></script>
+    <script type="module" src="js/dashboard.js"></script>
 </body>
 </html>
-<script type="module" src="js/dashboard.js"></script>
