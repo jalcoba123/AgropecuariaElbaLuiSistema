@@ -8,10 +8,12 @@ const loginForm = document.getElementById('login-form');
 const loginError = document.getElementById('login-error');
 const btnLogout = document.getElementById('btn-logout');
 
-// Escuchar si hay sesión activa
+console.log("✅ Módulo auth.js cargado e inicializado.");
+
+// 1. Escuchar el estado de la sesión
 onAuthStateChanged(auth, (user) => {
+    console.log("Estado de sesión:", user ? `Activo (${user.email})` : "Sin sesión");
     if (user) {
-        console.log("Sesión iniciada con éxito:", user.email);
         if (loginScreen) loginScreen.style.display = 'none';
         if (appContainer) appContainer.style.display = 'block';
     } else {
@@ -20,42 +22,35 @@ onAuthStateChanged(auth, (user) => {
     }
 });
 
-// Enviar datos del formulario
+// 2. Procesar el envío del formulario
 if (loginForm) {
     loginForm.addEventListener('submit', async (e) => {
         e.preventDefault();
+        console.log("👉 Procesando credenciales...");
         
+        if (loginError) loginError.style.display = 'none';
+
         const email = document.getElementById('login-email').value.trim();
         const password = document.getElementById('login-password').value;
 
         try {
             await signInWithEmailAndPassword(auth, email, password);
-            alert("¡Acceso concedido!");
+            console.log("¡Acceso concedido!");
+            loginForm.reset();
         } catch (error) {
-            console.error("Error Auth detallado:", error);
-            
-            let mensaje = "Error: ";
-            if (error.code === 'auth/unauthorized-domain') {
-                mensaje = "Dominio no autorizado. Agrega sistema-rust-theta.vercel.app en Firebase Console.";
-            } else if (error.code === 'auth/invalid-credential' || error.code === 'auth/wrong-password') {
-                mensaje = "Correo o contraseña incorrectos.";
-            } else if (error.code === 'auth/user-not-found') {
-                mensaje = "El usuario no existe en Firebase.";
-            } else {
-                mensaje += error.message;
-            }
-
-            alert(mensaje);
+            console.error("❌ Error de autenticación:", error.code);
             if (loginError) {
-                loginError.innerText = mensaje;
+                loginError.innerText = "Error: " + error.code;
                 loginError.style.display = 'block';
             }
+            alert("No se pudo ingresar: " + error.message);
         }
     });
+} else {
+    console.error("❌ No se encontró el elemento #login-form");
 }
 
+// 3. Botón de salida
 if (btnLogout) {
-    btnLogout.addEventListener('click', () => {
-        signOut(auth);
-    });
+    btnLogout.addEventListener('click', () => signOut(auth));
 }
