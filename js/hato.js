@@ -26,11 +26,11 @@ window.eliminarAnimal = async function(idDoc, arete) {
     }
 };
 
-// 2. ABRIR MODAL DE NOVEDAD Y GUARDAR ESTADO
+// 2. ABRIR MODAL DE NOVEDAD LIBRE
 window.abrirModalNovedad = function(idDoc, arete, saludActual) {
     document.getElementById('n-id').value = idDoc;
     document.getElementById('n-arete-display').innerText = arete;
-    document.getElementById('n-estado-salud').value = saludActual && saludActual !== 'undefined' ? saludActual : "🟢 Sano";
+    document.getElementById('n-estado-salud').value = (saludActual && saludActual !== 'undefined' && saludActual !== '🟢 Sano') ? saludActual : "";
     document.getElementById('modal-novedad').style.display = 'flex';
 };
 
@@ -39,20 +39,45 @@ if (formNovedad) {
     formNovedad.addEventListener('submit', async (e) => {
         e.preventDefault();
         const idDoc = document.getElementById('n-id').value;
-        const nuevoEstado = document.getElementById('n-estado-salud').value;
+        const nuevoEstado = document.getElementById('n-estado-salud').value.trim();
         const btn = formNovedad.querySelector('button[type="submit"]');
         
-        btn.innerText = "Actualizando..."; btn.disabled = true;
+        btn.innerText = "Guardando..."; btn.disabled = true;
         try {
-            // Actualiza solo el campo de salud
             await updateDoc(doc(window.db, "animales", idDoc), { salud: nuevoEstado });
             document.getElementById('modal-novedad').style.display = 'none';
         } catch (err) { alert("Error: " + err.message); } 
-        finally { btn.innerText = "Actualizar Estado"; btn.disabled = false; }
+        finally { btn.innerText = "Guardar Novedad"; btn.disabled = false; }
     });
 }
 
-// 3. REGISTRO DE ANIMAL NUEVO
+// 3. ABRIR EXPEDIENTE CLÍNICO (FICHA 👁️)
+window.abrirFicha = function(arete, categoria, finca, padre, madre, peso, estado, salud) {
+    document.getElementById('f-arete').innerText = arete;
+    document.getElementById('f-categoria').innerText = categoria;
+    document.getElementById('f-finca-tag').innerText = `FINCA: ${finca.toUpperCase()}`;
+    document.getElementById('f-padre').innerText = padre || 'N/D';
+    document.getElementById('f-madre').innerText = madre || 'N/D';
+    document.getElementById('f-peso').innerText = peso ? `${peso} kg` : 'Sin registrar';
+    document.getElementById('f-estado').innerText = estado;
+
+    const historialSalud = document.getElementById('f-historial-salud');
+    if (salud && salud !== '🟢 Sano') {
+        historialSalud.innerHTML = `🔴 <strong>Novedad Activa:</strong> ${salud}`;
+        historialSalud.style.background = '#fff1f2';
+        historialSalud.style.color = '#be123c';
+        historialSalud.style.borderColor = '#fecdd3';
+    } else {
+        historialSalud.innerHTML = `🟢 Animal en condiciones óptimas (Sin novedades médicas).`;
+        historialSalud.style.background = '#ecfdf5';
+        historialSalud.style.color = '#047857';
+        historialSalud.style.borderColor = '#a7f3d0';
+    }
+
+    document.getElementById('modal-ficha').style.display = 'flex';
+};
+
+// 4. REGISTRO DE ANIMAL NUEVO
 const formAnimal = document.getElementById('form-animal');
 if (formAnimal) {
     formAnimal.addEventListener('submit', async (e) => {
@@ -70,7 +95,7 @@ if (formAnimal) {
                 padre: document.getElementById('a-padre').value.trim() || 'N/D',
                 madre: document.getElementById('a-madre').value.trim() || 'N/D',
                 estado: document.getElementById('a-estado').value,
-                salud: "🟢 Sano", // Por defecto todos nacen o entran sanos
+                salud: "🟢 Sano",
                 fechaRegistro: serverTimestamp()
             });
             formAnimal.reset();
@@ -80,7 +105,7 @@ if (formAnimal) {
     });
 }
 
-// 4. LECTURA EN TIEMPO REAL (TABLA Y MONITOR CLÍNICO)
+// 5. LECTURA EN TIEMPO REAL
 window.cargarHato = function() {
     const tabla = document.getElementById('tabla-hato-body');
     const panelAlertas = document.getElementById('panel-alertas');
@@ -94,24 +119,25 @@ window.cargarHato = function() {
     onSnapshot(q, (snapshot) => {
         tabla.innerHTML = '';
         let total = 0, mautes = 0, gestantes = 0;
-        
-        // Diccionario para contar enfermedades
-        let conteoSalud = {
-            "🔴 Pata rota": 0, "🔴 Aborto": 0, "🟡 Mastitis": 0, 
-            "🟠 En tiempo de retiro": 0, "🔴 Herida / Miasis": 0
-        };
+        let conteoSalud = {};
 
         snapshot.forEach((documento) => {
             const a = documento.data();
             const idDoc = documento.id;
-            const saludActual = a.salud || "🟢 Sano"; // Si es viejo y no tiene estado, es Sano
+            const saludActual = a.salud || "🟢 Sano";
             
             total++;
             if (a.categoria === "Lote ElbaLui (Maute)") mautes++;
             if (a.estado === "Gestante") gestantes++;
-            if (conteoSalud[saludActual] !== undefined) conteoSalud[saludActual]++;
+            
+            if (saludActual !== "🟢 Sano") {
+                conteoSalud[saludActual] = (conteoSalud[saludActual] || 0) + 1;
+            }
 
             const textoPeso = a.peso ? `${a.peso} kg` : `<span style="color:#94a3b8;">S/P</span>`;
+
+            // Codificar valores de forma segura para pasarlos a la función abrirFicha
+            const escapeStr = (val) => String(val || '').replace(/'/g, "\\'");
 
             tabla.innerHTML += `
                 <tr>
@@ -121,10 +147,12 @@ window.cargarHato = function() {
                     <td style="padding: 10px; border-bottom: 1px solid var(--border-light);">${a.estado}</td>
                     <td style="padding: 10px; border-bottom: 1px solid var(--border-light); font-weight: 600;">${saludActual}</td>
                     <td style="padding: 10px; border-bottom: 1px solid var(--border-light); text-align: center; white-space: nowrap;">
-                        <!-- Botón Novedad 🏥 -->
-                        <button onclick="abrirModalNovedad('${idDoc}', '${a.arete}', '${saludActual}')" style="background: #fef2f2; color: #be123c; border: 1px solid #fecdd3; padding: 4px 8px; border-radius: 6px; cursor: pointer; margin-right: 5px;" title="Reportar Novedad">🏥</button>
-                        <!-- Botón Eliminar 🗑️ -->
-                        <button onclick="eliminarAnimal('${idDoc}', '${a.arete}')" style="background: #f1f5f9; color: #64748b; border: 1px solid #cbd5e1; padding: 4px 8px; border-radius: 6px; cursor: pointer;" title="Eliminar">🗑️</button>
+                        <!-- Botón Ficha (👁️) -->
+                        <button onclick="abrirFicha('${escapeStr(a.arete)}', '${escapeStr(a.categoria)}', '${escapeStr(a.finca)}', '${escapeStr(a.padre)}', '${escapeStr(a.madre)}', '${a.peso || ''}', '${escapeStr(a.estado)}', '${escapeStr(saludActual)}')" style="background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; padding: 4px 8px; border-radius: 6px; cursor: pointer; margin-right: 4px;" title="Ver Expediente">👁️</button>
+                        <!-- Botón Novedad (🏥) -->
+                        <button onclick="abrirModalNovedad('${idDoc}', '${escapeStr(a.arete)}', '${escapeStr(saludActual)}')" style="background: #fef2f2; color: #be123c; border: 1px solid #fecdd3; padding: 4px 8px; border-radius: 6px; cursor: pointer; margin-right: 4px;" title="Reportar Novedad">🏥</button>
+                        <!-- Botón Eliminar (🗑️) -->
+                        <button onclick="eliminarAnimal('${idDoc}', '${escapeStr(a.arete)}')" style="background: #f1f5f9; color: #64748b; border: 1px solid #cbd5e1; padding: 4px 8px; border-radius: 6px; cursor: pointer;" title="Eliminar">🗑️</button>
                     </td>
                 </tr>
             `;
@@ -135,18 +163,16 @@ window.cargarHato = function() {
         if (document.getElementById('kpi-mautes')) document.getElementById('kpi-mautes').innerText = mautes;
         if (document.getElementById('kpi-gestantes')) document.getElementById('kpi-gestantes').innerText = gestantes;
 
-        // Renderizar el Monitor Global (Panel Rojo)
+        // Renderizar Panel de Alertas Globales
         let htmlAlertas = "";
-        let animalesEnfermos = 0;
+        let totalEnfermos = 0;
         
         for (const [enfermedad, cantidad] of Object.entries(conteoSalud)) {
-            if (cantidad > 0) {
-                htmlAlertas += `<span style="background: white; padding: 6px 12px; border-radius: 20px; border: 1px solid #fecdd3; color: #be123c; font-weight: 600; cursor: pointer; transition: 0.2s;" onmouseover="this.style.background='#ffe4e6'" onmouseout="this.style.background='white'">${enfermedad}: ${cantidad}</span>`;
-                animalesEnfermos += cantidad;
-            }
+            htmlAlertas += `<span style="background: white; padding: 6px 12px; border-radius: 20px; border: 1px solid #fecdd3; color: #be123c; font-weight: 600;">${enfermedad}: ${cantidad}</span>`;
+            totalEnfermos += cantidad;
         }
 
-        if (animalesEnfermos === 0) {
+        if (totalEnfermos === 0) {
             panelAlertas.innerHTML = `<span style="background: #ecfdf5; padding: 6px 12px; border-radius: 20px; border: 1px solid #a7f3d0; color: #047857; font-weight: 600;">🟢 Hato 100% Sano. Sin novedades.</span>`;
         } else {
             panelAlertas.innerHTML = htmlAlertas;
