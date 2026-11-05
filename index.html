@@ -68,11 +68,87 @@
                 </div>
             </div>
 
-            <!-- MÓDULO 1: TORRE DE CONTROL -->
-            <div id="tab-dashboard" class="section-view active">
-                <div style="background: white; border-radius: 12px; border: 1px solid var(--border-light); padding: 20px; margin-bottom: 20px;">
-                    <h3 style="color: var(--green-dark); margin-bottom: 5px;">📊 Torre de Control</h3>
-                    <p style="font-size: 0.85rem; color: var(--text-muted);">En construcción: Aquí vivirán los paneles con alertas de secado y vacunaciones del hato.</p>
+         <!-- MÓDULO 1: TORRE DE CONTROL -->
+           <div id="tab-dashboard" class="section-view active">
+                
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;">
+                    
+                    <!-- PANEL IZQUIERDO: MOTOR DE TIEMPO (ALERTAS) -->
+                    <div style="display: flex; flex-direction: column; gap: 20px;">
+                        
+                        <!-- Alertas de Secado (Pre-Parto) -->
+                        <div style="background: white; border-radius: 12px; border: 1px solid var(--border-light); padding: 20px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
+                            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #fde68a; padding-bottom: 10px; margin-bottom: 15px;">
+                                <h3 style="color: #b45309; margin: 0; font-size: 1.1rem;">🟡 Próximos Secados & Partos</h3>
+                                <span style="background: #fef3c7; color: #b45309; padding: 4px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: bold;" id="dash-count-secado">0</span>
+                            </div>
+                            <div id="dash-list-secado" style="font-size: 0.85rem; max-height: 200px; overflow-y: auto;">
+                                <p style="color: var(--text-muted); font-style: italic;">Escaneando rebaño...</p>
+                            </div>
+                        </div>
+
+                        <!-- Alertas de Destete (Becerros > 7 meses) -->
+                        <div style="background: white; border-radius: 12px; border: 1px solid var(--border-light); padding: 20px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
+                            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #fde047; padding-bottom: 10px; margin-bottom: 15px;">
+                                <h3 style="color: #a16207; margin: 0; font-size: 1.1rem;">🍼 Lotes Listos para Destete</h3>
+                                <span style="background: #fef9c3; color: #a16207; padding: 4px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: bold;" id="dash-count-destete">0</span>
+                            </div>
+                            <div id="dash-list-destete" style="font-size: 0.85rem; max-height: 200px; overflow-y: auto;">
+                                <p style="color: var(--text-muted); font-style: italic;">Escaneando rebaño...</p>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <!-- PANEL DERECHO: CALENDARIO SANITARIO OFICIAL -->
+                    <div style="background: white; border-radius: 12px; border: 1px solid var(--border-light); padding: 20px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
+                        <div style="border-bottom: 2px solid #bbf7d0; padding-bottom: 10px; margin-bottom: 15px;">
+                            <h3 style="color: var(--green-dark); margin: 0; font-size: 1.1rem;">📅 Calendario Sanitario Anual (Monagas)</h3>
+                            <p style="margin: 5px 0 0 0; font-size: 0.8rem; color: var(--text-muted);">Programa preventivo oficial de Agropecuaria ElbaLui.</p>
+                        </div>
+                        
+                        <div style="display: flex; flex-direction: column; gap: 12px;">
+                            
+                            <!-- Ciclo Aftosa -->
+                            <div style="background: #f8fafc; border-left: 4px solid #ef4444; padding: 12px; border-radius: 4px;">
+                                <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                                    <strong style="color: #1e293b; font-size: 0.9rem;">Vacunación Fiebre Aftosa & Rabia</strong>
+                                    <span style="font-size: 0.8rem; color: #ef4444; font-weight: bold;">Mayo y Noviembre</span>
+                                </div>
+                                <p style="margin: 0; font-size: 0.8rem; color: var(--text-muted);">Aplicación obligatoria (INSAI) a todo el rebaño. Se realiza junto con la vacuna antirrábica.</p>
+                            </div>
+
+                            <!-- Ciclo Reproductivo -->
+                            <div style="background: #f8fafc; border-left: 4px solid #3b82f6; padding: 12px; border-radius: 4px;">
+                                <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                                    <strong style="color: #1e293b; font-size: 0.9rem;">Vacuna Reproductiva (Leptospira)</strong>
+                                    <span style="font-size: 0.8rem; color: #3b82f6; font-weight: bold;">Antes de montas</span>
+                                </div>
+                                <p style="margin: 0; font-size: 0.8rem; color: var(--text-muted);">Aplicar a novillas pre-servicio y vacas vacías para prevenir abortos (Leptospirosis, IBR, BVD).</p>
+                            </div>
+
+                            <!-- Desparasitación -->
+                            <div style="background: #f8fafc; border-left: 4px solid #eab308; padding: 12px; border-radius: 4px;">
+                                <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                                    <strong style="color: #1e293b; font-size: 0.9rem;">Desparasitación y Vitaminas</strong>
+                                    <span style="font-size: 0.8rem; color: #eab308; font-weight: bold;">Entrada/Salida Lluvias</span>
+                                </div>
+                                <p style="margin: 0; font-size: 0.8rem; color: var(--text-muted);">Mautes, becerros y adultos. Uso de Ivermectina o Albendazol + Complejo ADE.</p>
+                            </div>
+
+                            <!-- Pruebas Especiales -->
+                            <div style="background: #f8fafc; border-left: 4px solid #8b5cf6; padding: 12px; border-radius: 4px;">
+                                <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                                    <strong style="color: #1e293b; font-size: 0.9rem;">Sangría (Brucelosis)</strong>
+                                    <span style="font-size: 0.8rem; color: #8b5cf6; font-weight: bold;">Anual</span>
+                                </div>
+                                <p style="margin: 0; font-size: 0.8rem; color: var(--text-muted);">Requisito para movilización y control de hato lechero sano.</p>
+                            </div>
+                            
+                        </div>
+                        <button onclick="switchTab('hato')" style="width: 100%; margin-top: 15px; background: white; border: 1px solid var(--green-primary); color: var(--green-dark); padding: 8px; border-radius: 6px; cursor: pointer; font-weight: 600;">Ir a Ejecutar Vacunación Masiva 💉</button>
+                    </div>
+
                 </div>
             </div>
 
