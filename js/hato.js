@@ -100,15 +100,8 @@ if (formMasivo) {
                     const docRef = doc(window.db, "animales", idDoc);
                     const docSnap = await getDoc(docRef);
                     if (docSnap.exists()) {
-                        const data = docSnap.data();
-                        let historial = data.historialSalud || []; // Arreglo interno para vacunas
-                        const saludActual = (data.salud && data.salud !== '🟢 Sano') ? data.salud : '🟢 Sano';
-                        
-                        let nuevoDetalle = `💉 Aplicado: ${vacunaStr}`;
-                        // Para no complicar la BD de momento, guardamos la info en un campo tipo string temporal si no existe historialSalud
-                        
                         batch.update(docRef, { 
-                            salud: `🟢 Sano (Vacunado: ${vacunaStr})` // Deja rastro visual rápido
+                            salud: `🟢 Sano (Vacunado: ${vacunaStr})`
                         });
                     }
                 }
@@ -127,7 +120,6 @@ if (formMasivo) {
                     
                     if (docSnap.exists()) {
                         const data = docSnap.data();
-                        // Solo procesa si es becerro/a
                         if (data.categoria.includes("Becerr")) {
                             let nuevaCat = (data.categoria === 'Becerra') ? 'Mauta' : 'Maute';
                             let historialPesos = data.historialPesos || [];
@@ -138,9 +130,6 @@ if (formMasivo) {
                                 peso: pesoPromedio,
                                 historialPesos: historialPesos
                             });
-                            
-                            // Nota: Actualizar a la madre con batch requiere una query previa que lo haría asíncrono y complejo dentro del loop batch simple, 
-                            // para destete masivo cambiaremos la cría. La madre se asume destetada.
                         }
                     }
                 }
@@ -224,10 +213,9 @@ window.cargarHato = function() {
             const textoPeso = a.peso ? `${a.peso} kg` : `<span style="color:#94a3b8;">S/P</span>`;
             const escapeStr = (val) => String(val || '').replace(/'/g, "\\'");
 
-            // CÁLCULO DE MOTOR DE TIEMPO
+            // CÁLCULO DE MOTOR DE TIEMPO PARA LA TABLA
             let textoTiempo = `<span style="color:#94a3b8;">-</span>`;
             
-            // 1. Si es gestante, buscar FEP (Fecha Estimada de Parto)
             if (a.estado === "Gestante" && a.historialReproductivo) {
                 let ultimaFep = null;
                 a.historialReproductivo.forEach(ev => {
@@ -240,11 +228,9 @@ window.cargarHato = function() {
                     else textoTiempo = `Faltan ${diasParaParto} días`;
                 }
             } 
-            // 2. Si es Becerro o Maute, calcular Edad
             else if (a.categoria.includes("Becerr") || a.categoria.includes("Maut")) {
                 let fechaNac = a.fechaNacimiento;
                 if (!fechaNac && a.historialPesos && a.historialPesos.length > 0) {
-                    // Tomar la primera fecha de registro si no hay nacimiento explícito
                     fechaNac = a.historialPesos[0].fecha;
                 }
                 if (fechaNac && fechaNac !== 'Registro inicial') {
@@ -273,6 +259,9 @@ window.cargarHato = function() {
 
         // Refrescar Filtro si estaba aplicado
         aplicarFiltroHato();
+
+        // ACTUALIZAR TORRE DE CONTROL (DASHBOARD)
+        actualizarDashboard(window.datosHatoCache);
 
         if (document.getElementById('kpi-total')) document.getElementById('kpi-total').innerText = total;
         if (document.getElementById('kpi-mautes')) document.getElementById('kpi-mautes').innerText = mautes;
@@ -507,10 +496,4 @@ if (formAnimal) {
                 categoria: document.getElementById('a-categoria').value, peso: pesoValor,
                 fechaNacimiento: document.getElementById('a-nacimiento').value || null,
                 historialPesos: pesoValor ? [{ fecha: new Date().toISOString().split('T')[0], peso: pesoValor }] : [],
-                historialReproductivo: [], padre: document.getElementById('a-padre').value.trim() || 'N/D', madre: document.getElementById('a-madre').value.trim() || 'N/D',
-                estado: document.getElementById('a-estado').value, salud: "🟢 Sano", fechaRegistro: serverTimestamp()
-            });
-            formAnimal.reset(); document.getElementById('modal-animal').style.display = 'none';
-        } catch (err) { alert("Error: " + err.message); } finally { btn.innerText = "Guardar Animal"; btn.disabled = false; }
-    });
-}
+                historialReproductivo: [], padre: document.getElementById('a-padre').value.trim() || 'N/D', madre: document.getElementById('a-madre
