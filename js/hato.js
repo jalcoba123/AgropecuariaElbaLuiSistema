@@ -37,7 +37,7 @@ window.eliminarAnimal = async function(idDoc, arete) {
     }
 };
 
-// 2. REGISTRO DE ANIMALES (PESO OPCIONAL)
+// 2. REGISTRO DE ANIMALES
 const formAnimal = document.getElementById('form-animal');
 if (formAnimal) {
     formAnimal.addEventListener('submit', async (e) => {
@@ -52,7 +52,6 @@ if (formAnimal) {
         const fincaDestino = fincaSelect ? fincaSelect.value : 'Agua Clara';
         const btn = formAnimal.querySelector('button[type="submit"]');
         
-        // Manejo de peso opcional
         const pesoInput = document.getElementById('a-peso').value.trim();
         const pesoValor = pesoInput !== '' ? Number(pesoInput) : null;
 
@@ -64,7 +63,7 @@ if (formAnimal) {
                 finca: fincaDestino,
                 arete: document.getElementById('a-arete').value.trim(),
                 categoria: document.getElementById('a-categoria').value,
-                peso: pesoValor, // Guarda el número o null si quedó vacío
+                peso: pesoValor,
                 padre: document.getElementById('a-padre').value.trim() || 'N/D',
                 madre: document.getElementById('a-madre').value.trim() || 'N/D',
                 estado: document.getElementById('a-estado').value,
@@ -97,16 +96,17 @@ window.cargarHato = function() {
 
     onSnapshot(q, (snapshot) => {
         tabla.innerHTML = '';
-        let total = 0, mautes = 0, gestantes = 0;
+        let total = 0, mautes = 0, gestantes = 0, becerros = 0;
 
         snapshot.forEach((documento) => {
             const a = documento.data();
             const idDoc = documento.id;
             total++;
+            
             if (a.categoria === "Lote ElbaLui (Maute)") mautes++;
+            if (a.categoria === "Becerro(a)") becerros++;
             if (a.estado === "Gestante") gestantes++;
 
-            // Formateo del peso en la tabla
             const textoPeso = (a.peso !== null && a.peso !== undefined && a.peso !== '') 
                 ? `${a.peso} kg` 
                 : `<span style="color: var(--text-muted); font-weight: normal;">S/P</span>`;
@@ -126,12 +126,12 @@ window.cargarHato = function() {
             `;
         });
 
-        // Contadores del Módulo Hato
+        // Contadores Módulo Hato
         if (document.getElementById('kpi-total')) document.getElementById('kpi-total').innerText = total;
         if (document.getElementById('kpi-mautes')) document.getElementById('kpi-mautes').innerText = mautes;
         if (document.getElementById('kpi-gestantes')) document.getElementById('kpi-gestantes').innerText = gestantes;
 
-        // Contadores de la Torre de Control
+        // Contadores Dashboard
         if (document.getElementById('dash-total-hato')) document.getElementById('dash-total-hato').innerText = total;
 
         if (total === 0) {
