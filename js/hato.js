@@ -52,9 +52,8 @@ if (formNovedad) {
     });
 }
 
-// 3. ABRIR EXPEDIENTE CLÍNICO, PESAJES Y REPRODUCCIÓN (👁️)
+// 3. ABRIR EXPEDIENTE CLÍNICO, REPRODUCCIÓN Y PESAJES (👁️)
 window.abrirFicha = async function(idDoc) {
-    // Guardar id actual en los formularios ocultos del modal
     document.getElementById('p-id-doc').value = idDoc;
     document.getElementById('form-nuevo-peso').style.display = 'none';
     document.getElementById('form-nuevo-servicio').style.display = 'none';
@@ -105,7 +104,7 @@ window.abrirFicha = async function(idDoc) {
                 if (ev.tipo === 'Servicio') {
                     detalle = `Toro/Pajuela: <strong>${ev.toro}</strong> | FEP Estimada: <strong style="color:var(--green-dark);">${ev.fep}</strong>`;
                 } else if (ev.tipo === 'Aborto') {
-                    detalle = `<span style="color:#dc2626; font-weight:bold;">⚠️ Aborto reportado. Estatus cambiado a Vacía y aislamiento preventivo.</span>`;
+                    detalle = `<span style="color:#dc2626; font-weight:bold;">⚠️ Aborto reportado. Estatus cambiado a Vacía.</span>`;
                 }
 
                 tbodyRepro.innerHTML += `
@@ -118,7 +117,7 @@ window.abrirFicha = async function(idDoc) {
             });
         }
 
-        // Renderizar Tabla de Pesajes y GDP
+        // Renderizar Historial de Pesos y GDP (RESTAURADO)
         const tbodyPesajes = document.getElementById('f-tabla-pesajes');
         tbodyPesajes.innerHTML = '';
         const historialPesos = a.historialPesos || [];
@@ -174,7 +173,6 @@ if (formNuevoServicio) {
         const fechaServicio = document.getElementById('s-fecha').value;
         const toro = document.getElementById('s-toro').value.trim() || 'N/D';
 
-        // Calcular Fecha Estimada de Parto (FEP) sumando 283 días
         const dServicio = new Date(fechaServicio);
         dServicio.setDate(dServicio.getDate() + 283);
         const fep = dServicio.toISOString().split('T')[0];
@@ -192,7 +190,6 @@ if (formNuevoServicio) {
                 fep: fep
             });
 
-            // Actualizar Firestore (Cambiar estado a Gestante automáticamente)
             await updateDoc(docRef, {
                 estado: 'Gestante',
                 historialReproductivo: historialRepro
@@ -200,7 +197,7 @@ if (formNuevoServicio) {
 
             formNuevoServicio.reset();
             document.getElementById('form-nuevo-servicio').style.display = 'none';
-            alert(`✅ Servicio registrado con éxito.\n📅 Fecha Estimada de Parto (FEP): ${fep}`);
+            alert(`✅ Servicio registrado con éxito.\n📅 FEP: ${fep}`);
             window.abrirFicha(idDoc);
         } catch (err) {
             alert("Error al registrar servicio: " + err.message);
@@ -228,7 +225,6 @@ if (formNuevoAborto) {
                 detalle: 'Aborto registrado'
             });
 
-            // Actualizar Firestore: Cambiar estatus a Vacía y añadir alerta de sanidad preventiva
             await updateDoc(docRef, {
                 estado: 'Vacía',
                 salud: '🔴 Aborto reciente (Aislar y testear)',
@@ -237,7 +233,7 @@ if (formNuevoAborto) {
 
             formNuevoAborto.reset();
             document.getElementById('form-nuevo-aborto').style.display = 'none';
-            alert("⚠️ Aborto registrado. La vaca pasó a estatus 'Vacía' y se añadió alerta sanitaria.");
+            alert("⚠️ Aborto registrado. Estatus cambiado a 'Vacía'.");
             window.abrirFicha(idDoc);
         } catch (err) {
             alert("Error al registrar aborto: " + err.message);
@@ -352,23 +348,18 @@ window.cargarHato = function() {
                     <td style="padding: 10px; border-bottom: 1px solid var(--border-light);">${a.estado}</td>
                     <td style="padding: 10px; border-bottom: 1px solid var(--border-light); font-weight: 600;">${saludActual}</td>
                     <td style="padding: 10px; border-bottom: 1px solid var(--border-light); text-align: center; white-space: nowrap;">
-                        <!-- Botón Ficha (👁️) -->
                         <button onclick="abrirFicha('${idDoc}')" style="background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; padding: 4px 8px; border-radius: 6px; cursor: pointer; margin-right: 4px;" title="Ver Expediente">👁️</button>
-                        <!-- Botón Novedad (🏥) -->
                         <button onclick="abrirModalNovedad('${idDoc}', '${escapeStr(a.arete)}', '${escapeStr(saludActual)}')" style="background: #fef2f2; color: #be123c; border: 1px solid #fecdd3; padding: 4px 8px; border-radius: 6px; cursor: pointer; margin-right: 4px;" title="Reportar Novedad">🏥</button>
-                        <!-- Botón Eliminar (🗑️) -->
                         <button onclick="eliminarAnimal('${idDoc}', '${escapeStr(a.arete)}')" style="background: #f1f5f9; color: #64748b; border: 1px solid #cbd5e1; padding: 4px 8px; border-radius: 6px; cursor: pointer;" title="Eliminar">🗑️</button>
                     </td>
                 </tr>
             `;
         });
 
-        // Actualizar KPIs superiores
         if (document.getElementById('kpi-total')) document.getElementById('kpi-total').innerText = total;
         if (document.getElementById('kpi-mautes')) document.getElementById('kpi-mautes').innerText = mautes;
         if (document.getElementById('kpi-gestantes')) document.getElementById('kpi-gestantes').innerText = gestantes;
 
-        // Renderizar Panel de Alertas Globales
         let htmlAlertas = "";
         let totalEnfermos = 0;
         
