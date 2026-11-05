@@ -19,7 +19,7 @@ function obtenerFincaActual() {
     return 'Agua Clara';
 }
 
-// 1. FUNCIÓN GLOBAL PARA ELIMINAR ANIMAL
+// 1. ELIMINAR ANIMAL
 window.eliminarAnimal = async function(idDoc, arete) {
     if (!window.db) {
         alert("⚠️ Error: Conexión con Firestore no inicializada.");
@@ -37,7 +37,7 @@ window.eliminarAnimal = async function(idDoc, arete) {
     }
 };
 
-// 2. REGISTRO DE ANIMALES (CON DIAGNÓSTICO DIRECTO)
+// 2. REGISTRO DE ANIMALES (PESO OPCIONAL)
 const formAnimal = document.getElementById('form-animal');
 if (formAnimal) {
     formAnimal.addEventListener('submit', async (e) => {
@@ -52,6 +52,10 @@ if (formAnimal) {
         const fincaDestino = fincaSelect ? fincaSelect.value : 'Agua Clara';
         const btn = formAnimal.querySelector('button[type="submit"]');
         
+        // Manejo de peso opcional
+        const pesoInput = document.getElementById('a-peso').value.trim();
+        const pesoValor = pesoInput !== '' ? Number(pesoInput) : null;
+
         btn.innerText = "Guardando..."; 
         btn.disabled = true;
 
@@ -60,14 +64,14 @@ if (formAnimal) {
                 finca: fincaDestino,
                 arete: document.getElementById('a-arete').value.trim(),
                 categoria: document.getElementById('a-categoria').value,
-                peso: Number(document.getElementById('a-peso').value),
+                peso: pesoValor, // Guarda el número o null si quedó vacío
                 padre: document.getElementById('a-padre').value.trim() || 'N/D',
                 madre: document.getElementById('a-madre').value.trim() || 'N/D',
                 estado: document.getElementById('a-estado').value,
                 fechaRegistro: serverTimestamp()
             });
 
-            alert("✅ ¡Animal registrado exitosamente en la base de datos!");
+            alert("✅ ¡Animal registrado exitosamente!");
             formAnimal.reset();
             document.getElementById('modal-animal').style.display = 'none';
 
@@ -81,7 +85,7 @@ if (formAnimal) {
     });
 }
 
-// 3. LECTURA EN TIEMPO REAL (ACTUALIZA HATO Y TORRE DE CONTROL)
+// 3. LECTURA EN TIEMPO REAL
 window.cargarHato = function() {
     const tabla = document.getElementById('tabla-hato-body');
     if (!tabla || !window.db) return;
@@ -102,13 +106,18 @@ window.cargarHato = function() {
             if (a.categoria === "Lote ElbaLui (Maute)") mautes++;
             if (a.estado === "Gestante") gestantes++;
 
+            // Formateo del peso en la tabla
+            const textoPeso = (a.peso !== null && a.peso !== undefined && a.peso !== '') 
+                ? `${a.peso} kg` 
+                : `<span style="color: var(--text-muted); font-weight: normal;">S/P</span>`;
+
             tabla.innerHTML += `
                 <tr>
                     <td style="padding: 10px; border-bottom: 1px solid var(--border-light);"><strong>${a.arete}</strong></td>
                     <td style="padding: 10px; border-bottom: 1px solid var(--border-light);">${a.categoria}</td>
                     <td style="padding: 10px; border-bottom: 1px solid var(--border-light);"><span style="font-size: 0.75rem; background: #e2e8f0; padding: 2px 6px; border-radius: 4px; font-weight: 600;">${a.finca || 'Agua Clara'}</span></td>
                     <td style="padding: 10px; border-bottom: 1px solid var(--border-light);">${a.padre} / ${a.madre}</td>
-                    <td style="padding: 10px; border-bottom: 1px solid var(--border-light); font-weight: bold; color: var(--green-dark);">${a.peso} kg</td>
+                    <td style="padding: 10px; border-bottom: 1px solid var(--border-light); font-weight: bold; color: var(--green-dark);">${textoPeso}</td>
                     <td style="padding: 10px; border-bottom: 1px solid var(--border-light);">${a.estado}</td>
                     <td style="padding: 10px; border-bottom: 1px solid var(--border-light); text-align: center;">
                         <button onclick="eliminarAnimal('${idDoc}', '${a.arete}')" style="background: #fee2e2; color: #dc2626; border: 1px solid #fca5a5; padding: 4px 8px; border-radius: 6px; cursor: pointer; font-size: 0.8rem;" title="Eliminar animal">🗑️</button>
