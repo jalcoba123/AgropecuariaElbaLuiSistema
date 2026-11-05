@@ -117,7 +117,7 @@ window.abrirFicha = async function(idDoc) {
             });
         }
 
-        // Renderizar Historial de Pesos y GDP (RESTAURADO)
+        // Renderizar Historial de Pesos y GDP
         const tbodyPesajes = document.getElementById('f-tabla-pesajes');
         tbodyPesajes.innerHTML = '';
         const historialPesos = a.historialPesos || [];
