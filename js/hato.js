@@ -9,7 +9,8 @@ import {
     doc,
     deleteDoc,
     updateDoc,
-    getDoc 
+    getDoc,
+    getDocs
 } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
 function obtenerFincaActual() {
@@ -74,14 +75,27 @@ window.abrirFicha = async function(idDoc) {
         document.getElementById('form-nuevo-repro').style.display = 'none';
         document.getElementById('form-nuevo-aborto').style.display = 'none';
         document.getElementById('form-cambio-categoria').style.display = 'none';
+        document.getElementById('form-destete').style.display = 'none';
         
-        // Asignar categoría actual si existe en las opciones, si no, dejar el default
+        // Reiniciar selectores de Parto
+        document.getElementById('r-tipo').value = 'Palpación (+ Preñada)';
+        document.getElementById('div-tercio').style.display = 'block';
+        document.getElementById('div-parto-cria').style.display = 'none';
+
+        // Mostrar botón DESTETAR solo si es cría
+        const btnDestete = document.getElementById('btn-show-destete');
+        if (a.categoria === 'Becerro' || a.categoria === 'Becerra') {
+            btnDestete.style.display = 'inline-block';
+        } else {
+            btnDestete.style.display = 'none';
+        }
+        
         const selCat = document.getElementById('c-nueva-categoria');
         if (a.categoria && Array.from(selCat.options).some(opt => opt.value === a.categoria)) {
             selCat.value = a.categoria;
         }
 
-        // Llenar Ficha
+        // Llenar Ficha Base
         document.getElementById('f-arete').innerText = a.arete || 'N/D';
         document.getElementById('f-categoria').innerText = a.categoria || 'N/D';
         document.getElementById('f-finca-tag').innerText = `FINCA: ${(a.finca || 'Agua Clara').toUpperCase()}`;
@@ -104,14 +118,15 @@ window.abrirFicha = async function(idDoc) {
             historialSalud.style.borderColor = '#a7f3d0';
         }
 
-        // Reproducción y Alerta de 2 Años
+        // Reproducción y Alertas Inteligentes (Secado / Infertilidad)
         const tbodyRepro = document.getElementById('f-tabla-repro');
-        const alertaFertilidad = document.getElementById('f-alerta-fertilidad');
-        alertaFertilidad.innerHTML = ''; 
+        const alertaRepro = document.getElementById('f-alerta-repro');
+        alertaRepro.innerHTML = ''; 
         tbodyRepro.innerHTML = '';
         
         const historialRepro = a.historialReproductivo || [];
-        let ultimaFechaClave = null; 
+        let ultimaFechaClave = null; // Para contar los 2 años vacía
+        let ultimaFep = null; // Para alerta de secado
 
         if (historialRepro.length === 0) {
             tbodyRepro.innerHTML = `<tr><td colspan="3" style="padding: 10px; text-align: center; color: var(--text-muted);">Sin eventos reproductivos registrados.</td></tr>`;
@@ -122,12 +137,17 @@ window.abrirFicha = async function(idDoc) {
                         ultimaFechaClave = ev.fecha;
                     }
                 }
+                if (ev.tipo === 'Palpación (+ Preñada)' && ev.fep !== '-') {
+                    if (!ultimaFep || new Date(ev.fep) > new Date(ultimaFep)) {
+                        ultimaFep = ev.fep;
+                    }
+                }
 
                 let detalle = ev.detalle || '-';
                 if (ev.tipo === 'Palpación (+ Preñada)') {
                     detalle = `Tercio: <strong>${ev.tercio}</strong> | FEP: <strong style="color:var(--green-dark);">${ev.fep}</strong>`;
                 } else if (ev.tipo === 'Aborto') {
-                    detalle = `<span style="color:#dc2626; font-weight:bold;">⚠️ Aborto. Estatus cambió a Vacía.</span>`;
+                    detalle = `<span style="color:#dc2626; font-weight:bold;">⚠️ Aborto registrado.</span>`;
                 }
 
                 tbodyRepro.innerHTML += `
@@ -140,10 +160,19 @@ window.abrirFicha = async function(idDoc) {
             });
         }
 
-        if (ultimaFechaClave && a.estado !== 'Gestante') {
+        // LÓGICA 1: Alerta 2 Años Vacía
+        if (ultimaFechaClave && a.estado !== 'Gestante' && a.categoria.includes("Vaca")) {
             const diffDias = Math.floor((new Date() - new Date(ultimaFechaClave)) / (1000 * 60 * 60 * 24));
             if (diffDias >= 730) { 
-                alertaFertilidad.innerHTML = `<div style="background: #fee2e2; border: 1px solid #fca5a5; color: #991b1b; padding: 12px; border-radius: 8px; margin-bottom: 15px; font-weight: bold; font-size: 0.85rem;">⚠️ ALERTA DE FERTILIDAD: Este vientre lleva ${diffDias} días vacía desde su último parto/aborto. Revise el caso o considere descarte.</div>`;
+                alertaRepro.innerHTML += `<div style="background: #fee2e2; border: 1px solid #fca5a5; color: #991b1b; padding: 12px; border-radius: 8px; margin-bottom: 10px; font-weight: bold; font-size: 0.85rem;">⚠️ ALERTA INFERTILIDAD: ${diffDias} días vacía desde su último parto/aborto. Considere descarte.</div>`;
+            }
+        }
+
+        // LÓGICA 2: Alerta de Secado (60 días pre-parto aprox)
+        if (a.estado === 'Gestante' && ultimaFep) {
+            const diffDiasParto = Math.ceil((new Date(ultimaFep) - new Date()) / (1000 * 60 * 60 * 24));
+            if (diffDiasParto <= 75 && diffDiasParto >= 0 && a.categoria === 'Vaca Ordeño') {
+                alertaRepro.innerHTML += `<div style="background: #fef3c7; border: 1px solid #fde68a; color: #b45309; padding: 12px; border-radius: 8px; margin-bottom: 10px; font-weight: bold; font-size: 0.85rem;">⚠️ ALERTA DE SECADO: Faltan ~${diffDiasParto} días para el parto estimado. Prepare la vaca para secado (Pase a "Vaca Seca").</div>`;
             }
         }
 
@@ -175,7 +204,6 @@ window.abrirFicha = async function(idDoc) {
                         gdpTexto = `<strong style="color: ${gdp >= 0 ? 'var(--green-dark)' : '#dc2626'};">${gdp > 0 ? '+' : ''}${gdp} kg/día</strong> (${diffKg > 0 ? '+' : ''}${diffKg} kg)`;
                     }
                 }
-
                 tbodyPesajes.innerHTML += `
                     <tr>
                         <td style="padding: 6px; border-bottom: 1px solid var(--border-light);">${actual.fecha || 'N/D'}</td>
@@ -193,7 +221,7 @@ window.abrirFicha = async function(idDoc) {
     }
 };
 
-// 4. CAMBIAR CATEGORÍA (ASCENSO)
+// 4. CAMBIAR CATEGORÍA MANUAL
 const formCambioCategoria = document.getElementById('form-cambio-categoria');
 if (formCambioCategoria) {
     formCambioCategoria.addEventListener('submit', async (e) => {
@@ -202,13 +230,13 @@ if (formCambioCategoria) {
         const nuevaCat = document.getElementById('c-nueva-categoria').value;
         try {
             await updateDoc(doc(window.db, "animales", idDoc), { categoria: nuevaCat });
-            alert("✅ Categoría / Etapa actualizada con éxito.");
+            alert("✅ Categoría / Etapa actualizada.");
             window.abrirFicha(idDoc);
         } catch (err) { alert("Error al actualizar categoría: " + err.message); }
     });
 }
 
-// 5. REGISTRAR EVENTO (PALPACIÓN / PARTO)
+// 5. REGISTRO 2 EN 1 (PARTO AUTOMATIZADO)
 const formNuevoRepro = document.getElementById('form-nuevo-repro');
 if (formNuevoRepro) {
     formNuevoRepro.addEventListener('submit', async (e) => {
@@ -225,6 +253,7 @@ if (formNuevoRepro) {
             
             let fep = '-';
             let nuevoEstado = data.estado;
+            let nuevaCat = data.categoria;
             let detalle = '';
             let tercioStr = '-';
 
@@ -243,8 +272,38 @@ if (formNuevoRepro) {
                 detalle = 'La vaca se encontró vacía al palpar.';
             } 
             else if (tipoEvento === 'Parto') {
-                nuevoEstado = 'Vacía'; 
+                nuevoEstado = 'Vacía'; // Ciclo reproductivo reiniciado
+                if (data.categoria === 'Novilla' || data.categoria === 'Vaca Seca / Escampa') {
+                    nuevaCat = 'Vaca Ordeño'; // Al parir, pasa a lechería
+                }
                 detalle = 'Parto exitoso registrado.';
+
+                // MAGIA: CREAR CRÍA AUTOMÁTICAMENTE
+                const areteCria = document.getElementById('r-cria-arete').value.trim();
+                const sexoCria = document.getElementById('r-cria-sexo').value;
+                const pesoCriaInput = document.getElementById('r-cria-peso').value;
+                const pesoCria = pesoCriaInput ? Number(pesoCriaInput) : null;
+                
+                if (areteCria) {
+                    detalle += ` Nacimiento Cría: ${areteCria} (${sexoCria}).`;
+                    try {
+                        await addDoc(collection(window.db, "animales"), {
+                            finca: data.finca || 'Agua Clara',
+                            arete: areteCria,
+                            categoria: sexoCria,
+                            peso: pesoCria,
+                            historialPesos: pesoCria ? [{ fecha: fecha, peso: pesoCria }] : [],
+                            historialReproductivo: [],
+                            padre: 'N/D',
+                            madre: data.arete || 'N/D',
+                            estado: 'Activo/Creciendo',
+                            salud: "🟢 Sano",
+                            fechaRegistro: serverTimestamp()
+                        });
+                    } catch(err) {
+                        console.error("Error cría automática: ", err);
+                    }
+                }
             }
 
             historialRepro.push({
@@ -255,16 +314,71 @@ if (formNuevoRepro) {
                 detalle: detalle
             });
 
-            await updateDoc(docRef, { estado: nuevoEstado, historialReproductivo: historialRepro });
+            await updateDoc(docRef, { estado: nuevoEstado, categoria: nuevaCat, historialReproductivo: historialRepro });
             document.getElementById('form-nuevo-repro').style.display = 'none';
-            alert(`✅ Evento registrado. El estatus de la vaca cambió a: ${nuevoEstado}`);
+            alert(`✅ Evento guardado.`);
             window.abrirFicha(idDoc);
 
         } catch (err) { alert("Error reproductivo: " + err.message); }
     });
 }
 
-// 6. REGISTRAR ABORTO
+// 6. REGISTRAR DESTETE (KPI MADRE + ASCENSO CRÍA)
+const formDestete = document.getElementById('form-destete');
+if (formDestete) {
+    formDestete.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const idDoc = document.getElementById('p-id-doc').value;
+        const fechaDestete = document.getElementById('d-fecha').value;
+        const pesoDestete = Number(document.getElementById('d-peso').value);
+
+        try {
+            const docRef = doc(window.db, "animales", idDoc);
+            const docSnap = await getDoc(docRef);
+            const data = docSnap.data();
+
+            // 1. Ascender cría a Maute/Mauta
+            let nuevaCat = (data.categoria === 'Becerra') ? 'Mauta' : 'Maute';
+            let historialPesos = data.historialPesos || [];
+            historialPesos.push({ fecha: fechaDestete, peso: pesoDestete });
+
+            await updateDoc(docRef, {
+                categoria: nuevaCat,
+                peso: pesoDestete,
+                historialPesos: historialPesos
+            });
+
+            // 2. Anotar récord a la madre (Si está registrada)
+            if (data.madre && data.madre !== 'N/D') {
+                const madreQuery = query(collection(window.db, "animales"), where("finca", "==", data.finca), where("arete", "==", data.madre));
+                const madreSnapshot = await getDocs(madreQuery);
+                
+                if (!madreSnapshot.empty) {
+                    const madreDoc = madreSnapshot.docs[0];
+                    const madreData = madreDoc.data();
+                    let madreHistorial = madreData.historialReproductivo || [];
+                    
+                    madreHistorial.push({
+                        tipo: '🏅 Destete de Cría',
+                        fecha: fechaDestete,
+                        detalle: `Destetó a su cría (${data.arete}) con peso de ${pesoDestete} Kg.`
+                    });
+                    
+                    await updateDoc(doc(window.db, "animales", madreDoc.id), {
+                        historialReproductivo: madreHistorial
+                    });
+                }
+            }
+
+            alert(`✅ Destete completado. La cría pasó a ${nuevaCat} y el peso fue registrado.`);
+            document.getElementById('form-destete').style.display = 'none';
+            window.abrirFicha(idDoc);
+
+        } catch (err) { alert("Error al destetar: " + err.message); }
+    });
+}
+
+// 7. REGISTRAR ABORTO
 const formNuevoAborto = document.getElementById('form-nuevo-aborto');
 if (formNuevoAborto) {
     formNuevoAborto.addEventListener('submit', async (e) => {
@@ -293,7 +407,7 @@ if (formNuevoAborto) {
     });
 }
 
-// 7. REGISTRAR PESAJE
+// 8. REGISTRAR PESAJE
 const formNuevoPeso = document.getElementById('form-nuevo-peso');
 if (formNuevoPeso) {
     formNuevoPeso.addEventListener('submit', async (e) => {
@@ -318,7 +432,7 @@ if (formNuevoPeso) {
     });
 }
 
-// 8. REGISTRO NUEVO ANIMAL
+// 9. REGISTRO NUEVO ANIMAL MANUAL
 const formAnimal = document.getElementById('form-animal');
 if (formAnimal) {
     formAnimal.addEventListener('submit', async (e) => {
@@ -349,7 +463,7 @@ if (formAnimal) {
     });
 }
 
-// 9. LECTURA EN TIEMPO REAL
+// 10. LECTURA EN TIEMPO REAL
 window.cargarHato = function() {
     const tabla = document.getElementById('tabla-hato-body');
     const panelAlertas = document.getElementById('panel-alertas');
@@ -371,7 +485,6 @@ window.cargarHato = function() {
             const saludActual = a.salud || "🟢 Sano";
             
             total++;
-            // AHORA CUENTA MAUTES MACHOS, MAUTAS HEMBRAS, O SI TIENEN EL TEXTO VIEJO DE "Lote ElbaLui"
             if (a.categoria === "Maute" || a.categoria === "Mauta" || a.categoria === "Lote ElbaLui (Maute)") {
                 mautes++;
             }
