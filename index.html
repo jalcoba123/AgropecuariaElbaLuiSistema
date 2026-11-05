@@ -205,7 +205,6 @@
     <div id="modal-ficha" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 1000; padding: 20px;">
         <div style="background: white; padding: 24px; border-radius: 12px; width: 100%; max-width: 600px; max-height: 85vh; overflow-y: auto;">
             
-            <!-- CAMPO INVISIBLE AGREGADO AQUÍ -->
             <input type="hidden" id="p-id-doc">
 
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 2px solid var(--border-light); padding-bottom: 10px;">
@@ -219,7 +218,22 @@
             <!-- DATOS BASE -->
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; background: #f8fafc; padding: 12px; border-radius: 8px; margin-bottom: 15px; font-size: 0.85rem;">
                 <div><strong>Arete / ID:</strong> <span id="f-arete">-</span></div>
-                <div><strong>Categoría:</strong> <span id="f-categoria">-</span></div>
+                <div>
+                    <strong>Categoría:</strong> <span id="f-categoria">-</span> 
+                    <button type="button" onclick="document.getElementById('form-cambio-categoria').style.display='flex'" style="background:none; border:none; cursor:pointer; margin-left: 5px;" title="Cambiar Etapa (Ascenso)">✏️</button>
+                    <!-- Formulario oculto para cambiar etapa -->
+                    <form id="form-cambio-categoria" style="display:none; margin-top: 5px; gap: 5px;">
+                        <select id="c-nueva-categoria" style="padding:4px; border: 1px solid var(--border-light); border-radius:4px; font-size: 0.8rem;">
+                            <option value="Becerro(a)">Becerro / Becerra</option>
+                            <option value="Lote ElbaLui (Maute)">Lote ElbaLui (Maute)</option>
+                            <option value="Novilla">Novilla</option>
+                            <option value="Vaca Ordeño">Vaca en Ordeño</option>
+                            <option value="Vaca Seca / Escampa">Vaca Seca / Escampa</option>
+                            <option value="Toro Reproductor">Toro Reproductor</option>
+                        </select>
+                        <button type="submit" style="background: var(--green-primary); color: white; border: none; border-radius: 4px; padding: 4px 8px; font-size: 0.75rem; cursor: pointer;">Guardar</button>
+                    </form>
+                </div>
                 <div><strong>Padre:</strong> <span id="f-padre">-</span></div>
                 <div><strong>Madre:</strong> <span id="f-madre">-</span></div>
                 <div><strong>Estatus Actual:</strong> <span id="f-estado" style="font-weight: bold; color: var(--green-dark);">-</span></div>
@@ -231,23 +245,41 @@
                 Sin novedades médicas.
             </div>
 
-            <!-- SECCIÓN REPRODUCCIÓN & ABORTOS -->
+            <!-- SECCIÓN REPRODUCCIÓN & PALPACIONES -->
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                <h4 style="color: var(--green-dark); font-size: 0.9rem; margin: 0;">🍼 Historial Reproductivo & Servicios</h4>
+                <h4 style="color: var(--green-dark); font-size: 0.9rem; margin: 0;">🍼 Reproducción & Palpaciones</h4>
                 <div>
-                    <button type="button" onclick="document.getElementById('form-nuevo-servicio').style.display='block'; document.getElementById('form-nuevo-aborto').style.display='none';" style="background: #0284c7; color: white; border: none; padding: 4px 10px; border-radius: 4px; font-size: 0.75rem; cursor: pointer; margin-right: 4px;">+ Registrar Servicio</button>
-                    <button type="button" onclick="document.getElementById('form-nuevo-aborto').style.display='block'; document.getElementById('form-nuevo-servicio').style.display='none';" style="background: #dc2626; color: white; border: none; padding: 4px 10px; border-radius: 4px; font-size: 0.75rem; cursor: pointer;">⚠️ Registrar Aborto</button>
+                    <button type="button" onclick="document.getElementById('form-nuevo-repro').style.display='block'; document.getElementById('form-nuevo-aborto').style.display='none';" style="background: #0284c7; color: white; border: none; padding: 4px 10px; border-radius: 4px; font-size: 0.75rem; cursor: pointer; margin-right: 4px;">+ Registrar Evento</button>
+                    <button type="button" onclick="document.getElementById('form-nuevo-aborto').style.display='block'; document.getElementById('form-nuevo-repro').style.display='none';" style="background: #dc2626; color: white; border: none; padding: 4px 10px; border-radius: 4px; font-size: 0.75rem; cursor: pointer;">⚠️ Aborto</button>
                 </div>
             </div>
 
-            <!-- Formulario Oculto: Registrar Servicio -->
-            <form id="form-nuevo-servicio" style="display: none; background: #e0f2fe; padding: 10px; border-radius: 8px; margin-bottom: 10px; font-size: 0.85rem;">
-                <h5 style="color: #0369a1; margin: 0 0 6px 0;">Registrar Monta / Inseminación</h5>
+            <!-- Contenedor para Alerta de 2 Años Vacía -->
+            <div id="f-alerta-fertilidad"></div>
+
+            <!-- Formulario Oculto: Registrar Palpación / Parto -->
+            <form id="form-nuevo-repro" style="display: none; background: #e0f2fe; padding: 10px; border-radius: 8px; margin-bottom: 10px; font-size: 0.85rem;">
+                <h5 style="color: #0369a1; margin: 0 0 6px 0;">Registrar Palpación o Parto</h5>
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px;">
-                    <div><label>Fecha de Servicio</label><input type="date" id="s-fecha" required style="width:100%; padding:6px; border:1px solid #bae6fd; border-radius:4px;"></div>
-                    <div><label>Toro / Pajuela ID</label><input type="text" id="s-toro" placeholder="Ej. Brahman 05" style="width:100%; padding:6px; border:1px solid #bae6fd; border-radius:4px;"></div>
+                    <div><label>Fecha de Evaluación</label><input type="date" id="r-fecha" required style="width:100%; padding:6px; border:1px solid #bae6fd; border-radius:4px;"></div>
+                    <div>
+                        <label>Resultado / Evento</label>
+                        <select id="r-tipo" required style="width:100%; padding:6px; border:1px solid #bae6fd; border-radius:4px;" onchange="document.getElementById('div-tercio').style.display = this.value === 'Palpación (+ Preñada)' ? 'block' : 'none'">
+                            <option value="Palpación (+ Preñada)">Palpación (+ Preñada)</option>
+                            <option value="Palpación (- Vacía)">Palpación (- Vacía)</option>
+                            <option value="Parto">Nacimiento / Parto</option>
+                        </select>
+                    </div>
                 </div>
-                <button type="submit" style="background: #0284c7; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 0.8rem;">Guardar y Calcular Parto (FEP)</button>
+                <div id="div-tercio" style="margin-bottom: 8px;">
+                    <label>Tercio de Gestación (Aprox)</label>
+                    <select id="r-tercio" style="width:100%; padding:6px; border:1px solid #bae6fd; border-radius:4px;">
+                        <option value="1">1er Tercio (1 a 3 meses) -> Faltan ~7 meses</option>
+                        <option value="2">2do Tercio (4 a 6 meses) -> Faltan ~4 meses</option>
+                        <option value="3">3er Tercio (7 a 9 meses) -> Faltan ~1 mes</option>
+                    </select>
+                </div>
+                <button type="submit" style="background: #0284c7; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 0.8rem;">Guardar Evento Reproductivo</button>
             </form>
 
             <!-- Formulario Oculto: Registrar Aborto -->
@@ -269,7 +301,7 @@
                         </tr>
                     </thead>
                     <tbody id="f-tabla-repro">
-                        <tr><td colspan="3" style="padding: 10px; text-align: center; color: var(--text-muted);">Sin eventos reproductivos registrados.</td></tr>
+                        <tr><td colspan="3" style="padding: 10px; text-align: center; color: var(--text-muted);">Sin eventos reproductivos.</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -298,7 +330,7 @@
                         </tr>
                     </thead>
                     <tbody id="f-tabla-pesajes">
-                        <tr><td colspan="3" style="padding: 10px; text-align: center; color: var(--text-muted);">Sin pesajes históricos registrados.</td></tr>
+                        <tr><td colspan="3" style="padding: 10px; text-align: center; color: var(--text-muted);">Sin pesajes históricos.</td></tr>
                     </tbody>
                 </table>
             </div>
