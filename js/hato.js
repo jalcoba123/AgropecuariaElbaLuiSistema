@@ -1,5 +1,14 @@
 // js/hato.js
-import { collection, addDoc, query, where, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+import { 
+    collection, 
+    addDoc, 
+    query, 
+    where, 
+    onSnapshot, 
+    serverTimestamp,
+    doc,
+    deleteDoc 
+} from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
 function obtenerFincaActual() {
     const tag = document.getElementById('finca-tag');
@@ -10,7 +19,20 @@ function obtenerFincaActual() {
     return 'Agua Clara';
 }
 
-// 1. Registro de animales desde el modal
+// 1. FUNCIÓN GLOBAL PARA ELIMINAR ANIMAL
+window.eliminarAnimal = async function(idDoc, arete) {
+    const confirmacion = confirm(`¿Estás seguro de eliminar el animal con Arete "${arete}"?\nEsta acción lo borrará permanentemente de la base de datos.`);
+    
+    if (confirmacion && window.db) {
+        try {
+            await deleteDoc(doc(window.db, "animales", idDoc));
+        } catch (error) {
+            alert("Error al eliminar el registro: " + error.message);
+        }
+    }
+};
+
+// 2. REGISTRO DE ANIMALES
 const formAnimal = document.getElementById('form-animal');
 if (formAnimal) {
     formAnimal.addEventListener('submit', async (e) => {
@@ -43,26 +65,23 @@ if (formAnimal) {
     });
 }
 
-// 2. Lectura en tiempo real (Actualiza Hato y Torre de Control simultáneamente)
+// 3. LECTURA EN TIEMPO REAL CON BOTÓN DE ELIMINACIÓN
 window.cargarHato = function() {
     const tabla = document.getElementById('tabla-hato-body');
     if (!tabla || !window.db) return;
 
     const fincaActiva = obtenerFincaActual();
-    let q;
-
-    if (fincaActiva === 'Global') {
-        q = query(collection(window.db, "animales"));
-    } else {
-        q = query(collection(window.db, "animales"), where("finca", "==", fincaActiva));
-    }
+    let q = (fincaActiva === 'Global')
+        ? query(collection(window.db, "animales"))
+        : query(collection(window.db, "animales"), where("finca", "==", fincaActiva));
 
     onSnapshot(q, (snapshot) => {
         tabla.innerHTML = '';
         let total = 0, mautes = 0, gestantes = 0;
 
-        snapshot.forEach((doc) => {
-            const a = doc.data();
+        snapshot.forEach((documento) => {
+            const a = documento.data();
+            const idDoc = documento.id; // ID único generado por Firebase
             total++;
             if (a.categoria === "Lote ElbaLui (Maute)") mautes++;
             if (a.estado === "Gestante") gestantes++;
@@ -75,23 +94,23 @@ window.cargarHato = function() {
                     <td style="padding: 10px; border-bottom: 1px solid var(--border-light);">${a.padre} / ${a.madre}</td>
                     <td style="padding: 10px; border-bottom: 1px solid var(--border-light); font-weight: bold; color: var(--green-dark);">${a.peso} kg</td>
                     <td style="padding: 10px; border-bottom: 1px solid var(--border-light);">${a.estado}</td>
+                    <td style="padding: 10px; border-bottom: 1px solid var(--border-light); text-align: center;">
+                        <button onclick="eliminarAnimal('${idDoc}', '${a.arete}')" style="background: #fee2e2; color: #dc2626; border: 1px solid #fca5a5; padding: 4px 8px; border-radius: 6px; cursor: pointer; font-size: 0.8rem;" title="Eliminar animal">🗑️</button>
+                    </td>
                 </tr>
             `;
         });
 
-        // Actualizar contadores del módulo Hato
+        // Contadores Hato
         if (document.getElementById('kpi-total')) document.getElementById('kpi-total').innerText = total;
         if (document.getElementById('kpi-mautes')) document.getElementById('kpi-mautes').innerText = mautes;
         if (document.getElementById('kpi-gestantes')) document.getElementById('kpi-gestantes').innerText = gestantes;
 
-        // Actualizar contadores de la Torre de Control (Dashboard)
+        // Contadores Dashboard
         if (document.getElementById('dash-total-hato')) document.getElementById('dash-total-hato').innerText = total;
-        if (document.getElementById('dash-palma-ha')) {
-            document.getElementById('dash-palma-ha').innerText = (fincaActiva === 'El Sur') ? '0 ha' : '25 ha';
-        }
 
         if (total === 0) {
-            tabla.innerHTML = `<tr><td colspan="6" style="padding: 15px; text-align: center; color: var(--text-muted);">Sin animales registrados (${fincaActiva}).</td></tr>`;
+            tabla.innerHTML = `<tr><td colspan="7" style="padding: 15px; text-align: center; color: var(--text-muted);">Sin animales registrados (${fincaActiva}).</td></tr>`;
         }
     }, (err) => console.error("Error leyendo Hato:", err));
-};
+};deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
