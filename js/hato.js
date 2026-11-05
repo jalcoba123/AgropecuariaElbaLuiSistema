@@ -21,26 +21,39 @@ function obtenerFincaActual() {
 
 // 1. FUNCIÓN GLOBAL PARA ELIMINAR ANIMAL
 window.eliminarAnimal = async function(idDoc, arete) {
+    if (!window.db) {
+        alert("⚠️ Error: Conexión con Firestore no inicializada.");
+        return;
+    }
     const confirmacion = confirm(`¿Estás seguro de eliminar el animal con Arete "${arete}"?\nEsta acción lo borrará permanentemente de la base de datos.`);
     
-    if (confirmacion && window.db) {
+    if (confirmacion) {
         try {
             await deleteDoc(doc(window.db, "animales", idDoc));
+            alert("✅ Animal eliminado con éxito.");
         } catch (error) {
-            alert("Error al eliminar el registro: " + error.message);
+            alert("⚠️ Error al eliminar en Firestore: " + error.message);
         }
     }
 };
 
-// 2. REGISTRO DE ANIMALES
+// 2. REGISTRO DE ANIMALES (CON DIAGNÓSTICO DIRECTO)
 const formAnimal = document.getElementById('form-animal');
 if (formAnimal) {
     formAnimal.addEventListener('submit', async (e) => {
         e.preventDefault();
+        
+        if (!window.db) {
+            alert("⚠️ Error: Base de datos no conectada. Espera un segundo e intenta de nuevo.");
+            return;
+        }
+
         const fincaSelect = document.getElementById('a-finca-select');
         const fincaDestino = fincaSelect ? fincaSelect.value : 'Agua Clara';
         const btn = formAnimal.querySelector('button[type="submit"]');
-        btn.innerText = "Guardando..."; btn.disabled = true;
+        
+        btn.innerText = "Guardando..."; 
+        btn.disabled = true;
 
         try {
             await addDoc(collection(window.db, "animales"), {
@@ -54,18 +67,21 @@ if (formAnimal) {
                 fechaRegistro: serverTimestamp()
             });
 
+            alert("✅ ¡Animal registrado exitosamente en la base de datos!");
             formAnimal.reset();
             document.getElementById('modal-animal').style.display = 'none';
+
         } catch (err) {
+            alert("⚠️ ERROR DE FIRESTORE AL GUARDAR:\n\n" + err.message);
             console.error("Error al guardar animal:", err);
-            alert("Error al guardar en base de datos: " + err.message);
         } finally {
-            btn.innerText = "Guardar en Inventario"; btn.disabled = false;
+            btn.innerText = "Guardar en Inventario"; 
+            btn.disabled = false;
         }
     });
 }
 
-// 3. LECTURA EN TIEMPO REAL CON BOTÓN DE ELIMINACIÓN
+// 3. LECTURA EN TIEMPO REAL (ACTUALIZA HATO Y TORRE DE CONTROL)
 window.cargarHato = function() {
     const tabla = document.getElementById('tabla-hato-body');
     if (!tabla || !window.db) return;
@@ -81,7 +97,7 @@ window.cargarHato = function() {
 
         snapshot.forEach((documento) => {
             const a = documento.data();
-            const idDoc = documento.id; // ID único generado por Firebase
+            const idDoc = documento.id;
             total++;
             if (a.categoria === "Lote ElbaLui (Maute)") mautes++;
             if (a.estado === "Gestante") gestantes++;
@@ -101,16 +117,16 @@ window.cargarHato = function() {
             `;
         });
 
-        // Contadores Hato
+        // Contadores del Módulo Hato
         if (document.getElementById('kpi-total')) document.getElementById('kpi-total').innerText = total;
         if (document.getElementById('kpi-mautes')) document.getElementById('kpi-mautes').innerText = mautes;
         if (document.getElementById('kpi-gestantes')) document.getElementById('kpi-gestantes').innerText = gestantes;
 
-        // Contadores Dashboard
+        // Contadores de la Torre de Control
         if (document.getElementById('dash-total-hato')) document.getElementById('dash-total-hato').innerText = total;
 
         if (total === 0) {
             tabla.innerHTML = `<tr><td colspan="7" style="padding: 15px; text-align: center; color: var(--text-muted);">Sin animales registrados (${fincaActiva}).</td></tr>`;
         }
-    }, (err) => console.error("Error leyendo Hato:", err));
-};deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+    }, (err) => console.error("Error leyendo Firestore:", err));
+};
