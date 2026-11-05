@@ -130,10 +130,11 @@
                                     <th style="padding: 10px; border-bottom: 1px solid var(--border-light);">Padres</th>
                                     <th style="padding: 10px; border-bottom: 1px solid var(--border-light);">Peso (Kg)</th>
                                     <th style="padding: 10px; border-bottom: 1px solid var(--border-light);">Estado</th>
+                                    <th style="padding: 10px; border-bottom: 1px solid var(--border-light); text-align: center;">Acción</th>
                                 </tr>
                             </thead>
                             <tbody id="tabla-hato-body">
-                                <tr><td colspan="6" style="padding: 15px; text-align: center; color: var(--text-muted);">Cargando base de datos...</td></tr>
+                                <tr><td colspan="7" style="padding: 15px; text-align: center; color: var(--text-muted);">Cargando base de datos...</td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -165,6 +166,7 @@
                 <div class="form-field"><label>Arete / ID</label><input type="text" id="a-arete" required></div>
                 <div class="form-field"><label>Categoría</label>
                     <select id="a-categoria">
+                        <option value="Becerro(a)">Becerro / Becerra</option>
                         <option value="Vaca Ordeño">Vaca en Ordeño</option>
                         <option value="Lote ElbaLui (Maute)">Lote ElbaLui (Maute)</option>
                         <option value="Vaca Seca / Escampa">Vaca Seca / Escampa</option>
@@ -189,7 +191,7 @@
         </div>
     </div>
 
-    <!-- SCRIPT PRINCIPAL DEL SISTEMA (FIREBASE + NAVEGACIÓN UI) -->
+    <!-- SCRIPT PRINCIPAL DEL SISTEMA -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
         import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
