@@ -52,10 +52,13 @@ if (formNovedad) {
     });
 }
 
-// 3. ABRIR EXPEDIENTE CLÍNICO & PESAJES (👁️)
+// 3. ABRIR EXPEDIENTE CLÍNICO, PESAJES Y REPRODUCCIÓN (👁️)
 window.abrirFicha = async function(idDoc) {
+    // Guardar id actual en los formularios ocultos del modal
     document.getElementById('p-id-doc').value = idDoc;
     document.getElementById('form-nuevo-peso').style.display = 'none';
+    document.getElementById('form-nuevo-servicio').style.display = 'none';
+    document.getElementById('form-nuevo-aborto').style.display = 'none';
 
     try {
         const docRef = doc(window.db, "animales", idDoc);
@@ -72,7 +75,7 @@ window.abrirFicha = async function(idDoc) {
         document.getElementById('f-finca-tag').innerText = `FINCA: ${(a.finca || 'Agua Clara').toUpperCase()}`;
         document.getElementById('f-padre').innerText = a.padre || 'N/D';
         document.getElementById('f-madre').innerText = a.madre || 'N/D';
-        document.getElementById('f-estado').innerText = a.estado;
+        document.getElementById('f-estado').innerText = a.estado || 'Activo';
 
         // Salud
         const historialSalud = document.getElementById('f-historial-salud');
@@ -89,26 +92,50 @@ window.abrirFicha = async function(idDoc) {
             historialSalud.style.borderColor = '#a7f3d0';
         }
 
+        // Renderizar Historial Reproductivo
+        const tbodyRepro = document.getElementById('f-tabla-repro');
+        tbodyRepro.innerHTML = '';
+        const historialRepro = a.historialReproductivo || [];
+
+        if (historialRepro.length === 0) {
+            tbodyRepro.innerHTML = `<tr><td colspan="3" style="padding: 10px; text-align: center; color: var(--text-muted);">Sin eventos reproductivos registrados.</td></tr>`;
+        } else {
+            historialRepro.forEach((ev) => {
+                let detalle = ev.detalle || '-';
+                if (ev.tipo === 'Servicio') {
+                    detalle = `Toro/Pajuela: <strong>${ev.toro}</strong> | FEP Estimada: <strong style="color:var(--green-dark);">${ev.fep}</strong>`;
+                } else if (ev.tipo === 'Aborto') {
+                    detalle = `<span style="color:#dc2626; font-weight:bold;">⚠️ Aborto reportado. Estatus cambiado a Vacía y aislamiento preventivo.</span>`;
+                }
+
+                tbodyRepro.innerHTML += `
+                    <tr>
+                        <td style="padding: 6px; border-bottom: 1px solid var(--border-light); font-weight:bold;">${ev.tipo}</td>
+                        <td style="padding: 6px; border-bottom: 1px solid var(--border-light);">${ev.fecha}</td>
+                        <td style="padding: 6px; border-bottom: 1px solid var(--border-light);">${detalle}</td>
+                    </tr>
+                `;
+            });
+        }
+
         // Renderizar Tabla de Pesajes y GDP
         const tbodyPesajes = document.getElementById('f-tabla-pesajes');
         tbodyPesajes.innerHTML = '';
-        const historial = a.historialPesos || [];
+        const historialPesos = a.historialPesos || [];
 
-        if (historial.length === 0 && a.peso) {
-            // Si no hay historial pero tiene peso inicial guardado
-            historial.push({ fecha: 'Registro inicial', peso: a.peso });
+        if (historialPesos.length === 0 && a.peso) {
+            historialPesos.push({ fecha: 'Registro inicial', peso: a.peso });
         }
 
-        if (historial.length === 0) {
+        if (historialPesos.length === 0) {
             tbodyPesajes.innerHTML = `<tr><td colspan="3" style="padding: 10px; text-align: center; color: var(--text-muted);">Sin pesajes registrados.</td></tr>`;
         } else {
-            // Ordenar por fecha cronológica si es posible
-            for (let i = 0; i < historial.length; i++) {
-                const actual = historial[i];
+            for (let i = 0; i < historialPesos.length; i++) {
+                const actual = historialPesos[i];
                 let gdpTexto = '<span style="color: var(--text-muted);">-</span>';
 
                 if (i > 0) {
-                    const anterior = historial[i - 1];
+                    const anterior = historialPesos[i - 1];
                     const diffKg = actual.peso - anterior.peso;
                     
                     if (anterior.fecha && actual.fecha && anterior.fecha !== 'Registro inicial' && actual.fecha !== 'Registro inicial') {
@@ -138,7 +165,87 @@ window.abrirFicha = async function(idDoc) {
     }
 };
 
-// Registrar un nuevo pesaje desde el expediente
+// Registrar Servicio (Monta / IA)
+const formNuevoServicio = document.getElementById('form-nuevo-servicio');
+if (formNuevoServicio) {
+    formNuevoServicio.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const idDoc = document.getElementById('p-id-doc').value;
+        const fechaServicio = document.getElementById('s-fecha').value;
+        const toro = document.getElementById('s-toro').value.trim() || 'N/D';
+
+        // Calcular Fecha Estimada de Parto (FEP) sumando 283 días
+        const dServicio = new Date(fechaServicio);
+        dServicio.setDate(dServicio.getDate() + 283);
+        const fep = dServicio.toISOString().split('T')[0];
+
+        try {
+            const docRef = doc(window.db, "animales", idDoc);
+            const docSnap = await getDoc(docRef);
+            const data = docSnap.data();
+
+            let historialRepro = data.historialReproductivo || [];
+            historialRepro.push({
+                tipo: 'Servicio',
+                fecha: fechaServicio,
+                toro: toro,
+                fep: fep
+            });
+
+            // Actualizar Firestore (Cambiar estado a Gestante automáticamente)
+            await updateDoc(docRef, {
+                estado: 'Gestante',
+                historialReproductivo: historialRepro
+            });
+
+            formNuevoServicio.reset();
+            document.getElementById('form-nuevo-servicio').style.display = 'none';
+            alert(`✅ Servicio registrado con éxito.\n📅 Fecha Estimada de Parto (FEP): ${fep}`);
+            window.abrirFicha(idDoc);
+        } catch (err) {
+            alert("Error al registrar servicio: " + err.message);
+        }
+    });
+}
+
+// Registrar Aborto
+const formNuevoAborto = document.getElementById('form-nuevo-aborto');
+if (formNuevoAborto) {
+    formNuevoAborto.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const idDoc = document.getElementById('p-id-doc').value;
+        const fechaAborto = document.getElementById('ab-fecha').value;
+
+        try {
+            const docRef = doc(window.db, "animales", idDoc);
+            const docSnap = await getDoc(docRef);
+            const data = docSnap.data();
+
+            let historialRepro = data.historialReproductivo || [];
+            historialRepro.push({
+                tipo: 'Aborto',
+                fecha: fechaAborto,
+                detalle: 'Aborto registrado'
+            });
+
+            // Actualizar Firestore: Cambiar estatus a Vacía y añadir alerta de sanidad preventiva
+            await updateDoc(docRef, {
+                estado: 'Vacía',
+                salud: '🔴 Aborto reciente (Aislar y testear)',
+                historialReproductivo: historialRepro
+            });
+
+            formNuevoAborto.reset();
+            document.getElementById('form-nuevo-aborto').style.display = 'none';
+            alert("⚠️ Aborto registrado. La vaca pasó a estatus 'Vacía' y se añadió alerta sanitaria.");
+            window.abrirFicha(idDoc);
+        } catch (err) {
+            alert("Error al registrar aborto: " + err.message);
+        }
+    });
+}
+
+// Registrar un nuevo pesaje
 const formNuevoPeso = document.getElementById('form-nuevo-peso');
 if (formNuevoPeso) {
     formNuevoPeso.addEventListener('submit', async (e) => {
@@ -152,23 +259,22 @@ if (formNuevoPeso) {
             const docSnap = await getDoc(docRef);
             const data = docSnap.data();
 
-            let historial = data.historialPesos || [];
-            if (historial.length === 0 && data.peso) {
-                historial.push({ fecha: 'Registro inicial', peso: data.peso });
+            let historialPesos = data.historialPesos || [];
+            if (historialPesos.length === 0 && data.peso) {
+                historialPesos.push({ fecha: 'Registro inicial', peso: data.peso });
             }
 
-            historial.push({ fecha: nuevaFecha, peso: nuevoPeso });
+            historialPesos.push({ fecha: nuevaFecha, peso: nuevoPeso });
 
-            // Actualizar Firestore (guardar en el historial y actualizar el peso actual del animal)
             await updateDoc(docRef, {
                 peso: nuevoPeso,
-                historialPesos: historial
+                historialPesos: historialPesos
             });
 
             formNuevoPeso.reset();
             document.getElementById('form-nuevo-peso').style.display = 'none';
             alert("✅ Pesaje registrado con éxito.");
-            window.abrirFicha(idDoc); // Refrescar el modal
+            window.abrirFicha(idDoc);
         } catch (err) {
             alert("Error al registrar pesaje: " + err.message);
         }
@@ -192,6 +298,7 @@ if (formAnimal) {
                 categoria: document.getElementById('a-categoria').value,
                 peso: pesoValor,
                 historialPesos: pesoValor ? [{ fecha: 'Registro inicial', peso: pesoValor }] : [],
+                historialReproductivo: [],
                 padre: document.getElementById('a-padre').value.trim() || 'N/D',
                 madre: document.getElementById('a-madre').value.trim() || 'N/D',
                 estado: document.getElementById('a-estado').value,
@@ -245,7 +352,7 @@ window.cargarHato = function() {
                     <td style="padding: 10px; border-bottom: 1px solid var(--border-light);">${a.estado}</td>
                     <td style="padding: 10px; border-bottom: 1px solid var(--border-light); font-weight: 600;">${saludActual}</td>
                     <td style="padding: 10px; border-bottom: 1px solid var(--border-light); text-align: center; white-space: nowrap;">
-                        <!-- Botón Ficha (👁️) abre directo consultando Firestore -->
+                        <!-- Botón Ficha (👁️) -->
                         <button onclick="abrirFicha('${idDoc}')" style="background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; padding: 4px 8px; border-radius: 6px; cursor: pointer; margin-right: 4px;" title="Ver Expediente">👁️</button>
                         <!-- Botón Novedad (🏥) -->
                         <button onclick="abrirModalNovedad('${idDoc}', '${escapeStr(a.arete)}', '${escapeStr(saludActual)}')" style="background: #fef2f2; color: #be123c; border: 1px solid #fecdd3; padding: 4px 8px; border-radius: 6px; cursor: pointer; margin-right: 4px;" title="Reportar Novedad">🏥</button>
