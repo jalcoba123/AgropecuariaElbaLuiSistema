@@ -6,6 +6,8 @@
     <title>GanadoControl ERP - Agropecuaria ElbaLui</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
+    <!-- 📱 MANIFEST PARA INSTALACIÓN COMO APP NATIVA -->
+    <link rel="manifest" href="manifest.json">
 </head>
 <body>
 
@@ -645,5 +647,16 @@
         };
     </script>
     <script type="module" src="js/hato.js"></script>
+
+    <!-- REGISTRO DE SERVICE WORKER PARA APERTURA SIN INTERNET -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                    .then(reg => console.log('✅ App lista para abrir sin internet (Service Worker Activo)'))
+                    .catch(err => console.error('❌ Error instalando soporte Offline:', err));
+            });
+        }
+    </script>
 </body>
 </html>
