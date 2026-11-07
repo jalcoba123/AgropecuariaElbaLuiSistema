@@ -33,29 +33,35 @@ document.addEventListener('DOMContentLoaded', () => {
         inputLector.addEventListener('keypress', async function(e) {
             if (e.key === 'Enter') {
                 e.preventDefault();
-                const codigoRFID = inputLector.value.trim();
+                const codigoRFID = inputLector.value.trim().toLowerCase();
                 inputLector.value = '';
 
                 if (!codigoRFID) return;
 
+                console.log("📡 Buscando chip escaneado:", codigoRFID);
+
                 if (window.datosHatoCache && window.datosHatoCache.length > 0) {
-                    // Buscamos si el chip ya está vinculado o coincide con el arete
-                    const animalEncontrado = window.datosHatoCache.find(a => 
-                        (a.chipRFID && a.chipRFID.toLowerCase() === codigoRFID.toLowerCase()) || 
-                        (a.arete && a.arete.toLowerCase() === codigoRFID.toLowerCase())
-                    );
+                    // Buscamos coincidencia exacta limpiando espacios y mayúsculas
+                    const animalEncontrado = window.datosHatoCache.find(a => {
+                        const chipDb = a.chipRFID ? String(a.chipRFID).trim().toLowerCase() : '';
+                        const areteDb = a.arete ? String(a.arete).trim().toLowerCase() : '';
+                        return (chipDb === codigoRFID) || (areteDb === codigoRFID);
+                    });
 
                     if (animalEncontrado) {
+                        console.log("🎯 ¡Animal localizado! Abriendo expediente para:", animalEncontrado.arete);
                         if (typeof window.abrirFicha === 'function') {
                             window.abrirFicha(animalEncontrado.id);
+                        } else {
+                            alert(`✅ Animal encontrado: Arete ${animalEncontrado.arete}`);
                         }
                     } else {
-                        // 🧠 ESTRATEGIA DE CAMPO: Si el chip no está registrado, lo asociamos al arete físico
-                        const areteAsociar = prompt(`📡 ¡Chip nuevo detectado (${codigoRFID})!\n\nEste código universal no está registrado. Escriba el número de arete físico de la oreja para vincularlo:`);
+                        // Si no está registrado, abrimos el asistente rápido de vinculación
+                        const areteAsociar = prompt(`📡 ¡Chip nuevo detectado (${codigoRFID})!\n\nEste chip no está vinculado a ningún animal. Escriba el número de arete físico exacto de la oreja:`);
                         
                         if (areteAsociar && areteAsociar.trim() !== '') {
                             const animalPorArete = window.datosHatoCache.find(a => 
-                                a.arete.toLowerCase() === areteAsociar.trim().toLowerCase()
+                                a.arete.trim().toLowerCase() === areteAsociar.trim().toLowerCase()
                             );
 
                             if (animalPorArete) {
@@ -63,13 +69,18 @@ document.addEventListener('DOMContentLoaded', () => {
                                     await updateDoc(doc(window.db, "animales", animalPorArete.id), {
                                         chipRFID: codigoRFID
                                     });
-                                    alert(`✅ ¡Chip vinculado correctamente al arete ${animalPorArete.arete}!\n\nYa quedó grabado para las próximas lecturas.`);
+                                    alert(`✅ ¡Chip vinculado al arete ${animalPorArete.arete} con éxito!`);
+                                    
+                                    if (typeof window.cargarHato === 'function') {
+                                        window.cargarHato();
+                                    }
+
                                     window.abrirFicha(animalPorArete.id);
                                 } catch (err) {
                                     alert("❌ Error al guardar el chip en Firebase: " + err.message);
                                 }
                             } else {
-                                alert(`⚠️ No se encontró ningún animal con el arete "${areteAsociar}" en esta finca. Verifique el número.`);
+                                alert(`⚠️ No se encontró ningún animal con el arete "${areteAsociar}" en esta finca.`);
                             }
                         }
                     }
