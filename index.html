@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+\<!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
@@ -134,6 +134,20 @@
                     <h3 style="color: #be123c; margin-bottom: 10px; font-size: 0.95rem;">🏥 Animales en Observación Médica</h3>
                     <div id="panel-alertas" style="display: flex; gap: 10px; flex-wrap: wrap; font-size: 0.85rem;">
                         <span style="color: #9f1239; font-style: italic;">Cargando estado sanitario...</span>
+                    </div>
+                </div>
+
+                <!-- 📡 MÓDULO FIJO DEL LECTOR RFID (Solo vive aquí en Hato) -->
+                <div style="background: #f0fdf4; border: 1px solid #86efac; padding: 15px 20px; border-radius: 8px; margin-bottom: 20px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; width: 100%; box-sizing: border-box;">
+                    <div style="display: flex; align-items: center; gap: 15px; min-width: 250px;">
+                        <span style="font-size: 1.5rem; background: #dcfce7; padding: 8px; border-radius: 50%;">📡</span>
+                        <div>
+                            <h3 style="margin: 0; font-size: 1.1rem; color: #166534; font-weight: bold;">Lector RFID en Manga</h3>
+                            <p style="margin: 2px 0 0 0; font-size: 0.8rem; color: #15803d;">Escanee el arete para abrir el expediente del animal.</p>
+                        </div>
+                    </div>
+                    <div style="flex-grow: 1; text-align: right; display: flex; justify-content: flex-end; margin-top: 5px; min-width: 200px;">
+                        <input type="text" id="rfid-scanner-input" placeholder="📟 Esperando lectura de chip..." autocomplete="off" style="padding: 10px 15px; border: 2px solid #22c55e; border-radius: 6px; font-size: 1rem; width: 100%; max-width: 280px; background: white; outline: none; color: #166534; font-weight: bold;">
                     </div>
                 </div>
 
