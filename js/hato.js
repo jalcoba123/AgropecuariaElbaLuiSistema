@@ -28,10 +28,13 @@ window.datosHatoCache = [];
 // 🏷️ LECTOR RFID (ESCANEO RÁPIDO EN MANGA)
 // ==========================================
 function inicializarLectorRFID() {
-    const seccionHato = document.getElementById('tab-hato');
-    if (!seccionHato) return; 
-    
-    if (!document.getElementById('rfid-scanner-container')) {
+    try {
+        const seccionHato = document.getElementById('tab-hato');
+        if (!seccionHato) return; 
+        
+        // Si ya existe, no lo volvemos a crear
+        if (document.getElementById('rfid-scanner-container')) return; 
+
         const contenedorLector = document.createElement('div');
         contenedorLector.id = 'rfid-scanner-container';
         
@@ -53,26 +56,22 @@ function inicializarLectorRFID() {
             </div>
         `;
         
-        // 🛠️ ESTRATEGIA A PRUEBA DE BALAS: 
-        // Buscar exactamente el título "Inventario y Hoja de Vida" para inyectarlo arriba de esa tabla
-        let targetCard = null;
-        const elementos = seccionHato.querySelectorAll('*');
-        for (let el of elementos) {
-            if (el.innerText && el.innerText.trim().includes('Inventario y Hoja de Vida')) {
-                // Subimos en el DOM hasta encontrar la tarjeta contenedora
-                let parent = el;
-                while (parent && parent.parentNode && parent.parentNode.id !== 'tab-hato' && !parent.parentNode.className.includes('container')) {
-                    parent = parent.parentNode;
-                }
-                targetCard = parent;
-                break;
+        // 🛠️ ESTRATEGIA BLINDADA: 
+        // Partimos de la tabla, y subimos de forma nativa y segura hasta su contenedor blanco
+        const tablaCuerpo = document.getElementById('tabla-hato-body');
+        let inyectado = false;
+
+        if (tablaCuerpo) {
+            const tarjetaContenedora = tablaCuerpo.closest('.container') || tablaCuerpo.closest('div[style*="background: white"]');
+            
+            if (tarjetaContenedora && tarjetaContenedora.parentNode) {
+                tarjetaContenedora.parentNode.insertBefore(contenedorLector, tarjetaContenedora);
+                inyectado = true;
             }
         }
 
-        if (targetCard && targetCard.parentNode) {
-            targetCard.parentNode.insertBefore(contenedorLector, targetCard);
-        } else {
-            // Plan B: Anexar al final de la vista para no romper los indicadores de arriba
+        // Plan B: Si no se pudo arriba, se anexa de forma segura al final
+        if (!inyectado) {
             seccionHato.appendChild(contenedorLector);
         }
 
@@ -106,13 +105,9 @@ function inicializarLectorRFID() {
                 }
             });
         }
+    } catch (error) {
+        console.error("Error silencioso manejado en Lector RFID:", error);
     }
-}
-
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', inicializarLectorRFID);
-} else {
-    inicializarLectorRFID();
 }
 
 
@@ -272,6 +267,10 @@ if (formNovedad) {
 window.cargarHato = function() {
     const tabla = document.getElementById('tabla-hato-body');
     const panelAlertas = document.getElementById('panel-alertas');
+    
+    // 🛠️ Ejecutamos el Lector directamente aquí para asegurar sincronía
+    inicializarLectorRFID();
+
     if (!tabla || !window.db) return;
 
     const fincaActiva = obtenerFincaActual();
