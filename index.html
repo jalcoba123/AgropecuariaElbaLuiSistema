@@ -1,22 +1,3 @@
-```python
-# The user wants to integrate the "Documentos y Planillas" module using HTML/JS and completely ignore the Python PDF/Excel scripts I provided previously. They provided the full HTML file and requested to update it with the documents section explicitly added.
-# In the provided code, there is already a section:
-# <!-- MÓDULO NUEVO: DOCUMENTOS Y PLANILLAS -->
-# <div id="tab-documentos" class="section-view">...</div>
-# I will ensure this code is properly formatted, highlight the changes, and give it back to them ready to copy-paste.
-
-# I don't need to do any Python coding, just format and return the HTML code as requested.
-
-
-```
-
-¡Entendido, copiado! Aquí tienes el código base que enviaste con el **Módulo de Documentos y Planillas** perfectamente estructurado dentro del HTML.
-
-Este código incluye el botón en la barra de navegación y la sección `tab-documentos` donde puedes agregar accesos directos para ver, descargar o imprimir los PDFs de la finca.
-
-Copia y pega este código completo en tu archivo `index.html`:
-
-```html
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -355,7 +336,7 @@ Copia y pega este código completo en tu archivo `index.html`:
                         </div>
 
                         <div style="background: white; padding: 20px; border-radius: 12px; border: 1px solid var(--border-light); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
-                            <h3 style="color: #b45309; margin-top: 0; border-bottom: 2px solid #fde68a; padding-bottom: 10px;">💉 Catálogo de Tratamientos</h3>
+                            <h3 style="color: #b45309; margin: 0; border-bottom: 2px solid #fde68a; padding-bottom: 10px;">💉 Catálogo de Tratamientos</h3>
                             <div style="display: flex; gap: 10px; margin-bottom: 15px;">
                                 <input type="text" id="input-nueva-vacuna" placeholder="Ej. Aftosa, Complejo AD3E..." style="flex-grow: 1; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.9rem; outline: none;">
                                 <button id="btn-add-vacuna" style="background: #eab308; color: white; border: none; padding: 10px 15px; border-radius: 6px; cursor: pointer; font-weight: bold;">+ Añadir</button>
@@ -385,34 +366,22 @@ Copia y pega este código completo en tu archivo `index.html`:
                 </div>
             </div>
             
-            <!-- MÓDULO NUEVO: DOCUMENTOS Y PLANILLAS -->
+            <!-- MÓDULO NUEVO: DOCUMENTOS Y PLANILLAS (BIBLIOTECA) -->
             <div id="tab-documentos" class="section-view">
                 <div style="background: white; padding: 20px; border-radius: 12px; border: 1px solid var(--border-light); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
-                    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #bae6fd; padding-bottom: 15px; margin-bottom: 20px;">
-                        <h2 style="color: #0369a1; margin: 0;">📁 Repositorio de Planillas & Formatos ElbaLui</h2>
-                        <span style="font-size: 0.85rem; color: var(--text-muted);">Formatos de campo y registros oficiales</span>
+                    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #bae6fd; padding-bottom: 15px; margin-bottom: 20px; flex-wrap: wrap; gap: 15px;">
+                        <div>
+                            <h2 style="color: #0369a1; margin: 0;">📁 Biblioteca de Documentos ElbaLui</h2>
+                            <span style="font-size: 0.85rem; color: var(--text-muted);">Sube y administra planillas, manuales y registros de la finca.</span>
+                        </div>
+                        <button onclick="document.getElementById('modal-subir-doc').style.display='flex'" style="background: #0ea5e9; color: white; border: none; padding: 10px 15px; border-radius: 6px; cursor: pointer; font-weight: bold; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">⬆️ Subir Nuevo Documento</button>
                     </div>
 
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px;">
-                        <!-- Tarjeta Planilla 1 -->
-                        <div style="background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 15px; display: flex; flex-direction: column; justify-content: space-between;">
-                            <div>
-                                <span style="font-size: 1.5rem;">📋</span>
-                                <h4 style="margin: 10px 0 5px 0; color: #0f172a;">Planilla de Control de Manga (Vacunación / Pesaje)</h4>
-                                <p style="font-size: 0.85rem; color: #475569; margin: 0 0 15px 0;">Formato impreso para anotar Arete, Peso y Tratamiento en potrero cuando el búnker no tiene batería.</p>
-                            </div>
-                            <!-- Puedes reemplazar el enlace por el archivo PDF real de tu finca -->
-                            <button onclick="window.open('planillas/control_manga.pdf', '_blank')" style="background: #0ea5e9; color: white; border: none; padding: 8px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 0.85rem;">📄 Ver / Imprimir Planilla</button>
-                        </div>
-
-                        <!-- Tarjeta Planilla 2 -->
-                        <div style="background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 15px; display: flex; flex-direction: column; justify-content: space-between;">
-                            <div>
-                                <span style="font-size: 1.5rem;">📊</span>
-                                <h4 style="margin: 10px 0 5px 0; color: #0f172a;">Certificado y Registro INSAI (Aftosa)</h4>
-                                <p style="font-size: 0.85rem; color: #475569; margin: 0 0 10px 0;">Lineamientos oficiales y constancias de ciclos de vacunación obligatorios.</p>
-                            </div>
-                            <button onclick="window.open('planillas/insai_guia.pdf', '_blank')" style="background: #0ea5e9; color: white; border: none; padding: 8px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 0.85rem;">📄 Ver / Imprimir Guía</button>
+                    <!-- Contenedor donde aparecerán las tarjetas de los documentos -->
+                    <div id="contenedor-documentos" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px;">
+                        <!-- Aquí se inyectarán las tarjetas desde Firebase -->
+                        <div style="grid-column: 1 / -1; text-align: center; padding: 30px; color: var(--text-muted);">
+                            <span style="font-size: 2rem;">⏳</span><br>Cargando documentos de la nube...
                         </div>
                     </div>
                 </div>
@@ -666,6 +635,37 @@ Copia y pega este código completo en tu archivo `index.html`:
         </div>
     </div>
 
+    <!-- MODAL PARA SUBIR DOCUMENTO -->
+    <div id="modal-subir-doc" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 1000; padding: 20px;">
+        <div style="background: white; padding: 24px; border-radius: 12px; width: 100%; max-width: 450px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <h3 style="color: #0369a1; margin: 0;">⬆️ Subir Documento al ERP</h3>
+                <button onclick="document.getElementById('modal-subir-doc').style.display='none'" style="background:none; border:none; font-size:1.5rem; cursor:pointer;">&times;</button>
+            </div>
+            <form id="form-subir-doc">
+                <div class="form-field">
+                    <label>Título del Documento</label>
+                    <input type="text" id="doc-titulo" placeholder="Ej. Planilla Control Manga 2026" required style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #cbd5e1;">
+                </div>
+                <div class="form-field" style="margin-top: 15px;">
+                    <label>Descripción / Nota (Opcional)</label>
+                    <input type="text" id="doc-desc" placeholder="Ej. Formato en blanco para imprimir" style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #cbd5e1;">
+                </div>
+                <div class="form-field" style="margin-top: 15px; background: #f0f9ff; padding: 15px; border-radius: 8px; border: 1px dashed #0ea5e9;">
+                    <label style="color: #0369a1; font-weight: bold;">Seleccionar Archivo (PDF, Word, Excel, Imagen)</label>
+                    <input type="file" id="doc-archivo" required style="width: 100%; margin-top: 10px; font-size: 0.9rem;">
+                </div>
+                
+                <div id="barra-progreso-container" style="display: none; margin-top: 15px; background: #e2e8f0; border-radius: 4px; overflow: hidden; height: 10px;">
+                    <div id="barra-progreso" style="height: 100%; background: #0ea5e9; width: 0%; transition: width 0.3s;"></div>
+                </div>
+                <p id="texto-progreso" style="text-align: center; font-size: 0.8rem; color: #64748b; margin-top: 5px; display: none;">Subiendo... 0%</p>
+
+                <button type="submit" id="btn-submit-doc" class="btn-action" style="width: 100%; margin-top: 20px; background: #0ea5e9; color: white; padding: 12px; font-size: 1rem;">Subir y Guardar</button>
+            </form>
+        </div>
+    </div>
+
     <!-- SCRIPT DE FIREBASE -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
@@ -673,17 +673,23 @@ Copia y pega este código completo en tu archivo `index.html`:
         import { 
             initializeFirestore, 
             persistentLocalCache, 
-            persistentMultipleTabManager 
+            persistentMultipleTabManager,
+            collection, addDoc, getDocs, query, orderBy, serverTimestamp 
         } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+        // IMPORTAMOS STORAGE PARA SUBIR ARCHIVOS
+        import { getStorage, ref, uploadBytesResumable, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-storage.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyBHKDSUWKYICbu6vJ1UKUuY8Y6tOfZkoKs",
             authDomain: "finca-agropecuaria-elbalui.firebaseapp.com",
-            projectId: "finca-agropecuaria-elbalui"
+            projectId: "finca-agropecuaria-elbalui",
+            // IMPORTANTE: Asegúrate de que este bucket sea el correcto de tu proyecto
+            storageBucket: "finca-agropecuaria-elbalui.appspot.com" 
         };
 
         const app = initializeApp(firebaseConfig);
         window.auth = getAuth(app);
+        window.storage = getStorage(app); // Inicializamos Storage
         
         window.db = initializeFirestore(app, {
             localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() })
@@ -697,6 +703,7 @@ Copia y pega este código completo en tu archivo `index.html`:
                 loginScreen.style.display = 'none';
                 appContainer.style.display = 'block';
                 if (window.cargarHato) window.cargarHato();
+                cargarBibliotecaDocumentos(); // Cargamos los documentos al iniciar sesión
             } else {
                 loginScreen.style.display = 'flex';
                 appContainer.style.display = 'none';
@@ -717,6 +724,11 @@ Copia y pega este código completo en tu archivo `index.html`:
             document.querySelectorAll('.cat-chip').forEach(c => c.classList.remove('active'));
             document.getElementById('tab-' + tabId).classList.add('active');
             if (element) element.classList.add('active');
+            
+            // Si entra a la pestaña documentos, recargamos la vista
+            if(tabId === 'documentos') {
+                cargarBibliotecaDocumentos();
+            }
         };
 
         window.setFinca = function(fincaNombre) {
@@ -726,6 +738,137 @@ Copia y pega este código completo en tu archivo `index.html`:
             document.getElementById('finca-tag').innerText = fincaNombre === 'Global' ? 'VISTA: CONSOLIDADO' : 'FINCA ACTIVA: ' + fincaNombre.toUpperCase();
             if (window.cargarHato) window.cargarHato();
         };
+
+        // ==========================================
+        // LÓGICA DE LA BIBLIOTECA DE DOCUMENTOS
+        // ==========================================
+        
+        // 1. Cargar documentos de Firestore
+        async function cargarBibliotecaDocumentos() {
+            const contenedor = document.getElementById('contenedor-documentos');
+            if(!contenedor) return;
+            
+            contenedor.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; padding: 30px; color: var(--text-muted);"><span style="font-size: 2rem;">⏳</span><br>Cargando documentos de la nube...</div>';
+            
+            try {
+                const q = query(collection(window.db, "biblioteca_documentos"), orderBy("fechaSubida", "desc"));
+                const querySnapshot = await getDocs(q);
+                
+                if (querySnapshot.empty) {
+                    contenedor.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; padding: 30px; color: var(--text-muted); background: #f8fafc; border-radius: 8px; border: 1px dashed #cbd5e1;">Aún no hay documentos en la biblioteca. ¡Sube el primero!</div>';
+                    return;
+                }
+
+                let htmlContent = '';
+                querySnapshot.forEach((doc) => {
+                    const data = doc.data();
+                    
+                    // Icono dependiendo del tipo de archivo
+                    let icono = '📄';
+                    if(data.tipoArchivo && data.tipoArchivo.includes('pdf')) icono = '📋';
+                    if(data.tipoArchivo && data.tipoArchivo.includes('image')) icono = '🖼️';
+                    if(data.tipoArchivo && (data.tipoArchivo.includes('spreadsheet') || data.tipoArchivo.includes('excel'))) icono = '📊';
+
+                    htmlContent += `
+                        <div style="background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 15px; display: flex; flex-direction: column; justify-content: space-between;">
+                            <div>
+                                <span style="font-size: 1.5rem;">${icono}</span>
+                                <h4 style="margin: 10px 0 5px 0; color: #0f172a;">${data.titulo}</h4>
+                                <p style="font-size: 0.85rem; color: #475569; margin: 0 0 15px 0;">${data.descripcion || 'Sin descripción'}</p>
+                            </div>
+                            <div style="display: flex; gap: 10px;">
+                                <button onclick="window.open('${data.urlDescarga}', '_blank')" style="background: #0ea5e9; color: white; border: none; padding: 8px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 0.85rem; flex: 1;">Ver Documento</button>
+                            </div>
+                        </div>
+                    `;
+                });
+                contenedor.innerHTML = htmlContent;
+                
+            } catch (error) {
+                console.error("Error cargando documentos:", error);
+                contenedor.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; padding: 30px; color: #ef4444;">❌ Error cargando la biblioteca. Verifica tu conexión y los permisos de Firestore.</div>';
+            }
+        }
+
+        // 2. Subir nuevo documento
+        document.getElementById('form-subir-doc').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const btnSubmit = document.getElementById('btn-submit-doc');
+            const titulo = document.getElementById('doc-titulo').value;
+            const desc = document.getElementById('doc-desc').value;
+            const archivoInput = document.getElementById('doc-archivo');
+            const barraContenedor = document.getElementById('barra-progreso-container');
+            const barra = document.getElementById('barra-progreso');
+            const textoProgreso = document.getElementById('texto-progreso');
+            
+            if (archivoInput.files.length === 0) {
+                alert("Selecciona un archivo primero.");
+                return;
+            }
+
+            const archivo = archivoInput.files[0];
+            btnSubmit.disabled = true;
+            btnSubmit.innerText = "Subiendo archivo...";
+            barraContenedor.style.display = 'block';
+            textoProgreso.style.display = 'block';
+
+            // Crear referencia en Storage (carpeta 'documentos_erp/')
+            const storageRef = ref(window.storage, 'documentos_erp/' + Date.now() + '_' + archivo.name);
+            
+            // Iniciar subida con progreso
+            const uploadTask = uploadBytesResumable(storageRef, archivo);
+
+            uploadTask.on('state_changed', 
+                (snapshot) => {
+                    // Actualizar barra de progreso
+                    const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                    barra.style.width = progress + '%';
+                    textoProgreso.innerText = `Subiendo... ${Math.round(progress)}%`;
+                }, 
+                (error) => {
+                    console.error("Error en la subida:", error);
+                    alert("Error subiendo el archivo: " + error.message);
+                    resetFormularioDocs();
+                }, 
+                async () => {
+                    // Subida completada exitosamente
+                    try {
+                        const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+                        
+                        // Guardar referencia en Firestore
+                        await addDoc(collection(window.db, "biblioteca_documentos"), {
+                            titulo: titulo,
+                            descripcion: desc,
+                            urlDescarga: downloadURL,
+                            nombreArchivoOriginal: archivo.name,
+                            tipoArchivo: archivo.type,
+                            fechaSubida: serverTimestamp(),
+                            usuario: window.auth.currentUser ? window.auth.currentUser.email : 'Usuario Desconocido'
+                        });
+
+                        alert("¡Documento subido y guardado exitosamente!");
+                        document.getElementById('modal-subir-doc').style.display = 'none';
+                        cargarBibliotecaDocumentos(); // Refrescar vista
+                        resetFormularioDocs();
+                        
+                    } catch (firestoreError) {
+                        console.error("Error guardando en BD:", firestoreError);
+                        alert("El archivo se subió, pero hubo un error al guardar los datos.");
+                        resetFormularioDocs();
+                    }
+                }
+            );
+
+            function resetFormularioDocs() {
+                btnSubmit.disabled = false;
+                btnSubmit.innerText = "Subir y Guardar";
+                barraContenedor.style.display = 'none';
+                textoProgreso.style.display = 'none';
+                barra.style.width = '0%';
+                document.getElementById('form-subir-doc').reset();
+            }
+        });
     </script>
     <script type="module" src="js/hato.js"></script>
 
@@ -740,5 +883,3 @@ Copia y pega este código completo en tu archivo `index.html`:
     </script>
 </body>
 </html>
-
-```
