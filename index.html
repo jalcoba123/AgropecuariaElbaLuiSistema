@@ -1,3 +1,22 @@
+```python
+# The user wants to integrate the "Documentos y Planillas" module using HTML/JS and completely ignore the Python PDF/Excel scripts I provided previously. They provided the full HTML file and requested to update it with the documents section explicitly added.
+# In the provided code, there is already a section:
+# <!-- MÓDULO NUEVO: DOCUMENTOS Y PLANILLAS -->
+# <div id="tab-documentos" class="section-view">...</div>
+# I will ensure this code is properly formatted, highlight the changes, and give it back to them ready to copy-paste.
+
+# I don't need to do any Python coding, just format and return the HTML code as requested.
+
+
+```
+
+¡Entendido, copiado! Aquí tienes el código base que enviaste con el **Módulo de Documentos y Planillas** perfectamente estructurado dentro del HTML.
+
+Este código incluye el botón en la barra de navegación y la sección `tab-documentos` donde puedes agregar accesos directos para ver, descargar o imprimir los PDFs de la finca.
+
+Copia y pega este código completo en tu archivo `index.html`:
+
+```html
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -382,6 +401,7 @@
                                 <h4 style="margin: 10px 0 5px 0; color: #0f172a;">Planilla de Control de Manga (Vacunación / Pesaje)</h4>
                                 <p style="font-size: 0.85rem; color: #475569; margin: 0 0 15px 0;">Formato impreso para anotar Arete, Peso y Tratamiento en potrero cuando el búnker no tiene batería.</p>
                             </div>
+                            <!-- Puedes reemplazar el enlace por el archivo PDF real de tu finca -->
                             <button onclick="window.open('planillas/control_manga.pdf', '_blank')" style="background: #0ea5e9; color: white; border: none; padding: 8px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 0.85rem;">📄 Ver / Imprimir Planilla</button>
                         </div>
 
@@ -720,3 +740,5 @@
     </script>
 </body>
 </html>
+
+```
