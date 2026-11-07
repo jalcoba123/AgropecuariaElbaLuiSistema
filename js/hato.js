@@ -1,17 +1,15 @@
-// js/hato.js
 import { 
     collection, addDoc, query, where, onSnapshot, serverTimestamp,
     doc, deleteDoc, updateDoc, getDoc, getDocs, writeBatch
 } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
-// ID único del dispositivo local para rastrear eventos offline sin conflicto
 let ID_DISPOSITIVO = localStorage.getItem('elbalui_dispositivo_id');
 if (!ID_DISPOSITIVO) {
     ID_DISPOSITIVO = 'DEV-' + Math.random().toString(36).substring(2, 9).toUpperCase();
     localStorage.setItem('elbalui_dispositivo_id', ID_DISPOSITIVO);
 }
 
-function obtenerFincaActual() {
+window.obtenerFincaActual = function() {
     const tag = document.getElementById('finca-tag');
     if (!tag) return 'Agua Clara';
     if (tag.innerText.includes('CONSOLIDADO')) return 'Global';
@@ -22,7 +20,7 @@ function obtenerFincaActual() {
 window.datosHatoCache = [];
 
 // ==========================================
-// 🌐 MONITOREO DE CONEXIÓN A INTERNET (STATUS BAR)
+// 🌐 MONITOREO DE CONEXIÓN A INTERNET
 // ==========================================
 function actualizarEstadoConexion() {
     const statusBar = document.getElementById('offline-status-bar');
@@ -43,8 +41,8 @@ actualizarEstadoConexion();
 // ==========================================
 // 🏷️ ESTACIÓN DE CONTROL DE MANGA (SESIÓN & FAENA)
 // ==========================================
-window.faenaActualLista = []; // Memoria de animales pasados en la sesión actual
-window.modoMangaActual = 'conteo'; // 'conteo' o 'rafaga'
+window.faenaActualLista = [];
+window.modoMangaActual = 'conteo'; 
 
 window.cambiarModoManga = function(nuevoModo) {
     window.modoMangaActual = nuevoModo;
@@ -76,7 +74,7 @@ function reproducirAlertaAudio() {
         gain.connect(ctx.destination);
         osc.start();
         osc.stop(ctx.currentTime + 0.3);
-    } catch (e) { console.log("Audio not supported or blocked."); }
+    } catch (e) { console.log("Audio not supported."); }
 }
 
 function mostrarAlertaManga(mensaje, esError = true) {
@@ -97,12 +95,10 @@ function actualizarTableroManga() {
     const tablaFaenaUi = document.getElementById('manga-tabla-faena-body');
 
     if (!contadorUi) return;
-    
     contadorUi.innerText = window.faenaActualLista.length;
 
     let conteoCat = {};
     let conteoLote = {};
-
     tablaFaenaUi.innerHTML = '';
     
     if (window.faenaActualLista.length === 0) {
@@ -144,7 +140,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const inputLector = document.getElementById('rfid-scanner-input');
         if (inputLector) {
             clearInterval(intervalID);
-
             inputLector.addEventListener('keypress', async function(e) {
                 if (e.key === 'Enter') {
                     e.preventDefault();
@@ -161,7 +156,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     });
 
                     if (animalEncontrado) {
-                        // 1️⃣ Detección de duplicado en la misma sesión
                         const yaPaso = window.faenaActualLista.some(item => item.id === animalEncontrado.id);
                         if (yaPaso) {
                             mostrarAlertaManga(`⚠️ ¡ATENCIÓN! Arete #${animalEncontrado.arete} YA FUE PROCESADO en esta faena.`);
@@ -170,37 +164,29 @@ document.addEventListener('DOMContentLoaded', () => {
 
                         let accionRealizada = 'Conteo / Lectura de Manga';
 
-                        // 2️⃣ Si estamos en Modo Ráfaga, aplicamos tratamiento automáticamente
                         if (window.modoMangaActual === 'rafaga') {
                             const vacunaSel = document.getElementById('manga-vacuna-rafaga').value;
                             if (!vacunaSel) {
                                 mostrarAlertaManga("⚠️ Por favor seleccione una vacuna activa para el Modo Ráfaga.");
                                 return;
                             }
-                            
                             accionRealizada = `💉 Vacunado: ${vacunaSel}`;
                             
-                            // Guardado append-only seguro
                             try {
                                 const hoy = new Date().toISOString().split('T')[0];
                                 const docRef = doc(window.db, "animales", animalEncontrado.id);
                                 let historialEventos = animalEncontrado.historialReproductivo || [];
                                 historialEventos.push({
                                     tipo: '💉 Vacunación Ráfaga',
-                                    fecha: hoy,
-                                    detalle: vacunaSel,
-                                    dispositivo: ID_DISPOSITIVO
+                                    fecha: hoy, detalle: vacunaSel, dispositivo: ID_DISPOSITIVO
                                 });
                                 await updateDoc(docRef, {
                                     salud: `🟢 Sano (Vacunado: ${vacunaSel})`,
                                     historialReproductivo: historialEventos
                                 });
-                            } catch (err) {
-                                console.error("Error aplicando ráfaga:", err);
-                            }
+                            } catch (err) { console.error("Error aplicando ráfaga:", err); }
                         }
 
-                        // Agregar a faena actual
                         window.faenaActualLista.push({
                             id: animalEncontrado.id,
                             arete: animalEncontrado.arete,
@@ -223,12 +209,9 @@ document.addEventListener('DOMContentLoaded', () => {
                             const animalPorArete = window.datosHatoCache.find(a => 
                                 a.arete.trim().toLowerCase() === areteAsociar.trim().toLowerCase()
                             );
-
                             if (animalPorArete) {
                                 try {
-                                    await updateDoc(doc(window.db, "animales", animalPorArete.id), {
-                                        chipRFID: codigoRFID
-                                    });
+                                    await updateDoc(doc(window.db, "animales", animalPorArete.id), { chipRFID: codigoRFID });
                                     alert(`✅ Chip vinculado al arete ${animalPorArete.arete}`);
                                 } catch (err) { alert("❌ Error vinculando chip: " + err.message); }
                             } else { alert(`⚠️ Arete "${areteAsociar}" no encontrado.`); }
@@ -268,7 +251,7 @@ window.cambiarModuloHato = function(evento, idModulo) {
 };
 
 // ==========================================
-// SELECCIÓN Y FILTROS EN TABLA
+// SELECCIÓN Y FILTROS EN TABLA (NUEVO)
 // ==========================================
 window.toggleAllCheckboxes = function(source) {
     const checkboxes = document.querySelectorAll('.chk-animal');
@@ -280,20 +263,34 @@ window.toggleAllCheckboxes = function(source) {
 };
 
 window.aplicarFiltroHato = function() {
-    const filtro = document.getElementById('filtro-categoria').value;
+    const filtroSelect = document.getElementById('filtro-categoria').value;
+    const inputBusqueda = document.getElementById('buscador-hato');
+    const textoBusqueda = inputBusqueda ? inputBusqueda.value.toUpperCase() : "";
     const filas = document.querySelectorAll('#tabla-hato-body tr');
     
     filas.forEach(fila => {
-        if(fila.cells.length < 2) return;
-        const categoria = fila.cells[2].innerText;
-        const estado = fila.cells[3].innerText;
+        if(!fila.hasAttribute('data-categoria')) return; // ignora filas de "cargando"
+
+        const cat = fila.getAttribute('data-categoria');
+        const estado = fila.getAttribute('data-estado');
+        const arete = fila.getAttribute('data-arete').toUpperCase();
+
         let mostrar = false;
 
-        if (filtro === 'Todos') mostrar = true;
-        else if (filtro === 'Becerros' && (categoria.includes('Becerr'))) mostrar = true;
-        else if (filtro === 'Mautes' && (categoria.includes('Maut'))) mostrar = true;
-        else if (filtro === 'Vacas' && (categoria.includes('Vaca'))) mostrar = true;
-        else if (filtro === 'Gestantes' && estado === 'Gestante') mostrar = true;
+        // Filtro por Select
+        if (filtroSelect === 'Todos' && estado !== 'Baja (Vendido/Muerto)') mostrar = true;
+        else if (filtroSelect === 'Bajas' && estado === 'Baja (Vendido/Muerto)') mostrar = true;
+        else if (filtroSelect === 'Becerros' && cat.includes('Becerr') && estado !== 'Baja (Vendido/Muerto)') mostrar = true;
+        else if (filtroSelect === 'Mautes' && cat.includes('Maut') && estado !== 'Baja (Vendido/Muerto)') mostrar = true;
+        else if (filtroSelect === 'Vacas' && cat.includes('Vaca') && estado !== 'Baja (Vendido/Muerto)') mostrar = true;
+        else if (filtroSelect === 'Gestantes' && estado === 'Gestante') mostrar = true;
+
+        // Filtro por Buscador (Si pasó el select)
+        if (mostrar && textoBusqueda !== "") {
+            if (arete.indexOf(textoBusqueda) === -1) {
+                mostrar = false;
+            }
+        }
 
         fila.style.display = mostrar ? '' : 'none';
         if(!mostrar) {
@@ -301,7 +298,100 @@ window.aplicarFiltroHato = function() {
             if(chk) chk.checked = false;
         }
     });
-    document.getElementById('chk-all').checked = false;
+    
+    const chkAll = document.getElementById('chk-all');
+    if(chkAll) chkAll.checked = false;
+};
+
+// ==========================================
+// 🚀 EXCEL CSV MASIVO
+// ==========================================
+window.exportarExcel = function(tablaId, nombreArchivo) {
+    let tabla = document.getElementById(tablaId);
+    let filas = tabla.querySelectorAll('tr');
+    let csv = [];
+    
+    for (let i = 0; i < filas.length; i++) {
+        if(filas[i].style.display === "none") continue; 
+
+        let fila = [];
+        let columnas = filas[i].querySelectorAll('td, th');
+        
+        // Evitamos primera columna (Checkbox) y última (Botones de Acción)
+        for (let j = 1; j < columnas.length - 1; j++) { 
+            let texto = columnas[j].innerText.replace(/(\r\n|\n|\r)/gm, " - ");
+            fila.push('"' + texto + '"');
+        }
+        if(fila.length > 0) {
+            csv.push(fila.join(','));
+        }
+    }
+    
+    let csvString = csv.join('\n');
+    let blob = new Blob([new Uint8Array([0xEF, 0xBB, 0xBF]), csvString], { type: 'text/csv;charset=utf-8;' });
+    let enlace = document.createElement("a");
+    let url = URL.createObjectURL(blob);
+    enlace.setAttribute("href", url);
+    enlace.setAttribute("download", nombreArchivo + "_" + new Date().toISOString().split('T')[0] + ".csv");
+    document.body.appendChild(enlace);
+    enlace.click();
+    document.body.removeChild(enlace);
+};
+
+window.importarCSV = function(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = async function(e) {
+        const text = e.target.result;
+        const lineas = text.split('\n');
+        let contador = 0;
+        
+        const batch = writeBatch(window.db);
+        
+        // Asume formato: Arete, Categoria, Lote, Peso
+        for (let i = 1; i < lineas.length; i++) { 
+            let fila = lineas[i].split(',');
+            if (fila.length >= 2) {
+                let arete = fila[0].replace(/['"]/g, '').trim();
+                let cat = fila[1].replace(/['"]/g, '').trim();
+                if (!arete || !cat) continue;
+                
+                let lote = fila[2] ? fila[2].replace(/['"]/g, '').trim() : 'General';
+                let peso = fila[3] ? Number(fila[3].replace(/['"]/g, '').trim()) : null;
+
+                const refNuevo = doc(collection(window.db, "animales"));
+                batch.set(refNuevo, {
+                    finca: window.obtenerFincaActual(),
+                    arete: arete,
+                    categoria: cat,
+                    lote: lote,
+                    peso: peso,
+                    historialPesos: peso ? [{ fecha: new Date().toISOString().split('T')[0], peso: peso, dispositivo: ID_DISPOSITIVO }] : [],
+                    historialReproductivo: [],
+                    padre: 'N/D', madre: 'N/D',
+                    estado: 'Activo/Creciendo',
+                    salud: "🟢 Sano",
+                    fechaRegistro: serverTimestamp()
+                });
+                contador++;
+            }
+        }
+        if (contador > 0) {
+            try {
+                document.body.style.cursor = 'wait';
+                await batch.commit();
+                alert(`✅ Importación exitosa: ${contador} animales registrados desde el Excel/CSV.`);
+            } catch (err) {
+                alert("❌ Error al importar: " + err.message);
+            } finally {
+                document.body.style.cursor = 'default';
+            }
+        }
+    };
+    reader.readAsText(file);
+    event.target.value = ''; // Reset input
 };
 
 // ==========================================
@@ -343,10 +433,7 @@ if (formMasivo) {
                         const data = docSnap.data();
                         let historialRepro = data.historialReproductivo || [];
                         historialRepro.push({
-                            tipo: '💉 Vacunación Masiva',
-                            fecha: hoy,
-                            detalle: vacunaStr,
-                            dispositivo: ID_DISPOSITIVO
+                            tipo: '💉 Vacunación Masiva', fecha: hoy, detalle: vacunaStr, dispositivo: ID_DISPOSITIVO
                         });
                         batch.update(docRef, { 
                             salud: `🟢 Sano (Vacunado: ${vacunaStr})`,
@@ -388,15 +475,31 @@ if (formMasivo) {
 }
 
 // ==========================================
-// FUNCIONES BASE (ELIMINAR, NOVEDAD)
+// FUNCIONES BASE (ELIMINAR, BAJA, NOVEDAD)
 // ==========================================
 window.eliminarAnimal = async function(idDoc, arete) {
-    if (confirm(`¿Eliminar permanentemente Arete "${arete}"?`)) {
+    if (confirm(`⚠️ ALERTA: ¿Eliminar PERMANENTEMENTE Arete "${arete}" de la base de datos?\n\n(Recomendamos usar "Dar de Baja" si el animal murió o se vendió para no alterar estadísticas pasadas)`)) {
         try { 
             await deleteDoc(doc(window.db, "animales", idDoc)); 
             document.getElementById('modal-ficha').style.display = 'none';
         } 
         catch (err) { alert("Error al eliminar: " + err.message); }
+    }
+};
+
+window.mandarABaja = async function(idDoc, arete) {
+    const razon = prompt(`☠️ Registrar Baja / Venta para el Arete ${arete}\n\nEscriba el motivo (Ej. Venta a Matadero, Muerte por mordedura de serpiente, etc.):`);
+    if (razon !== null && razon.trim() !== "") {
+        try {
+            await updateDoc(doc(window.db, "animales", idDoc), { 
+                estado: "Baja (Vendido/Muerto)",
+                salud: `☠️ Baja: ${razon}` 
+            });
+            alert("✅ Animal dado de baja correctamente. Se quitó del inventario activo.");
+            document.getElementById('modal-ficha').style.display = 'none';
+        } catch (err) {
+            alert("Error al dar de baja: " + err.message);
+        }
     }
 };
 
@@ -422,10 +525,7 @@ if (formNovedad) {
             if (docSnap.exists()) {
                 let historialRepro = docSnap.data().historialReproductivo || [];
                 historialRepro.push({
-                    tipo: '🏥 Novedad Salud',
-                    fecha: new Date().toISOString().split('T')[0],
-                    detalle: nuevoEstado,
-                    dispositivo: ID_DISPOSITIVO
+                    tipo: '🏥 Novedad Salud', fecha: new Date().toISOString().split('T')[0], detalle: nuevoEstado, dispositivo: ID_DISPOSITIVO
                 });
                 await updateDoc(docRef, { salud: nuevoEstado, historialReproductivo: historialRepro });
             }
@@ -443,7 +543,7 @@ window.cargarHato = function() {
     const panelAlertas = document.getElementById('panel-alertas');
     if (!tabla || !window.db) return;
 
-    const fincaActiva = obtenerFincaActual();
+    const fincaActiva = window.obtenerFincaActual();
     let q = (fincaActiva === 'Global')
         ? query(collection(window.db, "animales"))
         : query(collection(window.db, "animales"), where("finca", "==", fincaActiva));
@@ -461,10 +561,15 @@ window.cargarHato = function() {
             window.datosHatoCache.push({ id: idDoc, ...a }); 
             
             const saludActual = a.salud || "🟢 Sano";
-            total++;
-            if (a.categoria === "Maute" || a.categoria === "Mauta" || a.categoria === "Lote ElbaLui (Maute)") mautes++;
-            if (a.estado === "Gestante") gestantes++;
-            if (!saludActual.includes("Sano")) conteoSalud[saludActual] = (conteoSalud[saludActual] || 0) + 1;
+            const esBaja = (a.estado === "Baja (Vendido/Muerto)");
+
+            // Contamos solo los ACTIVOS para los KPIs
+            if (!esBaja) {
+                total++;
+                if (a.categoria.includes("Maute") || a.categoria.includes("Mauta")) mautes++;
+                if (a.estado === "Gestante") gestantes++;
+                if (!saludActual.includes("Sano")) conteoSalud[saludActual] = (conteoSalud[saludActual] || 0) + 1;
+            }
 
             const escapeStr = (val) => String(val || '').replace(/'/g, "\\'");
             const nombreLote = a.lote ? a.lote : 'General';
@@ -495,8 +600,9 @@ window.cargarHato = function() {
                 }
             }
 
+            // ATRIBUTOS data-* PARA FACILITAR EL BUSCADOR Y EL FILTRO
             tabla.innerHTML += `
-                <tr>
+                <tr data-arete="${escapeStr(a.arete)}" data-categoria="${escapeStr(a.categoria)}" data-estado="${escapeStr(a.estado)}">
                     <td style="padding: 10px; border-bottom: 1px solid var(--border-light); text-align: center;">
                         <input type="checkbox" class="chk-animal" value="${idDoc}">
                     </td>
@@ -506,7 +612,7 @@ window.cargarHato = function() {
                     </td>
                     <td style="padding: 10px; border-bottom: 1px solid var(--border-light);">${a.categoria}</td>
                     <td style="padding: 10px; border-bottom: 1px solid var(--border-light); font-size: 0.8rem;">${textoTiempo}</td>
-                    <td style="padding: 10px; border-bottom: 1px solid var(--border-light); font-weight: 600;">${saludActual}</td>
+                    <td style="padding: 10px; border-bottom: 1px solid var(--border-light); font-weight: 600; color: ${esBaja ? '#475569' : 'inherit'};">${saludActual}</td>
                     <td style="padding: 10px; border-bottom: 1px solid var(--border-light); text-align: center; white-space: nowrap;">
                         <button onclick="abrirFicha('${idDoc}')" style="background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; padding: 4px 8px; border-radius: 6px; cursor: pointer; margin-right: 4px;" title="Ver Expediente">👁️</button>
                         <button onclick="abrirModalNovedad('${idDoc}', '${escapeStr(a.arete)}', '${escapeStr(saludActual)}')" style="background: #fef2f2; color: #be123c; border: 1px solid #fecdd3; padding: 4px 8px; border-radius: 6px; cursor: pointer; margin-right: 4px;" title="Reportar Novedad">🏥</button>
@@ -515,7 +621,7 @@ window.cargarHato = function() {
             `;
         });
 
-        aplicarFiltroHato();
+        window.aplicarFiltroHato();
         actualizarDashboard(window.datosHatoCache);
 
         if (document.getElementById('kpi-total')) document.getElementById('kpi-total').innerText = total;
@@ -530,7 +636,7 @@ window.cargarHato = function() {
         }
         panelAlertas.innerHTML = totalEnfermos === 0 ? `<span style="background: #ecfdf5; padding: 6px 12px; border-radius: 20px; border: 1px solid #a7f3d0; color: #047857; font-weight: 600;">🟢 Hato 100% Sano.</span>` : htmlAlertas;
 
-        if (total === 0) tabla.innerHTML = `<tr><td colspan="6" style="padding: 15px; text-align: center; color: var(--text-muted);">Sin animales registrados.</td></tr>`;
+        if (window.datosHatoCache.length === 0) tabla.innerHTML = `<tr><td colspan="6" style="padding: 15px; text-align: center; color: var(--text-muted);">Sin animales registrados.</td></tr>`;
     }, (err) => console.error("Error Firestore:", err));
 };
 
@@ -571,7 +677,7 @@ window.abrirFicha = async function(idDoc) {
         const historialSalud = document.getElementById('f-historial-salud');
         const saludActual = a.salud || "🟢 Sano";
         if (!saludActual.includes('Sano')) {
-            historialSalud.innerHTML = `🔴 <strong>Novedad:</strong> ${saludActual}`;
+            historialSalud.innerHTML = `🔴 <strong>Novedad / Baja:</strong> ${saludActual}`;
             historialSalud.style.background = '#fff1f2';
             historialSalud.style.color = '#be123c';
             historialSalud.style.borderColor = '#fecdd3';
@@ -609,7 +715,7 @@ window.abrirFicha = async function(idDoc) {
             });
         }
 
-        if (ultimaFechaClave && a.estado !== 'Gestante' && a.categoria.includes("Vaca")) {
+        if (ultimaFechaClave && a.estado !== 'Gestante' && a.estado !== 'Baja (Vendido/Muerto)' && a.categoria.includes("Vaca")) {
             const diffDias = Math.floor((new Date() - new Date(ultimaFechaClave)) / (1000 * 60 * 60 * 24));
             if (diffDias >= 730) alertaRepro.innerHTML += `<div style="background: #fee2e2; border: 1px solid #fca5a5; color: #991b1b; padding: 12px; border-radius: 8px; margin-bottom: 10px; font-weight: bold; font-size: 0.85rem;">⚠️ ALERTA INFERTILIDAD: ${diffDias} días vacía.</div>`;
         }
@@ -695,8 +801,8 @@ if (formNuevoRepro) {
                 if (areteCria) {
                     detalle += ` Nacimiento Cría: ${areteCria}.`;
                     await addDoc(collection(window.db, "animales"), {
-                        finca: data.finca || 'Agua Clara', arete: areteCria, categoria: document.getElementById('r-cria-sexo').value,
-                        peso: document.getElementById('r-cria-peso').value || null, fechaNacimiento: fecha,
+                        finca: data.finca || window.obtenerFincaActual(), arete: areteCria, categoria: document.getElementById('r-cria-sexo').value,
+                        peso: document.getElementById('r-cria-peso').value || null, fechaNacimiento: fecha, lote: 'General',
                         historialPesos: document.getElementById('r-cria-peso').value ? [{ fecha: fecha, peso: document.getElementById('r-cria-peso').value, dispositivo: ID_DISPOSITIVO }] : [],
                         historialReproductivo: [], padre: 'N/D', madre: data.arete || 'N/D', estado: 'Activo/Creciendo', salud: "🟢 Sano", fechaRegistro: serverTimestamp()
                     });
@@ -740,7 +846,7 @@ if (formDestete) {
 }
 
 // ==========================================
-// REGISTRO DE NUEVO ANIMAL (CON LOTE)
+// REGISTRO DE NUEVO ANIMAL
 // ==========================================
 const formAnimal = document.getElementById('form-animal');
 if (formAnimal) {
@@ -909,6 +1015,9 @@ function actualizarDashboard(datosHato) {
     const hoy = new Date();
 
     datosHato.forEach(a => {
+        // Ignoramos a los que están dados de baja
+        if (a.estado === 'Baja (Vendido/Muerto)') return;
+
         if (a.estado === "Gestante" && a.historialReproductivo) {
             let ultimaFep = null;
             a.historialReproductivo.forEach(ev => {
