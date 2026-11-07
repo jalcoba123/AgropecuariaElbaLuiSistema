@@ -1,4 +1,4 @@
-\<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
@@ -71,7 +71,6 @@
             <!-- MÓDULO 1: TORRE DE CONTROL -->
             <div id="tab-dashboard" class="section-view active">
                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;">
-                    
                     <div style="display: flex; flex-direction: column; gap: 20px;">
                         <div style="background: white; border-radius: 12px; border: 1px solid var(--border-light); padding: 20px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
                             <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #fde68a; padding-bottom: 10px; margin-bottom: 15px;">
@@ -113,80 +112,115 @@
                 </div>
             </div>
 
-            <!-- MÓDULO 2: HATO -->
+            <!-- MÓDULO 2: HATO Y SANIDAD (Con Mini-Menús) -->
             <div id="tab-hato" class="section-view">
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-bottom: 20px;">
-                    <div style="background: white; padding: 15px; border-radius: 8px; border: 1px solid var(--border-light);">
-                        <div style="font-size: 0.75rem; color: var(--text-muted); font-weight: bold;">Censo Total</div>
-                        <div id="kpi-total" style="font-size: 1.8rem; font-weight: bold;">0</div>
-                    </div>
-                    <div style="background: white; padding: 15px; border-radius: 8px; border: 1px solid var(--border-light);">
-                        <div style="font-size: 0.75rem; color: var(--text-muted); font-weight: bold;">Mautes/Mautas</div>
-                        <div id="kpi-mautes" style="font-size: 1.8rem; font-weight: bold;">0</div>
-                    </div>
-                    <div style="background: white; padding: 15px; border-radius: 8px; border: 1px solid var(--border-light);">
-                        <div style="font-size: 0.75rem; color: var(--text-muted); font-weight: bold;">Vientres Gestantes</div>
-                        <div id="kpi-gestantes" style="font-size: 1.8rem; font-weight: bold;">0</div>
-                    </div>
+                
+                <!-- BARRA DE MINI-MENÚS -->
+                <div class="tabs-hato-container" style="display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; overflow-x: auto;">
+                    <button class="tab-btn active" onclick="cambiarModuloHato(event, 'subtab-inventario')" style="padding: 10px 15px; cursor: pointer; border-radius: 8px; border: none; background: #0f172a; color: white; font-weight: bold; white-space: nowrap;">📦 Inventario General</button>
+                    <button class="tab-btn" onclick="cambiarModuloHato(event, 'subtab-lector')" style="padding: 10px 15px; cursor: pointer; border-radius: 8px; border: 1px solid #cbd5e1; background: white; color: #334155; font-weight: bold; white-space: nowrap;">🏷️ Lector RFID (Manga)</button>
+                    <button class="tab-btn" onclick="cambiarModuloHato(event, 'subtab-config')" style="padding: 10px 15px; cursor: pointer; border-radius: 8px; border: 1px solid #cbd5e1; background: white; color: #334155; font-weight: bold; white-space: nowrap;">⚙️ Configurar Lotes</button>
+                    <button class="tab-btn" onclick="cambiarModuloHato(event, 'subtab-calendario')" style="padding: 10px 15px; cursor: pointer; border-radius: 8px; border: 1px solid #cbd5e1; background: white; color: #334155; font-weight: bold; white-space: nowrap;">📅 Calendario Actividades</button>
                 </div>
 
-                <div style="background: #fff1f2; border-radius: 12px; border: 1px solid #fecdd3; padding: 16px; margin-bottom: 20px;">
-                    <h3 style="color: #be123c; margin-bottom: 10px; font-size: 0.95rem;">🏥 Animales en Observación Médica</h3>
-                    <div id="panel-alertas" style="display: flex; gap: 10px; flex-wrap: wrap; font-size: 0.85rem;">
-                        <span style="color: #9f1239; font-style: italic;">Cargando estado sanitario...</span>
-                    </div>
-                </div>
-
-                <!-- 📡 MÓDULO FIJO DEL LECTOR RFID (Solo vive aquí en Hato) -->
-                <div style="background: #f0fdf4; border: 1px solid #86efac; padding: 15px 20px; border-radius: 8px; margin-bottom: 20px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; width: 100%; box-sizing: border-box;">
-                    <div style="display: flex; align-items: center; gap: 15px; min-width: 250px;">
-                        <span style="font-size: 1.5rem; background: #dcfce7; padding: 8px; border-radius: 50%;">📡</span>
-                        <div>
-                            <h3 style="margin: 0; font-size: 1.1rem; color: #166534; font-weight: bold;">Lector RFID en Manga</h3>
-                            <p style="margin: 2px 0 0 0; font-size: 0.8rem; color: #15803d;">Escanee el arete para abrir el expediente del animal.</p>
+                <!-- SUB-PÁGINA 1: INVENTARIO COMPLETO -->
+                <div id="subtab-inventario" class="modulo-hato" style="display: block;">
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-bottom: 20px;">
+                        <div style="background: white; padding: 15px; border-radius: 8px; border: 1px solid var(--border-light);">
+                            <div style="font-size: 0.75rem; color: var(--text-muted); font-weight: bold;">Censo Total</div>
+                            <div id="kpi-total" style="font-size: 1.8rem; font-weight: bold;">0</div>
+                        </div>
+                        <div style="background: white; padding: 15px; border-radius: 8px; border: 1px solid var(--border-light);">
+                            <div style="font-size: 0.75rem; color: var(--text-muted); font-weight: bold;">Mautes/Mautas</div>
+                            <div id="kpi-mautes" style="font-size: 1.8rem; font-weight: bold;">0</div>
+                        </div>
+                        <div style="background: white; padding: 15px; border-radius: 8px; border: 1px solid var(--border-light);">
+                            <div style="font-size: 0.75rem; color: var(--text-muted); font-weight: bold;">Vientres Gestantes</div>
+                            <div id="kpi-gestantes" style="font-size: 1.8rem; font-weight: bold;">0</div>
                         </div>
                     </div>
-                    <div style="flex-grow: 1; text-align: right; display: flex; justify-content: flex-end; margin-top: 5px; min-width: 200px;">
-                        <input type="text" id="rfid-scanner-input" placeholder="📟 Esperando lectura de chip..." autocomplete="off" style="padding: 10px 15px; border: 2px solid #22c55e; border-radius: 6px; font-size: 1rem; width: 100%; max-width: 280px; background: white; outline: none; color: #166534; font-weight: bold;">
+
+                    <div style="background: #fff1f2; border-radius: 12px; border: 1px solid #fecdd3; padding: 16px; margin-bottom: 20px;">
+                        <h3 style="color: #be123c; margin-bottom: 10px; font-size: 0.95rem;">🏥 Animales en Observación Médica</h3>
+                        <div id="panel-alertas" style="display: flex; gap: 10px; flex-wrap: wrap; font-size: 0.85rem;">
+                            <span style="color: #9f1239; font-style: italic;">Cargando estado sanitario...</span>
+                        </div>
+                    </div>
+
+                    <div style="background: white; border-radius: 12px; border: 1px solid var(--border-light); padding: 16px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;">
+                            <h3 style="font-size: 1rem; color: var(--green-dark); margin: 0;">🐮 Inventario y Hoja de Vida</h3>
+                            <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                                <select id="filtro-categoria" onchange="aplicarFiltroHato()" style="padding: 6px; border-radius: 6px; border: 1px solid var(--border-light); font-size: 0.85rem;">
+                                    <option value="Todos">Todas las Categorías</option>
+                                    <option value="Becerros">Solo Becerros(as)</option>
+                                    <option value="Mautes">Solo Mautes(as)</option>
+                                    <option value="Vacas">Solo Vacas</option>
+                                    <option value="Gestantes">Solo Gestantes</option>
+                                </select>
+                                <button class="btn-action" onclick="abrirModalMasivo()" style="background: #eab308; color: white;">⚡ Acción Masiva</button>
+                                <button class="btn-action" onclick="document.getElementById('modal-animal').style.display='flex'">+ Registrar Animal</button>
+                            </div>
+                        </div>
+                        
+                        <div style="overflow-x: auto;">
+                            <table style="width: 100%; border-collapse: collapse; font-size: 0.85rem;">
+                                <thead style="background: #f1f5f9; text-align: left;">
+                                    <tr>
+                                        <th style="padding: 10px; border-bottom: 1px solid var(--border-light); width: 40px; text-align: center;">
+                                            <input type="checkbox" id="chk-all" onchange="toggleAllCheckboxes(this)">
+                                        </th>
+                                        <th style="padding: 10px; border-bottom: 1px solid var(--border-light);">Arete / Lote</th>
+                                        <th style="padding: 10px; border-bottom: 1px solid var(--border-light);">Categoría</th>
+                                        <th style="padding: 10px; border-bottom: 1px solid var(--border-light);">Tiempo/Gestación</th>
+                                        <th style="padding: 10px; border-bottom: 1px solid var(--border-light);">🏥 Estado de Salud</th>
+                                        <th style="padding: 10px; border-bottom: 1px solid var(--border-light); text-align: center;">Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tabla-hato-body">
+                                    <tr><td colspan="6" style="padding: 15px; text-align: center; color: var(--text-muted);">Cargando inventario...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
 
-                <div style="background: white; border-radius: 12px; border: 1px solid var(--border-light); padding: 16px;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;">
-                        <h3 style="font-size: 1rem; color: var(--green-dark); margin: 0;">🐮 Inventario y Hoja de Vida</h3>
-                        <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
-                            <select id="filtro-categoria" onchange="aplicarFiltroHato()" style="padding: 6px; border-radius: 6px; border: 1px solid var(--border-light); font-size: 0.85rem;">
-                                <option value="Todos">Todas las Categorías</option>
-                                <option value="Becerros">Solo Becerros(as)</option>
-                                <option value="Mautes">Solo Mautes(as)</option>
-                                <option value="Vacas">Solo Vacas</option>
-                                <option value="Gestantes">Solo Gestantes</option>
-                            </select>
-                            <button class="btn-action" onclick="abrirModalMasivo()" style="background: #eab308; color: white;">⚡ Acción Masiva</button>
-                            <button class="btn-action" onclick="document.getElementById('modal-animal').style.display='flex'">+ Registrar Animal</button>
+                <!-- SUB-PÁGINA 2: LECTOR RFID -->
+                <div id="subtab-lector" class="modulo-hato" style="display: none;">
+                    <div style="background: #f8fafc; padding: 40px 20px; border-radius: 12px; border: 1px solid #e2e8f0; text-align: center; max-width: 600px; margin: 0 auto;">
+                        <span style="font-size: 3rem; display: block; margin-bottom: 10px;">📡</span>
+                        <h2 style="color: #0f172a; margin-top: 0;">Control de Manga y Lotes</h2>
+                        <p style="color: #64748b; margin-bottom: 20px;">Conecte su bastón RFID y páselo por el arete del animal. El registro es automático.</p>
+                        
+                        <input type="text" id="rfid-scanner-input" placeholder="📟 Escaneando chip..." autocomplete="off" style="padding: 15px; width: 80%; font-size: 1.2rem; border-radius: 8px; border: 2px solid #0ea5e9; text-align: center; box-shadow: 0 4px 6px -1px rgba(14, 165, 233, 0.2); outline: none; font-weight: bold; color: #0284c7;">
+                        
+                        <div style="margin-top: 30px; background: white; padding: 15px; border-radius: 8px; border: 1px solid #e2e8f0; display: inline-block;">
+                            <h3 style="color: #047857; margin: 0; font-size: 1.1rem;">Lote Actual Procesado</h3>
+                            <div style="font-size: 3rem; font-weight: bold; color: #15803d; line-height: 1;" id="contador-lote-manga">0</div>
+                            <p style="margin: 5px 0 0 0; font-size: 0.8rem; color: #64748b;">Animales registrados en esta sesión</p>
                         </div>
-                    </div>
-                    
-                    <div style="overflow-x: auto;">
-                        <table style="width: 100%; border-collapse: collapse; font-size: 0.85rem;">
-                            <thead style="background: #f1f5f9; text-align: left;">
-                                <tr>
-                                    <th style="padding: 10px; border-bottom: 1px solid var(--border-light); width: 40px; text-align: center;">
-                                        <input type="checkbox" id="chk-all" onchange="toggleAllCheckboxes(this)">
-                                    </th>
-                                    <th style="padding: 10px; border-bottom: 1px solid var(--border-light);">Arete</th>
-                                    <th style="padding: 10px; border-bottom: 1px solid var(--border-light);">Categoría</th>
-                                    <th style="padding: 10px; border-bottom: 1px solid var(--border-light);">Tiempo/Gestación</th>
-                                    <th style="padding: 10px; border-bottom: 1px solid var(--border-light);">🏥 Estado de Salud</th>
-                                    <th style="padding: 10px; border-bottom: 1px solid var(--border-light); text-align: center;">Acciones</th>
-                                </tr>
-                            </thead>
-                            <tbody id="tabla-hato-body">
-                                <tr><td colspan="6" style="padding: 15px; text-align: center; color: var(--text-muted);">Cargando inventario...</td></tr>
-                            </tbody>
-                        </table>
+                        <button onclick="window.animalesPasadosHoy.clear(); document.getElementById('contador-lote-manga').innerText = '0';" style="display: block; margin: 20px auto 0 auto; background: none; border: 1px solid #cbd5e1; padding: 5px 10px; border-radius: 6px; cursor: pointer; color: #64748b; font-size: 0.8rem;">🔄 Reiniciar Contador</button>
                     </div>
                 </div>
+
+                <!-- SUB-PÁGINA 3: CONFIGURACIÓN -->
+                <div id="subtab-config" class="modulo-hato" style="display: none;">
+                    <div style="background: white; padding: 20px; border-radius: 12px; border: 1px solid var(--border-light);">
+                        <h2 style="color: var(--green-dark); margin-top: 0;">⚙️ Administrador del Sistema</h2>
+                        <p style="color: var(--text-muted);">Aquí construiremos los formularios para crear tus potreros (Ej: Lote 100 vacías con 5 toros) y agregar vacunas al catálogo.</p>
+                        <p><em>(Módulo en construcción para el próximo paso)</em></p>
+                    </div>
+                </div>
+
+                <!-- SUB-PÁGINA 4: CALENDARIO -->
+                <div id="subtab-calendario" class="modulo-hato" style="display: none;">
+                    <div style="background: white; padding: 20px; border-radius: 12px; border: 1px solid var(--border-light);">
+                        <h2 style="color: var(--green-dark); margin-top: 0;">📅 Calendario Ganadero</h2>
+                        <p style="color: var(--text-muted);">Aquí programaremos las fechas de partos estimadas, destetes a los 8 meses y ciclos de vacunación INSAI.</p>
+                        <p><em>(Módulo en construcción para el próximo paso)</em></p>
+                    </div>
+                </div>
+
             </div>
 
             <div id="tab-lecheria" class="section-view">En construcción...</div>
@@ -196,9 +230,9 @@
         </div>
     </div>
 
-    <!-- MODALES BÁSICOS -->
+    <!-- MODAL REGISTRO ANIMAL -->
     <div id="modal-animal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 1000; padding: 20px;">
-        <div style="background: white; padding: 24px; border-radius: 12px; width: 100%; max-width: 400px;">
+        <div style="background: white; padding: 24px; border-radius: 12px; width: 100%; max-width: 450px;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
                 <h3 style="color: var(--green-dark);">Registrar Animal</h3>
                 <button onclick="document.getElementById('modal-animal').style.display='none'" style="background:none; border:none; font-size:1.5rem; cursor:pointer;">&times;</button>
@@ -207,6 +241,11 @@
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
                     <div class="form-field"><label>Finca</label><select id="a-finca-select"><option value="Agua Clara">Agua Clara</option><option value="El Sur">El Sur</option></select></div>
                     <div class="form-field"><label>Arete / ID</label><input type="text" id="a-arete" required></div>
+                </div>
+                <!-- 🆕 NUEVO CAMPO DE LOTE -->
+                <div class="form-field">
+                    <label>Lote / Potrero Asignado</label>
+                    <input type="text" id="a-lote" placeholder="Ej. Lote Vacías 100, Potrero 3...">
                 </div>
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
                     <div class="form-field">
@@ -241,7 +280,7 @@
         </div>
     </div>
 
-    <!-- SCRIPT DE FIREBASE Y NAVEGACIÓN -->
+    <!-- SCRIPT DE FIREBASE Y NAVEGACIÓN PRINCIPAL -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
         import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
