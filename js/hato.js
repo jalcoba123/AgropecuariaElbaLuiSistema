@@ -25,74 +25,123 @@ function obtenerFincaActual() {
 window.datosHatoCache = [];
 
 // ==========================================
+// 🏷️ LECTOR RFID (CONTROL DE LOTE + FICHA)
 // ==========================================
-// 🏷️ LECTOR RFID (ESCANEO RÁPIDO EN MANGA)
-// ==========================================
+window.animalesPasadosHoy = new Set(); // Memoria para el lote en la manga
+
 document.addEventListener('DOMContentLoaded', () => {
-    const inputLector = document.getElementById('rfid-scanner-input');
-    if (inputLector) {
-        inputLector.addEventListener('keypress', async function(e) {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                
-                // Verificamos que el input tenga valor antes de limpiar
-                const codigoRFID = inputLector.value ? inputLector.value.trim().toLowerCase() : '';
-                if (inputLector) inputLector.value = ''; // Limpieza segura
+    const intervalID = setInterval(() => {
+        const inputLector = document.getElementById('rfid-scanner-input');
+        if (inputLector) {
+            clearInterval(intervalID);
 
-                if (!codigoRFID) return;
+            inputLector.addEventListener('keypress', async function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    
+                    const codigoRFID = inputLector.value ? inputLector.value.trim().toLowerCase() : '';
+                    inputLector.value = ''; // Limpieza segura
 
-                console.log("📡 Buscando chip escaneado:", codigoRFID);
+                    if (!codigoRFID) return;
 
-                if (window.datosHatoCache && window.datosHatoCache.length > 0) {
-                    const animalEncontrado = window.datosHatoCache.find(a => {
-                        const chipDb = a.chipRFID ? String(a.chipRFID).trim().toLowerCase() : '';
-                        const areteDb = a.arete ? String(a.arete).trim().toLowerCase() : '';
-                        return (chipDb === codigoRFID) || (areteDb === codigoRFID);
-                    });
+                    console.log("📡 Chip escaneado en manga:", codigoRFID);
 
-                    if (animalEncontrado) {
-                        console.log("🎯 ¡Animal localizado! Abriendo expediente para:", animalEncontrado.arete);
-                        if (typeof window.abrirFicha === 'function') {
-                            window.abrirFicha(animalEncontrado.id);
-                        } else {
-                            alert(`✅ Animal encontrado: Arete ${animalEncontrado.arete}`);
-                        }
-                    } else {
-                        const areteAsociar = prompt(`📡 ¡Chip nuevo detectado (${codigoRFID})!\n\nEste chip no está vinculado a ningún animal. Escriba el número de arete físico exacto de la oreja:`);
-                        
-                        if (areteAsociar && areteAsociar.trim() !== '') {
-                            const animalPorArete = window.datosHatoCache.find(a => 
-                                a.arete.trim().toLowerCase() === areteAsociar.trim().toLowerCase()
-                            );
+                    if (window.datosHatoCache && window.datosHatoCache.length > 0) {
+                        const animalEncontrado = window.datosHatoCache.find(a => {
+                            const chipDb = a.chipRFID ? String(a.chipRFID).trim().toLowerCase() : '';
+                            const areteDb = a.arete ? String(a.arete).trim().toLowerCase() : '';
+                            return (chipDb === codigoRFID) || (areteDb === codigoRFID);
+                        });
 
-                            if (animalPorArete) {
-                                try {
-                                    const { doc, updateDoc } = await import("https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js");
-                                    await updateDoc(doc(window.db, "animales", animalPorArete.id), {
-                                        chipRFID: codigoRFID
-                                    });
-                                    alert(`✅ ¡Chip vinculado al arete ${animalPorArete.arete} con éxito!`);
-                                    
-                                    if (typeof window.cargarHato === 'function') {
-                                        window.cargarHato();
-                                    }
+                        if (animalEncontrado) {
+                            // 1️⃣ Control de lote: Registramos que este animal ya pasó
+                            window.animalesPasadosHoy.add(animalEncontrado.id);
+                            
+                            const totalPasados = window.animalesPasadosHoy.size;
+                            const contadorUi = document.getElementById('contador-lote-manga');
+                            if (contadorUi) contadorUi.innerText = totalPasados;
 
-                                    window.abrirFicha(animalPorArete.id);
-                                } catch (err) {
-                                    alert("❌ Error al guardar el chip en Firebase: " + err.message);
-                                }
+                            console.log(`✅ LOTE MANGA: Animal ${animalEncontrado.arete} registrado. Total pasados: ${totalPasados}`);
+
+                            // 2️⃣ Abrimos de inmediato su ficha técnica
+                            if (typeof window.abrirFicha === 'function') {
+                                window.abrirFicha(animalEncontrado.id);
                             } else {
-                                alert(`⚠️ No se encontró ningún animal con el arete "${areteAsociar}" en esta finca.`);
+                                alert(`✅ Animal: Arete ${animalEncontrado.arete}\n📊 Lote actual en manga: ${totalPasados} animales.`);
+                            }
+                        } else {
+                            const areteAsociar = prompt(`📡 ¡Chip nuevo detectado (${codigoRFID})!\n\nEste código no está registrado. Escriba el número de arete físico exacto:`);
+                            
+                            if (areteAsociar && areteAsociar.trim() !== '') {
+                                const animalPorArete = window.datosHatoCache.find(a => 
+                                    a.arete.trim().toLowerCase() === areteAsociar.trim().toLowerCase()
+                                );
+
+                                if (animalPorArete) {
+                                    try {
+                                        await updateDoc(doc(window.db, "animales", animalPorArete.id), {
+                                            chipRFID: codigoRFID
+                                        });
+                                        alert(`✅ ¡Chip vinculado al arete ${animalPorArete.arete} con éxito!`);
+                                        
+                                        if (typeof window.cargarHato === 'function') {
+                                            window.cargarHato();
+                                        }
+
+                                        window.animalesPasadosHoy.add(animalPorArete.id);
+                                        const contadorUi = document.getElementById('contador-lote-manga');
+                                        if (contadorUi) contadorUi.innerText = window.animalesPasadosHoy.size;
+
+                                        window.abrirFicha(animalPorArete.id);
+                                    } catch (err) {
+                                        alert("❌ Error al guardar el chip: " + err.message);
+                                    }
+                                } else {
+                                    alert(`⚠️ No se encontró ningún animal con el arete "${areteAsociar}" en esta finca.`);
+                                }
                             }
                         }
+                    } else {
+                        alert("⚠️ Sincronizando datos del hato. Espere un segundo e intente de nuevo.");
                     }
-                } else {
-                    alert("⚠️ Aún se están sincronizando los datos del hato. Intente de nuevo en un segundo.");
                 }
-            }
-        });
-    }
+            });
+        }
+    }, 500);
 });
+
+// ==========================================
+// 🧭 CONTROL DE MINI-MENÚS (PESTAÑAS DEL HATO)
+// ==========================================
+window.cambiarModuloHato = function(evento, idModulo) {
+    // 1. Ocultar todos los módulos del hato
+    const modulos = document.querySelectorAll('.modulo-hato');
+    modulos.forEach(mod => mod.style.display = 'none');
+
+    // 2. Apagar botones
+    const botones = document.querySelectorAll('.tab-btn');
+    botones.forEach(btn => {
+        btn.style.background = 'white';
+        btn.style.color = '#334155';
+        btn.style.border = '1px solid #cbd5e1';
+    });
+
+    // 3. Mostrar módulo seleccionado
+    document.getElementById(idModulo).style.display = 'block';
+
+    // 4. Encender botón
+    const btnActivo = evento.currentTarget;
+    btnActivo.style.background = '#0f172a';
+    btnActivo.style.color = 'white';
+    btnActivo.style.border = 'none';
+
+    // 5. Enfocar el lector si entramos a la Manga
+    if (idModulo === 'subtab-lector') {
+        const inputLector = document.getElementById('rfid-scanner-input');
+        if (inputLector) inputLector.focus();
+    }
+};
+
 // ==========================================
 // SELECCIÓN Y FILTROS EN TABLA
 // ==========================================
@@ -276,6 +325,7 @@ window.cargarHato = function() {
 
             const textoPeso = a.peso ? `${a.peso} kg` : `<span style="color:#94a3b8;">S/P</span>`;
             const escapeStr = (val) => String(val || '').replace(/'/g, "\\'");
+            const nombreLote = a.lote ? a.lote : 'General';
 
             let textoTiempo = `<span style="color:#94a3b8;">-</span>`;
             
@@ -303,12 +353,16 @@ window.cargarHato = function() {
                 }
             }
 
+            // 🆕 Agregamos el "Lote" visible debajo de la finca en la tabla
             tabla.innerHTML += `
                 <tr>
                     <td style="padding: 10px; border-bottom: 1px solid var(--border-light); text-align: center;">
                         <input type="checkbox" class="chk-animal" value="${idDoc}">
                     </td>
-                    <td style="padding: 10px; border-bottom: 1px solid var(--border-light);"><strong>${a.arete}</strong><br><span style="font-size: 0.7rem; color: #64748b;">${a.finca}</span></td>
+                    <td style="padding: 10px; border-bottom: 1px solid var(--border-light);">
+                        <strong>${a.arete}</strong><br>
+                        <span style="font-size: 0.7rem; color: #64748b;">${a.finca} | <strong>Lote: ${nombreLote}</strong></span>
+                    </td>
                     <td style="padding: 10px; border-bottom: 1px solid var(--border-light);">${a.categoria}</td>
                     <td style="padding: 10px; border-bottom: 1px solid var(--border-light); font-size: 0.8rem;">${textoTiempo}</td>
                     <td style="padding: 10px; border-bottom: 1px solid var(--border-light); font-weight: 600;">${saludActual}</td>
@@ -547,7 +601,7 @@ if (formDestete) {
 }
 
 // ==========================================
-// REGISTRO DE NUEVO ANIMAL (BLINDADO)
+// REGISTRO DE NUEVO ANIMAL (CON LOTE)
 // ==========================================
 const formAnimal = document.getElementById('form-animal');
 if (formAnimal) {
@@ -568,11 +622,16 @@ if (formAnimal) {
             const pesoInput = document.getElementById('a-peso').value.trim();
             const pesoValor = pesoInput !== '' ? Number(pesoInput) : null;
             const fechaNac = document.getElementById('a-nacimiento').value || null;
+            
+            // 🆕 CAPTURAMOS EL LOTE (O DEJAMOS 'General' SI ESTÁ VACÍO)
+            const loteInput = document.getElementById('a-lote');
+            const loteValor = (loteInput && loteInput.value.trim() !== '') ? loteInput.value.trim() : 'General';
 
             await addDoc(collection(window.db, "animales"), {
                 finca: document.getElementById('a-finca-select').value,
                 arete: document.getElementById('a-arete').value.trim(),
                 categoria: document.getElementById('a-categoria').value,
+                lote: loteValor, 
                 peso: pesoValor,
                 fechaNacimiento: fechaNac,
                 historialPesos: pesoValor ? [{ fecha: new Date().toISOString().split('T')[0], peso: pesoValor }] : [],
