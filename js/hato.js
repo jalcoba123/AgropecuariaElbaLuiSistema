@@ -517,4 +517,140 @@ if (formDestete) {
             const docSnap = await getDoc(docRef);
             const data = docSnap.data();
             let nuevaCat = (data.categoria === 'Becerra') ? 'Mauta' : 'Maute';
-            let historialPesos = data.historialPesos
+            let historialPesos = data.historialPesos || [];
+            historialPesos.push({ fecha: fechaDestete, peso: pesoDestete });
+            await updateDoc(docRef, { categoria: nuevaCat, peso: pesoDestete, historialPesos: historialPesos });
+            if (data.madre && data.madre !== 'N/D') {
+                const madreQuery = query(collection(window.db, "animales"), where("finca", "==", data.finca), where("arete", "==", data.madre));
+                const madreSnapshot = await getDocs(madreQuery);
+                if (!madreSnapshot.empty) {
+                    const madreDoc = madreSnapshot.docs[0];
+                    let madreHistorial = madreDoc.data().historialReproductivo || [];
+                    madreHistorial.push({ tipo: '🏅 Destete Cría', fecha: fechaDestete, detalle: `Destetó a su cría con ${pesoDestete} Kg.` });
+                    await updateDoc(doc(window.db, "animales", madreDoc.id), { historialReproductivo: madreHistorial });
+                }
+            }
+            alert(`✅ Destete completado.`); document.getElementById('form-destete').style.display = 'none'; window.abrirFicha(idDoc);
+        } catch (err) { alert("Error: " + err.message); }
+    });
+}
+
+// ==========================================
+// REGISTRO DE NUEVO ANIMAL (BLINDADO)
+// ==========================================
+const formAnimal = document.getElementById('form-animal');
+if (formAnimal) {
+    formAnimal.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        if (!window.db || !window.auth.currentUser) {
+            alert("⚠️ Sesión expirada o base de datos desconectada. Por favor, vuelva a iniciar sesión.");
+            location.reload();
+            return;
+        }
+
+        const btn = formAnimal.querySelector('button[type="submit"]');
+        btn.innerText = "Guardando..."; 
+        btn.disabled = true;
+
+        try {
+            const pesoInput = document.getElementById('a-peso').value.trim();
+            const pesoValor = pesoInput !== '' ? Number(pesoInput) : null;
+            const fechaNac = document.getElementById('a-nacimiento').value || null;
+
+            await addDoc(collection(window.db, "animales"), {
+                finca: document.getElementById('a-finca-select').value,
+                arete: document.getElementById('a-arete').value.trim(),
+                categoria: document.getElementById('a-categoria').value,
+                peso: pesoValor,
+                fechaNacimiento: fechaNac,
+                historialPesos: pesoValor ? [{ fecha: new Date().toISOString().split('T')[0], peso: pesoValor }] : [],
+                historialReproductivo: [],
+                padre: document.getElementById('a-padre').value.trim() || 'N/D',
+                madre: document.getElementById('a-madre').value.trim() || 'N/D',
+                estado: document.getElementById('a-estado').value,
+                salud: "🟢 Sano",
+                fechaRegistro: serverTimestamp()
+            });
+
+            formAnimal.reset(); 
+            document.getElementById('modal-animal').style.display = 'none';
+            alert("✅ Animal guardado con éxito.");
+        } catch (err) { 
+            console.error("Error al guardar animal: ", err);
+            alert("❌ Error al guardar: " + err.message); 
+        } finally { 
+            btn.innerText = "Guardar Animal"; 
+            btn.disabled = false; 
+        }
+    });
+}
+
+// ==========================================
+// MOTOR DE TIEMPO Y TORRE DE CONTROL
+// ==========================================
+function actualizarDashboard(datosHato) {
+    const listSecado = document.getElementById('dash-list-secado');
+    const countSecado = document.getElementById('dash-count-secado');
+    const listDestete = document.getElementById('dash-list-destete');
+    const countDestete = document.getElementById('dash-count-destete');
+    
+    if(!listSecado || !listDestete) return;
+
+    let htmlSecado = "";
+    let htmlDestete = "";
+    let numSecado = 0;
+    let numDestete = 0;
+    const hoy = new Date();
+
+    datosHato.forEach(a => {
+        if (a.estado === "Gestante" && a.historialReproductivo) {
+            let ultimaFep = null;
+            a.historialReproductivo.forEach(ev => {
+                if(ev.tipo === 'Palpación (+ Preñada)' && ev.fep !== '-') ultimaFep = ev.fep;
+            });
+            if (ultimaFep) {
+                const diasParaParto = Math.ceil((new Date(ultimaFep) - hoy) / (1000 * 60 * 60 * 24));
+                if (diasParaParto <= 75) {
+                    numSecado++;
+                    let alertaStyle = diasParaParto < 0 ? "color:#dc2626; font-weight:bold;" : "color:#b45309; font-weight:bold;";
+                    let mensaje = diasParaParto < 0 ? `¡Parto Atrasado por ${Math.abs(diasParaParto)} días!` : `Faltan ${diasParaParto} días para parto.`;
+                    let badgeSecar = (diasParaParto <= 60 && a.categoria === 'Vaca Ordeño') ? `<span style="background:#ef4444; color:white; padding: 2px 6px; border-radius: 4px; font-size: 0.7rem; margin-left: 5px;">URGENTE SECAR</span>` : '';
+                    
+                    htmlSecado += `
+                        <div style="border-bottom: 1px solid var(--border-light); padding: 8px 0; display:flex; justify-content:space-between; align-items:center;">
+                            <div><strong style="color:var(--text-dark);">${a.arete}</strong> <span style="font-size:0.75rem; color:var(--text-muted);">(${a.categoria})</span></div>
+                            <div style="text-align:right;">
+                                <div style="${alertaStyle}">${mensaje}</div>
+                                ${badgeSecar}
+                            </div>
+                        </div>`;
+                }
+            }
+        }
+
+        if (a.categoria.includes("Becerr")) {
+            let fechaNac = a.fechaNacimiento;
+            if (!fechaNac && a.historialPesos && a.historialPesos.length > 0) fechaNac = a.historialPesos[0].fecha;
+            
+            if (fechaNac && fechaNac !== 'Registro inicial') {
+                const meses = Math.floor((hoy - new Date(fechaNac)) / (1000 * 60 * 60 * 24 * 30));
+                if (meses >= 7) {
+                    numDestete++;
+                    let color = meses >= 8 ? "#dc2626" : "#a16207"; 
+                    htmlDestete += `
+                        <div style="border-bottom: 1px solid var(--border-light); padding: 8px 0; display:flex; justify-content:space-between; align-items:center;">
+                            <div><strong style="color:var(--text-dark);">${a.arete}</strong> <span style="font-size:0.75rem; color:var(--text-muted);">Madre: ${a.madre}</span></div>
+                            <div style="font-weight:bold; color:${color};">${meses} meses de edad</div>
+                        </div>`;
+                }
+            }
+        }
+    });
+
+    countSecado.innerText = numSecado;
+    listSecado.innerHTML = numSecado > 0 ? htmlSecado : `<p style="color: var(--text-muted); font-style: italic; padding: 10px 0;">🟢 Ninguna vaca próxima a secado/parto.</p>`;
+    
+    countDestete.innerText = numDestete;
+    listDestete.innerHTML = numDestete > 0 ? htmlDestete : `<p style="color: var(--text-muted); font-style: italic; padding: 10px 0;">🟢 Ningún becerro ha alcanzado la edad de destete aún.</p>`;
+}
