@@ -25,6 +25,7 @@ function obtenerFincaActual() {
 window.datosHatoCache = [];
 
 // ==========================================
+// ==========================================
 // 🏷️ LECTOR RFID (ESCANEO RÁPIDO EN MANGA)
 // ==========================================
 document.addEventListener('DOMContentLoaded', () => {
@@ -33,15 +34,16 @@ document.addEventListener('DOMContentLoaded', () => {
         inputLector.addEventListener('keypress', async function(e) {
             if (e.key === 'Enter') {
                 e.preventDefault();
-                const codigoRFID = inputLector.value.trim().toLowerCase();
-                inputLector.value = '';
+                
+                // Verificamos que el input tenga valor antes de limpiar
+                const codigoRFID = inputLector.value ? inputLector.value.trim().toLowerCase() : '';
+                if (inputLector) inputLector.value = ''; // Limpieza segura
 
                 if (!codigoRFID) return;
 
                 console.log("📡 Buscando chip escaneado:", codigoRFID);
 
                 if (window.datosHatoCache && window.datosHatoCache.length > 0) {
-                    // Buscamos coincidencia exacta limpiando espacios y mayúsculas
                     const animalEncontrado = window.datosHatoCache.find(a => {
                         const chipDb = a.chipRFID ? String(a.chipRFID).trim().toLowerCase() : '';
                         const areteDb = a.arete ? String(a.arete).trim().toLowerCase() : '';
@@ -56,7 +58,6 @@ document.addEventListener('DOMContentLoaded', () => {
                             alert(`✅ Animal encontrado: Arete ${animalEncontrado.arete}`);
                         }
                     } else {
-                        // Si no está registrado, abrimos el asistente rápido de vinculación
                         const areteAsociar = prompt(`📡 ¡Chip nuevo detectado (${codigoRFID})!\n\nEste chip no está vinculado a ningún animal. Escriba el número de arete físico exacto de la oreja:`);
                         
                         if (areteAsociar && areteAsociar.trim() !== '') {
@@ -66,6 +67,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                             if (animalPorArete) {
                                 try {
+                                    const { doc, updateDoc } = await import("https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js");
                                     await updateDoc(doc(window.db, "animales", animalPorArete.id), {
                                         chipRFID: codigoRFID
                                     });
@@ -91,8 +93,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 });
-
-
 // ==========================================
 // SELECCIÓN Y FILTROS EN TABLA
 // ==========================================
