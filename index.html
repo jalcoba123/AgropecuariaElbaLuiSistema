@@ -204,7 +204,7 @@
                 </div>
 
                 <!-- SUB-PÁGINA 3: CONFIGURACIÓN -->
-               <!-- SUB-PÁGINA 3: CONFIGURACIÓN Y LOTES -->
+              <!-- SUB-PÁGINA 3: CONFIGURACIÓN Y LOTES -->
                 <div id="subtab-config" class="modulo-hato" style="display: none;">
                     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;">
                         
@@ -215,18 +215,38 @@
                             
                             <div style="display: flex; gap: 10px; margin-bottom: 15px;">
                                 <input type="text" id="input-nuevo-lote" placeholder="Ej. Lote 100 Vacías + 5 Toros" style="flex-grow: 1; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.9rem; outline: none;">
-                                <button style="background: var(--green-primary); color: white; border: none; padding: 10px 15px; border-radius: 6px; cursor: pointer; font-weight: bold;">+ Crear Lote</button>
+                                <button onclick="window.agregarLoteNuevo()" style="background: var(--green-primary); color: white; border: none; padding: 10px 15px; border-radius: 6px; cursor: pointer; font-weight: bold;">+ Crear Lote</button>
                             </div>
                             
                             <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 10px;">
                                 <h4 style="margin: 0 0 10px 0; font-size: 0.85rem; color: #475569;">Lotes Activos:</h4>
-                                <ul id="lista-lotes-ui" style="list-style: none; padding: 0; margin: 0; font-size: 0.9rem; color: #1e293b; max-height: 150px; overflow-y: auto;">
-                                    <li style="padding: 5px 0; border-bottom: 1px solid #e2e8f0;">👉 General / Sin Asignar</li>
-                                    <li style="padding: 5px 0; border-bottom: 1px solid #e2e8f0; font-weight: bold; color: var(--green-dark);">👉 Lote 100 Vacías (Con 5 Toros)</li>
-                                    <li style="padding: 5px 0; border-bottom: 1px solid #e2e8f0; font-weight: bold; color: var(--green-dark);">👉 Lote 75 Vacías (Con 4 Toros)</li>
+                                <ul id="lista-lotes-ui" style="list-style: none; padding: 0; margin: 0; font-size: 0.9rem; color: #1e293b; max-height: 250px; overflow-y: auto;">
+                                    <li style="padding: 5px 0; border-bottom: 1px solid #e2e8f0; font-style: italic; color: #94a3b8;">Cargando lotes...</li>
                                 </ul>
                             </div>
                         </div>
+
+                        <!-- TARJETA DE VACUNAS Y SANIDAD (Pendiente de conectar a BD) -->
+                        <div style="background: white; padding: 20px; border-radius: 12px; border: 1px solid var(--border-light); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
+                            <h3 style="color: #b45309; margin-top: 0; border-bottom: 2px solid #fde68a; padding-bottom: 10px;">💉 Catálogo de Tratamientos</h3>
+                            <p style="font-size: 0.85rem; color: var(--text-muted);">Registra las vacunas y minerales para aplicarlos rápido en la manga.</p>
+                            
+                            <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+                                <input type="text" id="input-nueva-vacuna" placeholder="Ej. Aftosa, Complejo AD3E..." style="flex-grow: 1; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.9rem; outline: none;">
+                                <button style="background: #eab308; color: white; border: none; padding: 10px 15px; border-radius: 6px; cursor: pointer; font-weight: bold;">+ Añadir</button>
+                            </div>
+
+                            <div style="background: #fefce8; border: 1px solid #fef08a; border-radius: 6px; padding: 10px;">
+                                <h4 style="margin: 0 0 10px 0; font-size: 0.85rem; color: #854d0e;">Tratamientos Disponibles:</h4>
+                                <ul id="lista-vacunas-ui" style="list-style: none; padding: 0; margin: 0; font-size: 0.9rem; color: #713f12; max-height: 150px; overflow-y: auto;">
+                                    <li style="padding: 5px 0; border-bottom: 1px solid #fef08a;">👉 Fiebre Aftosa (INSAI)</li>
+                                    <li style="padding: 5px 0; border-bottom: 1px solid #fef08a;">👉 Mineralización (Hierro/Cobre)</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
 
                         <!-- TARJETA DE VACUNAS Y SANIDAD -->
                         <div style="background: white; padding: 20px; border-radius: 12px; border: 1px solid var(--border-light); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
