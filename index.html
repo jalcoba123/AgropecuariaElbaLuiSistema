@@ -219,11 +219,19 @@
                             ⚠️ ALERTA EN MANGA
                         </div>
 
-                        <!-- INPUT PRINCIPAL DEL LECTOR BASTÓN -->
-                        <div style="text-align: center; max-width: 600px; margin: 0 auto;">
+                        <!-- INPUT PRINCIPAL DEL LECTOR BASTÓN (Con Enfoque Forzado) -->
+                        <div style="text-align: center; max-width: 600px; margin: 0 auto; position: relative;">
                             <span style="font-size: 2.5rem; display: block; margin-bottom: 5px;">📡</span>
                             <h2 style="color: #0f172a; margin-top: 0; font-size: 1.3rem;">Estación de Control de Manga</h2>
-                            <input type="text" id="rfid-scanner-input" placeholder="📟 Pase el bastón RFID por el arete..." autocomplete="off" style="padding: 15px; width: 90%; font-size: 1.2rem; border-radius: 8px; border: 2px solid #0ea5e9; text-align: center; box-shadow: 0 4px 6px -1px rgba(14, 165, 233, 0.2); outline: none; font-weight: bold; color: #0284c7;">
+                            
+                            <!-- El formulario envuelve el input para atrapar el "Enter" del bastón -->
+                            <form id="form-rfid-scanner" onsubmit="event.preventDefault(); window.procesarLecturaManga(document.getElementById('rfid-scanner-input').value);">
+                                <input type="text" id="rfid-scanner-input" placeholder="📟 Pase el bastón RFID por el arete..." autocomplete="off" 
+                                       style="padding: 15px; width: 90%; font-size: 1.2rem; border-radius: 8px; border: 2px solid #0ea5e9; text-align: center; box-shadow: 0 4px 6px -1px rgba(14, 165, 233, 0.2); outline: none; font-weight: bold; color: #0284c7;"
+                                       onblur="this.focus()" autofocus> 
+                            </form>
+                            
+                            <p style="font-size: 0.75rem; color: #64748b; margin-top: 10px;">🟢 El sistema está escuchando al bastón automáticamente.</p>
                         </div>
 
                         <!-- DESGLOSE EN TIEMPO REAL DE LA FAENA ACTUAL -->
