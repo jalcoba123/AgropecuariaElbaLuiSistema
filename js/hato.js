@@ -27,10 +27,14 @@ window.datosHatoCache = [];
 // ==========================================
 // 🏷️ LECTOR RFID (ESCANEO RÁPIDO EN MANGA)
 // ==========================================
-document.addEventListener('DOMContentLoaded', () => {
+// Envuelto en una función segura para no interrumpir la carga de Firebase
+function inicializarLectorRFID() {
     const seccionHato = document.getElementById('tab-hato');
-    if (seccionHato && !document.getElementById('rfid-scanner-input')) {
+    if (!seccionHato) return; // Si no existe el contenedor, salir silenciosamente
+    
+    if (!document.getElementById('rfid-scanner-input')) {
         const contenedorLector = document.createElement('div');
+        contenedorLector.id = 'rfid-container'; // ID para control
         contenedorLector.style.cssText = "background: #f0fdf4; border: 1px solid #bbf7d0; padding: 10px 15px; border-radius: 8px; margin-bottom: 15px; display: flex; align-items: center; gap: 10px;";
         contenedorLector.innerHTML = `
             <span style="font-size: 1.2rem;">📡</span>
@@ -41,47 +45,53 @@ document.addEventListener('DOMContentLoaded', () => {
             <input type="text" id="rfid-scanner-input" placeholder="Esperando lectura de chip..." autocomplete="off" style="padding: 6px 10px; border: 1px solid #86efac; border-radius: 6px; font-size: 0.85rem; width: 220px; background: white;">
         `;
         
-        // Insertarlo justo arriba de la tabla de inventario
-        const tablaCard = seccionHato.querySelector('.container div:last-child') || seccionHato.children[2];
-        if (tablaCard) {
-            tablaCard.parentNode.insertBefore(contenedorLector, tablaCard);
+        // Insertarlo arriba de la tabla de inventario de forma segura
+        const tablaInventario = seccionHato.querySelector('.container div:last-child') || seccionHato.children[2];
+        if (tablaInventario && tablaInventario.parentNode) {
+            tablaInventario.parentNode.insertBefore(contenedorLector, tablaInventario);
         } else {
-            seccionHato.prepend(contenedorLector);
+            seccionHato.appendChild(contenedorLector);
         }
 
-        // Escuchar el "disparo" del bastón lector
         const inputLector = document.getElementById('rfid-scanner-input');
         if (inputLector) {
             inputLector.addEventListener('keypress', function(e) {
-                // El lector RFID siempre manda un "Enter" al final de leer el chip
                 if (e.key === 'Enter') {
                     e.preventDefault();
                     const codigoRFID = inputLector.value.trim();
-                    inputLector.value = ''; // Limpiar el campo para la siguiente vaca
+                    inputLector.value = '';
 
                     if (!codigoRFID) return;
 
-                    // Buscar el animal en la caché de tu sistema
-                    if (window.datosHatoCache) {
+                    if (window.datosHatoCache && window.datosHatoCache.length > 0) {
                         const animalEncontrado = window.datosHatoCache.find(a => 
                             (a.arete && a.arete.toLowerCase() === codigoRFID.toLowerCase()) || 
                             (a.chipRFID && a.chipRFID === codigoRFID)
                         );
 
                         if (animalEncontrado) {
-                            // Abrir automáticamente el expediente clínico
                             if (typeof window.abrirFicha === 'function') {
                                 window.abrirFicha(animalEncontrado.id);
                             }
                         } else {
                             alert(`⚠️ El chip leído (${codigoRFID}) no está registrado en el sistema. Verifique o registre el animal.`);
                         }
+                    } else {
+                        alert("⚠️ Aún no se han cargado los datos del hato. Intente de nuevo en unos segundos.");
                     }
                 }
             });
         }
     }
-});
+}
+
+// Ejecutar cuando el DOM esté completamente listo sin bloquear la carga
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', inicializarLectorRFID);
+} else {
+    inicializarLectorRFID();
+}
+
 
 // ==========================================
 // SELECCIÓN Y FILTROS EN TABLA
@@ -615,3 +625,43 @@ function actualizarDashboard(datosHato) {
                 if (diasParaParto <= 75) {
                     numSecado++;
                     let alertaStyle = diasParaParto < 0 ? "color:#dc2626; font-weight:bold;" : "color:#b45309; font-weight:bold;";
+                    let mensaje = diasParaParto < 0 ? `¡Parto Atrasado por ${Math.abs(diasParaParto)} días!` : `Faltan ${diasParaParto} días para parto.`;
+                    let badgeSecar = (diasParaParto <= 60 && a.categoria === 'Vaca Ordeño') ? `<span style="background:#ef4444; color:white; padding: 2px 6px; border-radius: 4px; font-size: 0.7rem; margin-left: 5px;">URGENTE SECAR</span>` : '';
+                    
+                    htmlSecado += `
+                        <div style="border-bottom: 1px solid var(--border-light); padding: 8px 0; display:flex; justify-content:space-between; align-items:center;">
+                            <div><strong style="color:var(--text-dark);">${a.arete}</strong> <span style="font-size:0.75rem; color:var(--text-muted);">(${a.categoria})</span></div>
+                            <div style="text-align:right;">
+                                <div style="${alertaStyle}">${mensaje}</div>
+                                ${badgeSecar}
+                            </div>
+                        </div>`;
+                }
+            }
+        }
+
+        if (a.categoria.includes("Becerr")) {
+            let fechaNac = a.fechaNacimiento;
+            if (!fechaNac && a.historialPesos && a.historialPesos.length > 0) fechaNac = a.historialPesos[0].fecha;
+            
+            if (fechaNac && fechaNac !== 'Registro inicial') {
+                const meses = Math.floor((hoy - new Date(fechaNac)) / (1000 * 60 * 60 * 24 * 30));
+                if (meses >= 7) {
+                    numDestete++;
+                    let color = meses >= 8 ? "#dc2626" : "#a16207"; 
+                    htmlDestete += `
+                        <div style="border-bottom: 1px solid var(--border-light); padding: 8px 0; display:flex; justify-content:space-between; align-items:center;">
+                            <div><strong style="color:var(--text-dark);">${a.arete}</strong> <span style="font-size:0.75rem; color:var(--text-muted);">Madre: ${a.madre}</span></div>
+                            <div style="font-weight:bold; color:${color};">${meses} meses de edad</div>
+                        </div>`;
+                }
+            }
+        }
+    });
+
+    countSecado.innerText = numSecado;
+    listSecado.innerHTML = numSecado > 0 ? htmlSecado : `<p style="color: var(--text-muted); font-style: italic; padding: 10px 0;">🟢 Ninguna vaca próxima a secado/parto.</p>`;
+    
+    countDestete.innerText = numDestete;
+    listDestete.innerHTML = numDestete > 0 ? htmlDestete : `<p style="color: var(--text-muted); font-style: italic; padding: 10px 0;">🟢 Ningún becerro ha alcanzado la edad de destete aún.</p>`;
+}
