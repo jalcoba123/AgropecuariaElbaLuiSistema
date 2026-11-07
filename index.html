@@ -72,10 +72,7 @@
             <div id="tab-dashboard" class="section-view active">
                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;">
                     
-                    <!-- PANEL IZQUIERDO: MOTOR DE TIEMPO (ALERTAS) -->
                     <div style="display: flex; flex-direction: column; gap: 20px;">
-                        
-                        <!-- Alertas de Secado (Pre-Parto) -->
                         <div style="background: white; border-radius: 12px; border: 1px solid var(--border-light); padding: 20px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
                             <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #fde68a; padding-bottom: 10px; margin-bottom: 15px;">
                                 <h3 style="color: #b45309; margin: 0; font-size: 1.1rem;">🟡 Próximos Secados & Partos</h3>
@@ -86,7 +83,6 @@
                             </div>
                         </div>
 
-                        <!-- Alertas de Destete (Becerros > 7 meses) -->
                         <div style="background: white; border-radius: 12px; border: 1px solid var(--border-light); padding: 20px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
                             <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #fde047; padding-bottom: 10px; margin-bottom: 15px;">
                                 <h3 style="color: #a16207; margin: 0; font-size: 1.1rem;">🍼 Lotes Listos para Destete</h3>
@@ -96,65 +92,29 @@
                                 <p style="color: var(--text-muted); font-style: italic;">Escaneando rebaño...</p>
                             </div>
                         </div>
-
                     </div>
 
-                    <!-- PANEL DERECHO: CALENDARIO SANITARIO OFICIAL -->
                     <div style="background: white; border-radius: 12px; border: 1px solid var(--border-light); padding: 20px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
                         <div style="border-bottom: 2px solid #bbf7d0; padding-bottom: 10px; margin-bottom: 15px;">
                             <h3 style="color: var(--green-dark); margin: 0; font-size: 1.1rem;">📅 Calendario Sanitario Anual (Monagas)</h3>
                             <p style="margin: 5px 0 0 0; font-size: 0.8rem; color: var(--text-muted);">Programa preventivo oficial de Agropecuaria ElbaLui.</p>
                         </div>
-                        
                         <div style="display: flex; flex-direction: column; gap: 12px;">
-                            
-                            <!-- Ciclo Aftosa -->
                             <div style="background: #f8fafc; border-left: 4px solid #ef4444; padding: 12px; border-radius: 4px;">
                                 <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
                                     <strong style="color: #1e293b; font-size: 0.9rem;">Vacunación Fiebre Aftosa & Rabia</strong>
                                     <span style="font-size: 0.8rem; color: #ef4444; font-weight: bold;">Mayo y Noviembre</span>
                                 </div>
-                                <p style="margin: 0; font-size: 0.8rem; color: var(--text-muted);">Aplicación obligatoria (INSAI) a todo el rebaño. Se realiza junto con la vacuna antirrábica.</p>
+                                <p style="margin: 0; font-size: 0.8rem; color: var(--text-muted);">Aplicación obligatoria (INSAI) a todo el rebaño.</p>
                             </div>
-
-                            <!-- Ciclo Reproductivo -->
-                            <div style="background: #f8fafc; border-left: 4px solid #3b82f6; padding: 12px; border-radius: 4px;">
-                                <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
-                                    <strong style="color: #1e293b; font-size: 0.9rem;">Vacuna Reproductiva (Leptospira)</strong>
-                                    <span style="font-size: 0.8rem; color: #3b82f6; font-weight: bold;">Antes de montas</span>
-                                </div>
-                                <p style="margin: 0; font-size: 0.8rem; color: var(--text-muted);">Aplicar a novillas pre-servicio y vacas vacías para prevenir abortos (Leptospirosis, IBR, BVD).</p>
-                            </div>
-
-                            <!-- Desparasitación -->
-                            <div style="background: #f8fafc; border-left: 4px solid #eab308; padding: 12px; border-radius: 4px;">
-                                <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
-                                    <strong style="color: #1e293b; font-size: 0.9rem;">Desparasitación y Vitaminas</strong>
-                                    <span style="font-size: 0.8rem; color: #eab308; font-weight: bold;">Entrada/Salida Lluvias</span>
-                                </div>
-                                <p style="margin: 0; font-size: 0.8rem; color: var(--text-muted);">Mautes, becerros y adultos. Uso de Ivermectina o Albendazol + Complejo ADE.</p>
-                            </div>
-
-                            <!-- Pruebas Especiales -->
-                            <div style="background: #f8fafc; border-left: 4px solid #8b5cf6; padding: 12px; border-radius: 4px;">
-                                <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
-                                    <strong style="color: #1e293b; font-size: 0.9rem;">Sangría (Brucelosis)</strong>
-                                    <span style="font-size: 0.8rem; color: #8b5cf6; font-weight: bold;">Anual</span>
-                                </div>
-                                <p style="margin: 0; font-size: 0.8rem; color: var(--text-muted);">Requisito para movilización y control de hato lechero sano.</p>
-                            </div>
-                            
                         </div>
                         <button onclick="switchTab('hato')" style="width: 100%; margin-top: 15px; background: white; border: 1px solid var(--green-primary); color: var(--green-dark); padding: 8px; border-radius: 6px; cursor: pointer; font-weight: 600;">Ir a Ejecutar Vacunación Masiva 💉</button>
                     </div>
-
                 </div>
             </div>
 
-            <!-- MÓDULO 2: HATO, SANIDAD Y REPRODUCCIÓN -->
+            <!-- MÓDULO 2: HATO -->
             <div id="tab-hato" class="section-view">
-                
-                <!-- KPIs BASE -->
                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-bottom: 20px;">
                     <div style="background: white; padding: 15px; border-radius: 8px; border: 1px solid var(--border-light);">
                         <div style="font-size: 0.75rem; color: var(--text-muted); font-weight: bold;">Censo Total</div>
@@ -170,7 +130,6 @@
                     </div>
                 </div>
 
-                <!-- 🏥 PABELLÓN DE OBSERVACIÓN -->
                 <div style="background: #fff1f2; border-radius: 12px; border: 1px solid #fecdd3; padding: 16px; margin-bottom: 20px;">
                     <h3 style="color: #be123c; margin-bottom: 10px; font-size: 0.95rem;">🏥 Animales en Observación Médica</h3>
                     <div id="panel-alertas" style="display: flex; gap: 10px; flex-wrap: wrap; font-size: 0.85rem;">
@@ -178,12 +137,9 @@
                     </div>
                 </div>
 
-                <!-- TABLA DE INVENTARIO CON FILTROS Y ACCIONES MASIVAS -->
                 <div style="background: white; border-radius: 12px; border: 1px solid var(--border-light); padding: 16px;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;">
                         <h3 style="font-size: 1rem; color: var(--green-dark); margin: 0;">🐮 Inventario y Hoja de Vida</h3>
-                        
-                        <!-- FILTROS Y BOTONES -->
                         <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
                             <select id="filtro-categoria" onchange="aplicarFiltroHato()" style="padding: 6px; border-radius: 6px; border: 1px solid var(--border-light); font-size: 0.85rem;">
                                 <option value="Todos">Todas las Categorías</option>
@@ -219,7 +175,6 @@
                 </div>
             </div>
 
-            <!-- OTROS MÓDULOS -->
             <div id="tab-lecheria" class="section-view">En construcción...</div>
             <div id="tab-palma" class="section-view">En construcción...</div>
             <div id="tab-operaciones" class="section-view">En construcción...</div>
@@ -227,11 +182,7 @@
         </div>
     </div>
 
-    <!-- ============================================== -->
-    <!-- MODALES Y FORMULARIOS -->
-    <!-- ============================================== -->
-
-    <!-- 🐄 MODAL: REGISTRO DE ANIMAL -->
+    <!-- MODALES BÁSICOS -->
     <div id="modal-animal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 1000; padding: 20px;">
         <div style="background: white; padding: 24px; border-radius: 12px; width: 100%; max-width: 400px;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
@@ -276,240 +227,7 @@
         </div>
     </div>
 
-    <!-- ⚡ MODAL: ACCIONES MASIVAS -->
-    <div id="modal-masivo" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 1000; padding: 20px;">
-        <div style="background: white; padding: 24px; border-radius: 12px; width: 100%; max-width: 450px;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                <h3 style="color: #ca8a04; margin: 0;">⚡ Acción Masiva de Lote</h3>
-                <button onclick="document.getElementById('modal-masivo').style.display='none'" style="background:none; border:none; font-size:1.5rem; cursor:pointer;">&times;</button>
-            </div>
-            <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0;">Animales seleccionados: <strong id="m-count" style="color: #1e293b;">0</strong></p>
-            
-            <form id="form-masivo">
-                <div class="form-field">
-                    <label>Tipo de Acción</label>
-                    <select id="m-tipo" required onchange="
-                        document.getElementById('m-div-vacuna').style.display = this.value === 'Sanidad' ? 'block' : 'none';
-                        document.getElementById('m-div-destete').style.display = this.value === 'Destete' ? 'block' : 'none';
-                    ">
-                        <option value="">-- Seleccione una opción --</option>
-                        <option value="Sanidad">💉 Vacunación / Tratamiento Masivo</option>
-                        <option value="Destete">🍼 Destetar Lote (Pasan a Maute)</option>
-                    </select>
-                </div>
-
-                <!-- Opciones Vacunación -->
-                <div id="m-div-vacuna" style="display: none; background: #f0fdf4; border: 1px solid #bbf7d0; padding: 12px; border-radius: 6px; margin-bottom: 10px;">
-                    <label style="font-size: 0.8rem; font-weight: 600;">Plan Sanitario a Aplicar</label>
-                    <input type="text" id="m-vacuna-nombre" placeholder="Ej. Vacuna Fiebre Aftosa, Desparasitante..." style="width: 100%; padding: 8px; border: 1px solid #86efac; border-radius: 4px; margin-top: 5px;">
-                </div>
-
-                <!-- Opciones Destete Masivo -->
-                <div id="m-div-destete" style="display: none; background: #fef9c3; border: 1px solid #fde047; padding: 12px; border-radius: 6px; margin-bottom: 10px;">
-                    <label style="font-size: 0.8rem; font-weight: 600; color: #a16207;">Peso Promedio del Lote (Kg)</label>
-                    <input type="number" id="m-destete-peso" placeholder="Ej. 180" style="width: 100%; padding: 8px; border: 1px solid #fde047; border-radius: 4px; margin-top: 5px;">
-                    <p style="font-size: 0.7rem; color: #a16207; margin: 5px 0 0 0;">*Se ascenderá a todos los becerros a Maute/Mauta y se inyectará el récord a sus madres.</p>
-                </div>
-
-                <button type="submit" id="btn-submit-masivo" style="background: #eab308; color: white; border: none; padding: 10px; border-radius: 6px; font-weight: 600; cursor: pointer; width: 100%;">Ejecutar Acción a Todos</button>
-            </form>
-        </div>
-    </div>
-
-    <!-- 🏥 MODAL: REPORTAR NOVEDAD SANITARIA -->
-    <div id="modal-novedad" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 1000; padding: 20px;">
-        <div style="background: white; padding: 24px; border-radius: 12px; width: 100%; max-width: 380px;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                <h3 style="color: #be123c;">Reportar Novedad Libre</h3>
-                <button onclick="document.getElementById('modal-novedad').style.display='none'" style="background:none; border:none; font-size:1.5rem; cursor:pointer;">&times;</button>
-            </div>
-            <form id="form-novedad">
-                <input type="hidden" id="n-id">
-                <div style="margin-bottom: 15px; font-size: 0.9rem; color: var(--text-muted);">Animal: <strong id="n-arete-display" style="color: var(--text-dark); font-size: 1rem;"></strong></div>
-                <div class="form-field"><label>Descripción</label><input type="text" id="n-estado-salud" placeholder="Ej. Pata rota, Mordedura..." required style="border-color: #be123c;"></div>
-                <button type="submit" style="width:100%; margin-top:10px; background: #be123c; color: white; border: none; padding: 10px; border-radius: 6px; font-weight: 600; cursor: pointer;">Guardar Novedad</button>
-            </form>
-        </div>
-    </div>
-
-    <!-- 👁️ MODAL: EXPEDIENTE CLÍNICO & REPRODUCTIVO -->
-    <div id="modal-ficha" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 1000; padding: 20px;">
-        <div style="background: white; padding: 24px; border-radius: 12px; width: 100%; max-width: 600px; max-height: 85vh; overflow-y: auto;">
-            
-            <input type="hidden" id="p-id-doc">
-
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 2px solid var(--border-light); padding-bottom: 10px;">
-                <div>
-                    <h3 style="color: var(--green-dark); margin: 0;">📋 Expediente del Animal</h3>
-                    <span id="f-finca-tag" style="font-size: 0.75rem; color: var(--text-muted); font-weight: bold;">AGUA CLARA</span>
-                </div>
-                <button onclick="document.getElementById('modal-ficha').style.display='none'" style="background:none; border:none; font-size:1.5rem; cursor:pointer;">&times;</button>
-            </div>
-
-            <!-- DATOS BASE -->
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; background: #f8fafc; padding: 12px; border-radius: 8px; margin-bottom: 15px; font-size: 0.85rem;">
-                <div><strong>Arete / ID:</strong> <span id="f-arete">-</span></div>
-                <div>
-                    <strong>Categoría:</strong> <span id="f-categoria">-</span> 
-                    <button type="button" onclick="document.getElementById('form-cambio-categoria').style.display='flex'" style="background:none; border:none; cursor:pointer; margin-left: 5px;" title="Cambiar Etapa">✏️</button>
-                    <form id="form-cambio-categoria" style="display:none; margin-top: 5px; gap: 5px;">
-                        <select id="c-nueva-categoria" style="padding:4px; border: 1px solid var(--border-light); border-radius:4px; font-size: 0.8rem;">
-                            <option value="Becerro">Becerro (Macho)</option>
-                            <option value="Becerra">Becerra (Hembra)</option>
-                            <option value="Maute">Maute (Macho)</option>
-                            <option value="Mauta">Mauta (Hembra)</option>
-                            <option value="Novilla">Novilla</option>
-                            <option value="Vaca Ordeño">Vaca en Ordeño</option>
-                            <option value="Vaca Seca / Escampa">Vaca Seca / Escampa</option>
-                            <option value="Toro Reproductor">Toro Reproductor</option>
-                        </select>
-                        <button type="submit" style="background: var(--green-primary); color: white; border: none; border-radius: 4px; padding: 4px 8px; font-size: 0.75rem; cursor: pointer;">Guardar</button>
-                    </form>
-                </div>
-                <div><strong>Padre:</strong> <span id="f-padre">-</span></div>
-                <div><strong>Madre:</strong> <span id="f-madre">-</span></div>
-                <div><strong>Estatus Actual:</strong> <span id="f-estado" style="font-weight: bold; color: var(--green-dark);">-</span></div>
-            </div>
-
-            <!-- SECCIÓN SALUD -->
-            <h4 style="color: var(--green-dark); font-size: 0.9rem; margin-bottom: 6px;">🏥 Historial de Salud y Vacunas</h4>
-            <div id="f-historial-salud" style="background: #ecfdf5; border: 1px solid #a7f3d0; padding: 10px; border-radius: 8px; font-size: 0.85rem; color: #047857; margin-bottom: 15px;">
-                Sin novedades médicas.
-            </div>
-
-            <!-- SECCIÓN REPRODUCCIÓN & PALPACIONES -->
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                <h4 style="color: var(--green-dark); font-size: 0.9rem; margin: 0;">🍼 Reproducción & Palpaciones</h4>
-                <div>
-                    <button type="button" id="btn-show-destete" onclick="document.getElementById('form-destete').style.display='block'; this.style.display='none';" style="display: none; background: #eab308; color: white; border: none; padding: 4px 10px; border-radius: 4px; font-size: 0.75rem; cursor: pointer; margin-right: 4px;">🍼 Destetar</button>
-                    <button type="button" onclick="document.getElementById('form-nuevo-repro').style.display='block'; document.getElementById('form-nuevo-aborto').style.display='none';" style="background: #0284c7; color: white; border: none; padding: 4px 10px; border-radius: 4px; font-size: 0.75rem; cursor: pointer; margin-right: 4px;">+ Registrar Evento</button>
-                    <button type="button" onclick="document.getElementById('form-nuevo-aborto').style.display='block'; document.getElementById('form-nuevo-repro').style.display='none';" style="background: #dc2626; color: white; border: none; padding: 4px 10px; border-radius: 4px; font-size: 0.75rem; cursor: pointer;">⚠️ Aborto</button>
-                </div>
-            </div>
-
-            <div id="f-alerta-repro"></div>
-
-            <!-- Formulario Destete Individual -->
-            <form id="form-destete" style="display: none; background: #fef9c3; padding: 10px; border-radius: 8px; margin-bottom: 10px; font-size: 0.85rem; border: 1px solid #fde047;">
-                <h5 style="color: #a16207; margin: 0 0 6px 0;">🍼 Destetar Cría (Pasar a Maute/Mauta)</h5>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px;">
-                    <div><label>Fecha de Destete</label><input type="date" id="d-fecha" required style="width:100%; padding:6px; border:1px solid #fde047; border-radius:4px;"></div>
-                    <div><label>Peso al Destete (Kg)</label><input type="number" id="d-peso" required style="width:100%; padding:6px; border:1px solid #fde047; border-radius:4px;"></div>
-                </div>
-                <button type="submit" style="background: #ca8a04; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 0.8rem; width: 100%;">Confirmar Destete (Anotará el récord a la madre)</button>
-            </form>
-
-            <!-- Formulario Parto 2 en 1 -->
-            <form id="form-nuevo-repro" style="display: none; background: #e0f2fe; padding: 10px; border-radius: 8px; margin-bottom: 10px; font-size: 0.85rem;">
-                <h5 style="color: #0369a1; margin: 0 0 6px 0;">Registrar Palpación o Parto</h5>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px;">
-                    <div><label>Fecha de Evaluación</label><input type="date" id="r-fecha" required style="width:100%; padding:6px; border:1px solid #bae6fd; border-radius:4px;"></div>
-                    <div>
-                        <label>Resultado / Evento</label>
-                        <select id="r-tipo" required style="width:100%; padding:6px; border:1px solid #bae6fd; border-radius:4px;" onchange="
-                            document.getElementById('div-tercio').style.display = this.value === 'Palpación (+ Preñada)' ? 'block' : 'none';
-                            document.getElementById('div-parto-cria').style.display = this.value === 'Parto' ? 'block' : 'none';
-                        ">
-                            <option value="Palpación (+ Preñada)">Palpación (+ Preñada)</option>
-                            <option value="Palpación (- Vacía)">Palpación (- Vacía)</option>
-                            <option value="Parto">Nacimiento / Parto (Automático)</option>
-                        </select>
-                    </div>
-                </div>
-                <div id="div-tercio" style="margin-bottom: 8px;">
-                    <label>Tercio de Gestación</label>
-                    <select id="r-tercio" style="width:100%; padding:6px; border:1px solid #bae6fd; border-radius:4px;">
-                        <option value="1">1er Tercio (1 a 3 meses)</option>
-                        <option value="2">2do Tercio (4 a 6 meses)</option>
-                        <option value="3">3er Tercio (7 a 9 meses)</option>
-                    </select>
-                </div>
-                <div id="div-parto-cria" style="display: none; background: #f0f9ff; border: 1px solid #7dd3fc; padding: 10px; border-radius: 6px; margin-bottom: 8px;">
-                    <h6 style="margin:0 0 8px 0; color:#0284c7;">🍼 Datos del Nuevo Becerro(a)</h6>
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px;">
-                        <div><label>Arete / ID Cría</label><input type="text" id="r-cria-arete" placeholder="Ej. B-01" style="width:100%; padding:6px; border:1px solid #bae6fd; border-radius:4px;"></div>
-                        <div>
-                            <label>Sexo</label>
-                            <select id="r-cria-sexo" style="width:100%; padding:6px; border:1px solid #bae6fd; border-radius:4px;">
-                                <option value="Becerro">Macho (Becerro)</option>
-                                <option value="Becerra">Hembra (Becerra)</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div><label>Peso al Nacer (Kg)</label><input type="number" id="r-cria-peso" placeholder="Opcional" style="width:100%; padding:6px; border:1px solid #bae6fd; border-radius:4px;"></div>
-                </div>
-                <button type="submit" style="background: #0284c7; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 0.8rem; width: 100%;">Guardar Evento</button>
-            </form>
-
-            <form id="form-nuevo-aborto" style="display: none; background: #fee2e2; padding: 10px; border-radius: 8px; margin-bottom: 10px; font-size: 0.85rem;">
-                <div style="margin-bottom: 8px;"><label>Fecha del Aborto</label><input type="date" id="ab-fecha" required style="width:100%; padding:6px; border:1px solid #fca5a5; border-radius:4px;"></div>
-                <button type="submit" style="background: #dc2626; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 0.8rem; width:100%;">Confirmar Aborto (Cambiar a Vacía)</button>
-            </form>
-
-            <div style="max-height: 150px; overflow-y: auto; border: 1px solid var(--border-light); border-radius: 8px; margin-bottom: 15px;">
-                <table style="width: 100%; border-collapse: collapse; font-size: 0.8rem;">
-                    <thead style="background: #f8fafc; position: sticky; top: 0;">
-                        <tr>
-                            <th style="padding: 6px; text-align: left; border-bottom: 1px solid var(--border-light);">Evento</th>
-                            <th style="padding: 6px; text-align: left; border-bottom: 1px solid var(--border-light);">Fecha</th>
-                            <th style="padding: 6px; text-align: left; border-bottom: 1px solid var(--border-light);">Detalle / FEP</th>
-                        </tr>
-                    </thead>
-                    <tbody id="f-tabla-repro">
-                        <tr><td colspan="3" style="padding: 10px; text-align: center; color: var(--text-muted);">Sin eventos reproductivos.</td></tr>
-                    </tbody>
-                </table>
-            </div>
-
-            <!-- SECCIÓN PESAJES Y GDP -->
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                <h4 style="color: var(--green-dark); font-size: 0.9rem; margin: 0;">⚖️ Historial de Pesos & Ganancia (GDP)</h4>
-                <button type="button" onclick="document.getElementById('form-nuevo-peso').style.display='block'" style="background: var(--green-primary); color: white; border: none; padding: 4px 10px; border-radius: 4px; font-size: 0.75rem; cursor: pointer;">+ Nuevo Pesaje</button>
-            </div>
-            <form id="form-nuevo-peso" style="display: none; background: #f1f5f9; padding: 10px; border-radius: 8px; margin-bottom: 10px; font-size: 0.85rem;">
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px;">
-                    <div><label>Nuevo Peso (Kg)</label><input type="number" id="p-nuevo-peso" required style="width:100%; padding:6px; border:1px solid var(--border-light); border-radius:4px;"></div>
-                    <div><label>Fecha</label><input type="date" id="p-fecha" required style="width:100%; padding:6px; border:1px solid var(--border-light); border-radius:4px;"></div>
-                </div>
-                <button type="submit" style="background: var(--green-dark); color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 0.8rem;">Registrar Pesaje</button>
-            </form>
-            <div style="max-height: 120px; overflow-y: auto; border: 1px solid var(--border-light); border-radius: 8px;">
-                <table style="width: 100%; border-collapse: collapse; font-size: 0.8rem;">
-                    <thead style="background: #f8fafc; position: sticky; top: 0;">
-                        <tr><th style="padding: 6px; text-align: left; border-bottom: 1px solid var(--border-light);">Fecha</th><th style="padding: 6px; text-align: left; border-bottom: 1px solid var(--border-light);">Peso (Kg)</th><th style="padding: 6px; text-align: left; border-bottom: 1px solid var(--border-light);">GDP</th></tr>
-                    </thead>
-                    <tbody id="f-tabla-pesajes"><tr><td colspan="3" style="padding: 10px; text-align: center; color: var(--text-muted);">Sin pesajes.</td></tr></tbody>
-                </table>
-            </div>
-
-            <div style="margin-top: 20px; text-align: right;">
-                <button onclick="document.getElementById('modal-ficha').style.display='none'" style="background: var(--text-dark); color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 0.85rem;">Cerrar Expediente</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- 🤖 ASISTENTE IA GANADERO (FLOTANTE) -->
-    <div id="ai-chat-widget" style="position: fixed; bottom: 20px; right: 20px; z-index: 9999;">
-        <button onclick="toggleAIChat()" style="background: var(--green-dark); color: white; border: none; border-radius: 50px; width: 55px; height: 55px; font-size: 1.5rem; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">🤖</button>
-        
-        <div id="ai-chat-box" style="display: none; position: absolute; bottom: 70px; right: 0; width: 350px; height: 450px; background: white; border: 1px solid var(--border-light); border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.15); flex-direction: column; overflow: hidden;">
-            <div style="background: var(--green-dark); color: white; padding: 12px; display: flex; justify-content: space-between; align-items: center;">
-                <strong style="font-size: 0.9rem;">Asistente ElbaLui AI</strong>
-                <button onclick="toggleAIChat()" style="background:none; border:none; color:white; font-size:1.2rem; cursor:pointer;">&times;</button>
-            </div>
-            <div id="ai-chat-messages" style="flex: 1; padding: 12px; overflow-y: auto; font-size: 0.85rem; display: flex; flex-direction: column; gap: 8px; background: #f8fafc;">
-                <div style="background: #e2e8f0; padding: 8px 12px; border-radius: 8px; align-self: flex-start; max-width: 80%;">
-                    ¡Hola! Soy tu asistente de IA. Pregúntame sobre tus vacas, alertas de secado o estado del hato de Agua Clara y El Sur.
-                </div>
-            </div>
-            <div style="padding: 10px; border-top: 1px solid var(--border-light); display: flex; gap: 6px; background: white;">
-                <input type="text" id="ai-input" placeholder="Ej. ¿Cuántas gestantes tengo?" style="flex: 1; padding: 8px; border: 1px solid var(--border-light); border-radius: 6px; font-size: 0.85rem;" onkeypress="if(event.key === 'Enter') enviarPreguntaIA()">
-                <button onclick="enviarPreguntaIA()" style="background: var(--green-primary); color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-weight: bold;">Enviar</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- SCRIPT PRINCIPAL DE FIREBASE Y NAVEGACIÓN -->
+    <!-- SCRIPT DE FIREBASE Y NAVEGACIÓN -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
         import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
@@ -520,3 +238,48 @@
             authDomain: "finca-agropecuaria-elbalui.firebaseapp.com",
             projectId: "finca-agropecuaria-elbalui"
         };
+        const app = initializeApp(firebaseConfig);
+        window.auth = getAuth(app);
+        window.db = getFirestore(app);
+
+        const loginScreen = document.getElementById('login-screen');
+        const appContainer = document.getElementById('app-container');
+        
+        onAuthStateChanged(window.auth, (user) => {
+            if (user) {
+                loginScreen.style.display = 'none';
+                appContainer.style.display = 'block';
+                if (window.cargarHato) window.cargarHato();
+            } else {
+                loginScreen.style.display = 'flex';
+                appContainer.style.display = 'none';
+            }
+        });
+
+        document.getElementById('login-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            try {
+                await signInWithEmailAndPassword(window.auth, document.getElementById('login-email').value, document.getElementById('login-password').value);
+                e.target.reset();
+            } catch (error) { alert("Error: " + error.message); }
+        });
+        document.getElementById('btn-logout').addEventListener('click', () => signOut(window.auth));
+
+        window.switchTab = function(tabId, element) {
+            document.querySelectorAll('.section-view').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.cat-chip').forEach(c => c.classList.remove('active'));
+            document.getElementById('tab-' + tabId).classList.add('active');
+            if (element) element.classList.add('active');
+        };
+
+        window.setFinca = function(fincaNombre) {
+            document.querySelectorAll('.finca-btn').forEach(b => {
+                b.classList.toggle('active', b.innerText.includes(fincaNombre === 'Global' ? 'Consolidado' : fincaNombre));
+            });
+            document.getElementById('finca-tag').innerText = fincaNombre === 'Global' ? 'VISTA: CONSOLIDADO' : 'FINCA ACTIVA: ' + fincaNombre.toUpperCase();
+            if (window.cargarHato) window.cargarHato();
+        };
+    </script>
+    <script type="module" src="js/hato.js"></script>
+</body>
+</html>
