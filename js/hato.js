@@ -1,17 +1,7 @@
 // js/hato.js
 import { 
-    collection, 
-    addDoc, 
-    query, 
-    where, 
-    onSnapshot, 
-    serverTimestamp,
-    doc,
-    deleteDoc,
-    updateDoc,
-    getDoc,
-    getDocs,
-    writeBatch
+    collection, addDoc, query, where, onSnapshot, serverTimestamp,
+    doc, deleteDoc, updateDoc, getDoc, getDocs, writeBatch
 } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
 function obtenerFincaActual() {
@@ -54,7 +44,6 @@ document.addEventListener('DOMContentLoaded', () => {
                         });
 
                         if (animalEncontrado) {
-                            // 1️⃣ Control de lote: Registramos que este animal ya pasó
                             window.animalesPasadosHoy.add(animalEncontrado.id);
                             
                             const totalPasados = window.animalesPasadosHoy.size;
@@ -63,7 +52,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
                             console.log(`✅ LOTE MANGA: Animal ${animalEncontrado.arete} registrado. Total pasados: ${totalPasados}`);
 
-                            // 2️⃣ Abrimos de inmediato su ficha técnica
                             if (typeof window.abrirFicha === 'function') {
                                 window.abrirFicha(animalEncontrado.id);
                             } else {
@@ -84,26 +72,18 @@ document.addEventListener('DOMContentLoaded', () => {
                                         });
                                         alert(`✅ ¡Chip vinculado al arete ${animalPorArete.arete} con éxito!`);
                                         
-                                        if (typeof window.cargarHato === 'function') {
-                                            window.cargarHato();
-                                        }
+                                        if (typeof window.cargarHato === 'function') window.cargarHato();
 
                                         window.animalesPasadosHoy.add(animalPorArete.id);
                                         const contadorUi = document.getElementById('contador-lote-manga');
                                         if (contadorUi) contadorUi.innerText = window.animalesPasadosHoy.size;
 
                                         window.abrirFicha(animalPorArete.id);
-                                    } catch (err) {
-                                        alert("❌ Error al guardar el chip: " + err.message);
-                                    }
-                                } else {
-                                    alert(`⚠️ No se encontró ningún animal con el arete "${areteAsociar}" en esta finca.`);
-                                }
+                                    } catch (err) { alert("❌ Error al guardar el chip: " + err.message); }
+                                } else { alert(`⚠️ No se encontró ningún animal con el arete "${areteAsociar}" en esta finca.`); }
                             }
                         }
-                    } else {
-                        alert("⚠️ Sincronizando datos del hato. Espere un segundo e intente de nuevo.");
-                    }
+                    } else { alert("⚠️ Sincronizando datos del hato. Espere un segundo e intente de nuevo."); }
                 }
             });
         }
@@ -131,7 +111,6 @@ window.cambiarModuloHato = function(evento, idModulo) {
     btnActivo.style.color = 'white';
     btnActivo.style.border = 'none';
 
-    // Enfocar el lector si entramos a la Manga
     if (idModulo === 'subtab-lector') {
         const inputLector = document.getElementById('rfid-scanner-input');
         if (inputLector) inputLector.focus();
@@ -184,7 +163,7 @@ window.abrirModalMasivo = function() {
     
     document.getElementById('m-count').innerText = seleccionados.length;
     document.getElementById('form-masivo').reset();
-    document.getElementById('m-div-vacuna').style.display = 'none';
+    document.getElementById('m-div-vacuna').style.display = 'block';
     document.getElementById('m-div-destete').style.display = 'none';
     document.getElementById('modal-masivo').style.display = 'flex';
 };
@@ -204,16 +183,14 @@ if (formMasivo) {
         try {
             if (tipoAccion === 'Sanidad') {
                 const vacunaStr = document.getElementById('m-vacuna-nombre').value.trim();
-                if (!vacunaStr) throw new Error("Escriba el nombre de la vacuna o tratamiento.");
+                if (!vacunaStr) throw new Error("Seleccione el nombre de la vacuna o tratamiento.");
                 
                 for (let chk of seleccionados) {
                     const idDoc = chk.value;
                     const docRef = doc(window.db, "animales", idDoc);
                     const docSnap = await getDoc(docRef);
                     if (docSnap.exists()) {
-                        batch.update(docRef, { 
-                            salud: `🟢 Sano (Vacunado: ${vacunaStr})`
-                        });
+                        batch.update(docRef, { salud: `🟢 Sano (Vacunado: ${vacunaStr})` });
                     }
                 }
                 await batch.commit();
@@ -234,12 +211,7 @@ if (formMasivo) {
                             let nuevaCat = (data.categoria === 'Becerra') ? 'Mauta' : 'Maute';
                             let historialPesos = data.historialPesos || [];
                             historialPesos.push({ fecha: hoy, peso: pesoPromedio });
-
-                            batch.update(docRef, {
-                                categoria: nuevaCat,
-                                peso: pesoPromedio,
-                                historialPesos: historialPesos
-                            });
+                            batch.update(docRef, { categoria: nuevaCat, peso: pesoPromedio, historialPesos: historialPesos });
                         }
                     }
                 }
@@ -259,7 +231,10 @@ if (formMasivo) {
 // ==========================================
 window.eliminarAnimal = async function(idDoc, arete) {
     if (confirm(`¿Eliminar permanentemente Arete "${arete}"?`)) {
-        try { await deleteDoc(doc(window.db, "animales", idDoc)); } 
+        try { 
+            await deleteDoc(doc(window.db, "animales", idDoc)); 
+            document.getElementById('modal-ficha').style.display = 'none';
+        } 
         catch (err) { alert("Error al eliminar: " + err.message); }
     }
 };
@@ -399,9 +374,7 @@ window.abrirFicha = async function(idDoc) {
         const a = docSnap.data();
         
         document.getElementById('p-id-doc').value = idDoc;
-        document.getElementById('form-nuevo-peso').style.display = 'none';
         document.getElementById('form-nuevo-repro').style.display = 'none';
-        document.getElementById('form-nuevo-aborto').style.display = 'none';
         document.getElementById('form-cambio-categoria').style.display = 'none';
         document.getElementById('form-destete').style.display = 'none';
         
@@ -595,7 +568,7 @@ if (formDestete) {
 }
 
 // ==========================================
-// REGISTRO DE NUEVO ANIMAL (CON LOTE)
+// REGISTRO DE NUEVO ANIMAL (CON LOTE AUTOMATIZADO)
 // ==========================================
 const formAnimal = document.getElementById('form-animal');
 if (formAnimal) {
@@ -647,6 +620,101 @@ if (formAnimal) {
         }
     });
 }
+
+// ==========================================
+// 📍 ADMINISTRACIÓN DE LOTES Y POTREROS
+// ==========================================
+window.cargarListaLotes = function() {
+    const listaUI = document.getElementById('lista-lotes-ui');
+    const selectLote = document.getElementById('a-lote');
+    if (!listaUI || !selectLote || !window.db) return;
+
+    onSnapshot(query(collection(window.db, "config_lotes")), (snapshot) => {
+        listaUI.innerHTML = `<li style="padding: 8px 5px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center;"><span>👉 General / Sin Asignar</span></li>`;
+        selectLote.innerHTML = `<option value="General">👉 General / Sin Asignar</option>`;
+
+        snapshot.forEach((docSnap) => {
+            const data = docSnap.data();
+            const loteId = docSnap.id;
+            const nombreLote = data.nombre || 'Lote Sin Nombre';
+            
+            listaUI.innerHTML += `
+                <li style="padding: 8px 5px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center;">
+                    <span style="font-weight: bold; color: var(--green-dark);">👉 ${nombreLote}</span>
+                    <button onclick="window.eliminarLoteActivo('${loteId}', '${nombreLote.replace(/'/g, "\\'")}')" style="background: #fef2f2; color: #ef4444; border: 1px solid #fecdd3; border-radius: 4px; padding: 2px 6px; cursor: pointer; font-weight: bold;" title="Borrar Lote">❌</button>
+                </li>
+            `;
+            selectLote.innerHTML += `<option value="${nombreLote}">${nombreLote}</option>`;
+        });
+    }, (err) => console.error("Error cargando lotes:", err));
+};
+
+window.agregarLoteNuevo = async function() {
+    const inputLote = document.getElementById('input-nuevo-lote');
+    const nombreLote = inputLote.value.trim();
+    if (!nombreLote) return alert("⚠️ Escriba un nombre para el lote (Ej. Lote 100 Vacías).");
+    
+    try {
+        await addDoc(collection(window.db, "config_lotes"), { nombre: nombreLote, fechaCreacion: serverTimestamp() });
+        inputLote.value = ''; 
+    } catch (err) { alert("❌ Error al crear lote: " + err.message); }
+};
+
+window.eliminarLoteActivo = async function(idLote, nombreLote) {
+    if (confirm(`¿Estás seguro de eliminar el lote "${nombreLote}"?`)) {
+        try { await deleteDoc(doc(window.db, "config_lotes", idLote)); } 
+        catch (err) { alert("❌ Error al borrar el lote: " + err.message); }
+    }
+};
+
+// ==========================================
+// 💉 ADMINISTRACIÓN DE VACUNAS Y TRATAMIENTOS
+// ==========================================
+window.cargarListaVacunas = function() {
+    const listaVacunasUI = document.getElementById('lista-vacunas-ui');
+    const selectMasivoVacunas = document.getElementById('m-vacuna-nombre');
+    if (!listaVacunasUI || !window.db) return;
+
+    onSnapshot(query(collection(window.db, "config_vacunas")), (snapshot) => {
+        listaVacunasUI.innerHTML = '';
+        if(selectMasivoVacunas) selectMasivoVacunas.innerHTML = '<option value="">Seleccione un tratamiento...</option>';
+
+        let hayVacunas = false;
+        snapshot.forEach((docSnap) => {
+            hayVacunas = true;
+            const data = docSnap.data();
+            const vacunaId = docSnap.id;
+            const nombreVacuna = data.nombre;
+            
+            listaVacunasUI.innerHTML += `
+                <li style="padding: 8px 5px; border-bottom: 1px solid #fef08a; display: flex; justify-content: space-between; align-items: center;">
+                    <span style="font-weight: bold; color: #854d0e;">👉 ${nombreVacuna}</span>
+                    <button onclick="window.eliminarVacunaActiva('${vacunaId}', '${nombreVacuna.replace(/'/g, "\\'")}')" style="background: #fef2f2; color: #ef4444; border: 1px solid #fecdd3; border-radius: 4px; padding: 2px 6px; cursor: pointer; font-weight: bold;">❌</button>
+                </li>
+            `;
+            if(selectMasivoVacunas) selectMasivoVacunas.innerHTML += `<option value="${nombreVacuna}">${nombreVacuna}</option>`;
+        });
+
+        if(!hayVacunas) listaVacunasUI.innerHTML = '<li style="padding: 5px 0; font-style: italic; color: #a16207;">No hay tratamientos registrados.</li>';
+    });
+};
+
+window.agregarVacunaNueva = async function() {
+    const inputVacuna = document.getElementById('input-nueva-vacuna');
+    const nombreVacuna = inputVacuna.value.trim();
+    if (!nombreVacuna) return alert("⚠️ Escriba el nombre de la vacuna/tratamiento.");
+    try {
+        await addDoc(collection(window.db, "config_vacunas"), { nombre: nombreVacuna });
+        inputVacuna.value = ''; 
+    } catch (err) { alert("❌ Error: " + err.message); }
+};
+
+window.eliminarVacunaActiva = async function(idVacuna, nombreVacuna) {
+    if (confirm(`¿Eliminar el tratamiento "${nombreVacuna}" del catálogo?`)) {
+        try { await deleteDoc(doc(window.db, "config_vacunas", idVacuna)); } 
+        catch (err) { alert("❌ Error: " + err.message); }
+    }
+};
 
 // ==========================================
 // MOTOR DE TIEMPO Y TORRE DE CONTROL
@@ -718,57 +786,18 @@ function actualizarDashboard(datosHato) {
 }
 
 // ==========================================
-// 📍 ADMINISTRACIÓN DE LOTES Y POTREROS
+// 🚀 INICIALIZACIÓN FINAL DEL ERP
 // ==========================================
-window.cargarListaLotes = function() {
-    const listaUI = document.getElementById('lista-lotes-ui');
-    if (!listaUI || !window.db) return;
-
-    onSnapshot(query(collection(window.db, "config_lotes")), (snapshot) => {
-        listaUI.innerHTML = '';
-        listaUI.innerHTML += `<li style="padding: 8px 5px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center;">
-                                <span>👉 General / Sin Asignar</span>
-                              </li>`;
-
-        snapshot.forEach((docSnap) => {
-            const data = docSnap.data();
-            const loteId = docSnap.id;
-            const nombreLote = data.nombre || 'Lote Sin Nombre';
-            
-            listaUI.innerHTML += `
-                <li style="padding: 8px 5px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center;">
-                    <span style="font-weight: bold; color: var(--green-dark);">👉 ${nombreLote}</span>
-                    <button onclick="window.eliminarLoteActivo('${loteId}', '${nombreLote.replace(/'/g, "\\'")}')" style="background: #fef2f2; color: #ef4444; border: 1px solid #fecdd3; border-radius: 4px; padding: 2px 6px; cursor: pointer; font-weight: bold;" title="Borrar Lote">❌</button>
-                </li>
-            `;
-        });
-    }, (err) => console.error("Error cargando lotes:", err));
-};
-
-window.agregarLoteNuevo = async function() {
-    const inputLote = document.getElementById('input-nuevo-lote');
-    const nombreLote = inputLote.value.trim();
-    
-    if (!nombreLote) return alert("⚠️ Escriba un nombre para el lote (Ej. Lote 100 Vacías).");
-    if (!window.db) return alert("⚠️ Base de datos desconectada.");
-
-    try {
-        await addDoc(collection(window.db, "config_lotes"), {
-            nombre: nombreLote,
-            fechaCreacion: serverTimestamp()
-        });
-        inputLote.value = ''; 
-    } catch (err) {
-        alert("❌ Error al crear lote: " + err.message);
+document.addEventListener('DOMContentLoaded', () => {
+    const btnAddVacuna = document.getElementById('btn-add-vacuna');
+    if (btnAddVacuna) {
+        btnAddVacuna.onclick = window.agregarVacunaNueva;
     }
-};
 
-window.eliminarLoteActivo = async function(idLote, nombreLote) {
-    if (confirm(`¿Estás seguro de eliminar el lote "${nombreLote}"?\n\nOjo: Los animales asignados a este lote no se borrarán del sistema.`)) {
-        try {
-            await deleteDoc(doc(window.db, "config_lotes", idLote));
-        } catch (err) {
-            alert("❌ Error al borrar el lote: " + err.message);
+    setTimeout(() => {
+        if (window.db) {
+            if (window.cargarListaLotes) window.cargarListaLotes();
+            if (window.cargarListaVacunas) window.cargarListaVacunas();
         }
-    }
-};
+    }, 1500); 
+});
