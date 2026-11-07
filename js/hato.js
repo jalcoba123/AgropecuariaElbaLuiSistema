@@ -28,7 +28,6 @@ window.datosHatoCache = [];
 // 🏷️ LECTOR RFID (ESCANEO RÁPIDO EN MANGA)
 // ==========================================
 document.addEventListener('DOMContentLoaded', () => {
-    // Crear input invisible o visible para capturar el lector de chips por USB/Teclado
     const seccionHato = document.getElementById('tab-hato');
     if (seccionHato && !document.getElementById('rfid-scanner-input')) {
         const contenedorLector = document.createElement('div');
@@ -41,41 +40,48 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
             <input type="text" id="rfid-scanner-input" placeholder="Esperando lectura de chip..." autocomplete="off" style="padding: 6px 10px; border: 1px solid #86efac; border-radius: 6px; font-size: 0.85rem; width: 220px; background: white;">
         `;
-        // Insertarlo arriba de la tabla de inventario
+        
+        // Insertarlo justo arriba de la tabla de inventario
         const tablaCard = seccionHato.querySelector('.container div:last-child') || seccionHato.children[2];
         if (tablaCard) {
             tablaCard.parentNode.insertBefore(contenedorLector, tablaCard);
+        } else {
+            seccionHato.prepend(contenedorLector);
         }
 
-        // Escuchar el evento de lectura del bastón (que envía los números y un Enter)
+        // Escuchar el "disparo" del bastón lector
         const inputLector = document.getElementById('rfid-scanner-input');
         if (inputLector) {
             inputLector.addEventListener('keypress', function(e) {
+                // El lector RFID siempre manda un "Enter" al final de leer el chip
                 if (e.key === 'Enter') {
                     e.preventDefault();
                     const codigoRFID = inputLector.value.trim();
-                    inputLector.value = ''; // Limpiar para el siguiente animal
+                    inputLector.value = ''; // Limpiar el campo para la siguiente vaca
 
                     if (!codigoRFID) return;
 
-                    // Buscar el animal en la caché local del hato
-                    const animalEncontrado = window.datosHatoCache.find(a => 
-                        (a.arete && a.arete.toLowerCase() === codigoRFID.toLowerCase()) || 
-                        (a.chipRFID && a.chipRFID === codigoRFID)
-                    );
+                    // Buscar el animal en la caché de tu sistema
+                    if (window.datosHatoCache) {
+                        const animalEncontrado = window.datosHatoCache.find(a => 
+                            (a.arete && a.arete.toLowerCase() === codigoRFID.toLowerCase()) || 
+                            (a.chipRFID && a.chipRFID === codigoRFID)
+                        );
 
-                    if (animalEncontrado) {
-                        alert(`✅ ¡Animal encontrado! Arete: ${animalEncontrado.arete}`);
-                        window.abrirFicha(animalEncontrado.id);
-                    } else {
-                        alert(`⚠️ El chip leído (${codigoRFID}) no está registrado en el sistema. Verifique o registre el animal.`);
+                        if (animalEncontrado) {
+                            // Abrir automáticamente el expediente clínico
+                            if (typeof window.abrirFicha === 'function') {
+                                window.abrirFicha(animalEncontrado.id);
+                            }
+                        } else {
+                            alert(`⚠️ El chip leído (${codigoRFID}) no está registrado en el sistema. Verifique o registre el animal.`);
+                        }
                     }
                 }
             });
         }
     }
 });
-
 
 // ==========================================
 // SELECCIÓN Y FILTROS EN TABLA
@@ -156,7 +162,7 @@ if (formMasivo) {
                     }
                 }
                 await batch.commit();
-                alert(`✅ Vacunación (${vacunaStr}) aplicada a${seleccionados.length} animales.`);
+                alert(`✅ Vacunación (${vacunaStr}) aplicada a ${seleccionados.length} animales.`);
             } 
             else if (tipoAccion === 'Destete') {
                 const pesoPromedio = Number(document.getElementById('m-destete-peso').value);
@@ -197,7 +203,68 @@ if (formMasivo) {
 // FUNCIONES BASE (ELIMINAR, NOVEDAD)
 // ==========================================
 window.eliminarAnimal = async function(idDoc, arete) {
-    if (confirm(`¿Eliminar permanentemente Arete "${arete}"?`)) { try { await deleteDoc(doc(window.db, "animales", idDoc)); } catch (err) { alert("Error al eliminar: " + err.message); } } };  window.abrirModalNovedad = function(idDoc, arete, saludActual) { document.getElementById('n-id').value = idDoc; document.getElementById('n-arete-display').innerText = arete; document.getElementById('n-estado-salud').value = (saludActual && saludActual !== 'undefined' && !saludActual.includes('Sano')) ? saludActual : ""; document.getElementById('modal-novedad').style.display = 'flex'; };  const formNovedad = document.getElementById('form-novedad'); if (formNovedad) { formNovedad.addEventListener('submit', async (e) => { e.preventDefault(); const idDoc = document.getElementById('n-id').value; const nuevoEstado = document.getElementById('n-estado-salud').value.trim(); const btn = formNovedad.querySelector('button[type="submit"]');  btn.innerText = "Guardando..."; btn.disabled = true; try { await updateDoc(doc(window.db, "animales", idDoc), { salud: nuevoEstado }); document.getElementById('modal-novedad').style.display = 'none'; } catch (err) { alert("Error: " + err.message); } finally { btn.innerText = "Guardar Novedad"; btn.disabled = false; } }); }  // ========================================== // LECTURA EN TIEMPO REAL (INVENTARIO Y CÁLCULOS) // ========================================== window.cargarHato = function() { const tabla = document.getElementById('tabla-hato-body'); const panelAlertas = document.getElementById('panel-alertas'); if (!tabla \vert{}\vert{} !window.db) return;  const fincaActiva = obtenerFincaActual(); let q = (fincaActiva === 'Global') ? query(collection(window.db, "animales")) : query(collection(window.db, "animales"), where("finca", "==", fincaActiva));  onSnapshot(q, (snapshot) => { tabla.innerHTML = ''; window.datosHatoCache = []; let total = 0, mautes = 0, gestantes = 0; let conteoSalud = {}; const hoy = new Date();  snapshot.forEach((documento) => { const a = documento.data(); const idDoc = documento.id; window.datosHatoCache.push({ id: idDoc, ...a });  const saludActual = a.salud \vert{}\vert{} "🟢 Sano"; total++; if (a.categoria === "Maute" \vert{}\vert{} a.categoria === "Mauta" \vert{}\vert{} a.categoria === "Lote ElbaLui (Maute)") mautes++; if (a.estado === "Gestante") gestantes++; if (!saludActual.includes("Sano")) conteoSalud[saludActual] = (conteoSalud[saludActual] \vert{}\vert{} 0) + 1;  const textoPeso = a.peso ? `${a.peso} kg` : `<span style="color:#94a3b8;">S/P</span>`;
+    if (confirm(`¿Eliminar permanentemente Arete "${arete}"?`)) {
+        try { await deleteDoc(doc(window.db, "animales", idDoc)); } 
+        catch (err) { alert("Error al eliminar: " + err.message); }
+    }
+};
+
+window.abrirModalNovedad = function(idDoc, arete, saludActual) {
+    document.getElementById('n-id').value = idDoc;
+    document.getElementById('n-arete-display').innerText = arete;
+    document.getElementById('n-estado-salud').value = (saludActual && saludActual !== 'undefined' && !saludActual.includes('Sano')) ? saludActual : "";
+    document.getElementById('modal-novedad').style.display = 'flex';
+};
+
+const formNovedad = document.getElementById('form-novedad');
+if (formNovedad) {
+    formNovedad.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const idDoc = document.getElementById('n-id').value;
+        const nuevoEstado = document.getElementById('n-estado-salud').value.trim();
+        const btn = formNovedad.querySelector('button[type="submit"]');
+        
+        btn.innerText = "Guardando..."; btn.disabled = true;
+        try {
+            await updateDoc(doc(window.db, "animales", idDoc), { salud: nuevoEstado });
+            document.getElementById('modal-novedad').style.display = 'none';
+        } catch (err) { alert("Error: " + err.message); } 
+        finally { btn.innerText = "Guardar Novedad"; btn.disabled = false; }
+    });
+}
+
+// ==========================================
+// LECTURA EN TIEMPO REAL (INVENTARIO Y CÁLCULOS)
+// ==========================================
+window.cargarHato = function() {
+    const tabla = document.getElementById('tabla-hato-body');
+    const panelAlertas = document.getElementById('panel-alertas');
+    if (!tabla || !window.db) return;
+
+    const fincaActiva = obtenerFincaActual();
+    let q = (fincaActiva === 'Global')
+        ? query(collection(window.db, "animales"))
+        : query(collection(window.db, "animales"), where("finca", "==", fincaActiva));
+
+    onSnapshot(q, (snapshot) => {
+        tabla.innerHTML = '';
+        window.datosHatoCache = []; 
+        let total = 0, mautes = 0, gestantes = 0;
+        let conteoSalud = {};
+        const hoy = new Date();
+
+        snapshot.forEach((documento) => {
+            const a = documento.data();
+            const idDoc = documento.id;
+            window.datosHatoCache.push({ id: idDoc, ...a }); 
+            
+            const saludActual = a.salud || "🟢 Sano";
+            total++;
+            if (a.categoria === "Maute" || a.categoria === "Mauta" || a.categoria === "Lote ElbaLui (Maute)") mautes++;
+            if (a.estado === "Gestante") gestantes++;
+            if (!saludActual.includes("Sano")) conteoSalud[saludActual] = (conteoSalud[saludActual] || 0) + 1;
+
+            const textoPeso = a.peso ? `${a.peso} kg` : `<span style="color:#94a3b8;">S/P</span>`;
             const escapeStr = (val) => String(val || '').replace(/'/g, "\\'");
 
             let textoTiempo = `<span style="color:#94a3b8;">-</span>`;
@@ -211,7 +278,17 @@ window.eliminarAnimal = async function(idDoc, arete) {
                     const diasParaParto = Math.ceil((new Date(ultimaFep) - hoy) / (1000 * 60 * 60 * 24));
                     if (diasParaParto < 0) textoTiempo = `<strong style="color:#dc2626;">¡Parto Atrasado!</strong>`;
                     else if (diasParaParto <= 60) textoTiempo = `<strong style="color:#ca8a04;">Faltan ${diasParaParto} días</strong>`;
-                    else textoTiempo = `Faltan ${diasParaParto} días`; } } else if (a.categoria.includes("Becerr") \vert{}\vert{} a.categoria.includes("Maut")) { let fechaNac = a.fechaNacimiento; if (!fechaNac && a.historialPesos && a.historialPesos.length > 0) { fechaNac = a.historialPesos[0].fecha; } if (fechaNac && fechaNac !== 'Registro inicial') { const meses = Math.floor((hoy - new Date(fechaNac)) / (1000 * 60 * 60 * 24 * 30)); textoTiempo = meses > 0 ? `${meses} meses` : `Recién nacido`;
+                    else textoTiempo = `Faltan ${diasParaParto} días`;
+                }
+            } 
+            else if (a.categoria.includes("Becerr") || a.categoria.includes("Maut")) {
+                let fechaNac = a.fechaNacimiento;
+                if (!fechaNac && a.historialPesos && a.historialPesos.length > 0) {
+                    fechaNac = a.historialPesos[0].fecha;
+                }
+                if (fechaNac && fechaNac !== 'Registro inicial') {
+                    const meses = Math.floor((hoy - new Date(fechaNac)) / (1000 * 60 * 60 * 24 * 30));
+                    textoTiempo = meses > 0 ? `${meses} meses` : `Recién nacido`;
                     if (a.categoria.includes("Becerr") && meses >= 8) textoTiempo = `<strong style="color:#ca8a04;">${meses} meses (Pto. Destete)</strong>`;
                 }
             }
@@ -243,7 +320,7 @@ window.eliminarAnimal = async function(idDoc, arete) {
         let htmlAlertas = "";
         let totalEnfermos = 0;
         for (const [enfermedad, cantidad] of Object.entries(conteoSalud)) {
-            htmlAlertas += `<span style="background: white; padding: 6px 12px; border-radius: 20px; border: 1px solid #fecdd3; color: #be123c; font-weight: 600;">${enfermedad}:${cantidad}</span>`;
+            htmlAlertas += `<span style="background: white; padding: 6px 12px; border-radius: 20px; border: 1px solid #fecdd3; color: #be123c; font-weight: 600;">${enfermedad}: ${cantidad}</span>`;
             totalEnfermos += cantidad;
         }
         panelAlertas.innerHTML = totalEnfermos === 0 ? `<span style="background: #ecfdf5; padding: 6px 12px; border-radius: 20px; border: 1px solid #a7f3d0; color: #047857; font-weight: 600;">🟢 Hato 100% Sano.</span>` : htmlAlertas;
@@ -291,7 +368,12 @@ window.abrirFicha = async function(idDoc) {
         const historialSalud = document.getElementById('f-historial-salud');
         const saludActual = a.salud || "🟢 Sano";
         if (!saludActual.includes('Sano')) {
-            historialSalud.innerHTML = `🔴 <strong>Novedad:</strong> ${saludActual}`; historialSalud.style.background = '#fff1f2'; historialSalud.style.color = '#be123c'; historialSalud.style.borderColor = '#fecdd3'; } else { historialSalud.innerHTML = `🟢 ${saludActual}`;
+            historialSalud.innerHTML = `🔴 <strong>Novedad:</strong> ${saludActual}`;
+            historialSalud.style.background = '#fff1f2';
+            historialSalud.style.color = '#be123c';
+            historialSalud.style.borderColor = '#fecdd3';
+        } else {
+            historialSalud.innerHTML = `🟢 ${saludActual}`;
             historialSalud.style.background = '#ecfdf5';
             historialSalud.style.color = '#047857';
             historialSalud.style.borderColor = '#a7f3d0';
@@ -354,4 +436,182 @@ window.abrirFicha = async function(idDoc) {
                         gdpTexto = `<strong style="color: ${gdp >= 0 ? 'var(--green-dark)' : '#dc2626'};">${gdp > 0 ? '+' : ''}${gdp} kg/día</strong>`;
                     }
                 }
-                tbodyPesajes.innerHTML += `<tr><td style="padding: 6px; border-bottom: 1px solid var(--border-light);">${actual.fecha || 'N/D'}</td><td style="padding: 6px; border-bottom: 1px solid var(--border-light); font-weight: bold
+                tbodyPesajes.innerHTML += `<tr><td style="padding: 6px; border-bottom: 1px solid var(--border-light);">${actual.fecha || 'N/D'}</td><td style="padding: 6px; border-bottom: 1px solid var(--border-light); font-weight: bold;">${actual.peso} kg</td><td style="padding: 6px; border-bottom: 1px solid var(--border-light);">${gdpTexto}</td></tr>`;
+            }
+        }
+
+        document.getElementById('modal-ficha').style.display = 'flex';
+    } catch (err) { alert("❌ Error: " + err.message); }
+};
+
+// ==========================================
+// FORMULARIOS DENTRO DE LA FICHA
+// ==========================================
+const formCambioCategoria = document.getElementById('form-cambio-categoria');
+if (formCambioCategoria) {
+    formCambioCategoria.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        try {
+            await updateDoc(doc(window.db, "animales", document.getElementById('p-id-doc').value), { categoria: document.getElementById('c-nueva-categoria').value });
+            alert("✅ Categoría actualizada."); window.abrirFicha(document.getElementById('p-id-doc').value);
+        } catch (err) { alert("Error: " + err.message); }
+    });
+}
+
+const formNuevoRepro = document.getElementById('form-nuevo-repro');
+if (formNuevoRepro) {
+    formNuevoRepro.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const idDoc = document.getElementById('p-id-doc').value;
+        const fecha = document.getElementById('r-fecha').value;
+        const tipoEvento = document.getElementById('r-tipo').value;
+        
+        try {
+            const docRef = doc(window.db, "animales", idDoc);
+            const docSnap = await getDoc(docRef);
+            const data = docSnap.data();
+            let historialRepro = data.historialReproductivo || [];
+            let fep = '-', nuevoEstado = data.estado, nuevaCat = data.categoria, detalle = '', tercioStr = '-';
+
+            if (tipoEvento === 'Palpación (+ Preñada)') {
+                nuevoEstado = 'Gestante';
+                const tercio = document.getElementById('r-tercio').value;
+                const d = new Date(fecha);
+                if (tercio === '1') { d.setDate(d.getDate() + 210); tercioStr = '1er Tercio'; }
+                else if (tercio === '2') { d.setDate(d.getDate() + 120); tercioStr = '2do Tercio'; }
+                else if (tercio === '3') { d.setDate(d.getDate() + 30); tercioStr = '3er Tercio'; }
+                fep = d.toISOString().split('T')[0];
+                detalle = `Confirmada preñez en ${tercioStr}.`;
+            } 
+            else if (tipoEvento === 'Palpación (- Vacía)') { nuevoEstado = 'Vacía'; detalle = 'Vacía.'; } 
+            else if (tipoEvento === 'Parto') {
+                nuevoEstado = 'Vacía';
+                if (data.categoria === 'Novilla' || data.categoria === 'Vaca Seca / Escampa') nuevaCat = 'Vaca Ordeño';
+                detalle = 'Parto exitoso.';
+                const areteCria = document.getElementById('r-cria-arete').value.trim();
+                if (areteCria) {
+                    detalle += ` Nacimiento Cría: ${areteCria}.`;
+                    await addDoc(collection(window.db, "animales"), {
+                        finca: data.finca || 'Agua Clara', arete: areteCria, categoria: document.getElementById('r-cria-sexo').value,
+                        peso: document.getElementById('r-cria-peso').value || null, fechaNacimiento: fecha,
+                        historialPesos: document.getElementById('r-cria-peso').value ? [{ fecha: fecha, peso: document.getElementById('r-cria-peso').value }] : [],
+                        historialReproductivo: [], padre: 'N/D', madre: data.arete || 'N/D', estado: 'Activo/Creciendo', salud: "🟢 Sano", fechaRegistro: serverTimestamp()
+                    });
+                }
+            }
+            historialRepro.push({ tipo: tipoEvento, fecha: fecha, tercio: tercioStr, fep: fep, detalle: detalle });
+            await updateDoc(docRef, { estado: nuevoEstado, categoria: nuevaCat, historialReproductivo: historialRepro });
+            document.getElementById('form-nuevo-repro').style.display = 'none'; alert(`✅ Evento guardado.`); window.abrirFicha(idDoc);
+        } catch (err) { alert("Error: " + err.message); }
+    });
+}
+
+const formDestete = document.getElementById('form-destete');
+if (formDestete) {
+    formDestete.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const idDoc = document.getElementById('p-id-doc').value;
+        const fechaDestete = document.getElementById('d-fecha').value;
+        const pesoDestete = Number(document.getElementById('d-peso').value);
+        try {
+            const docRef = doc(window.db, "animales", idDoc);
+            const docSnap = await getDoc(docRef);
+            const data = docSnap.data();
+            let nuevaCat = (data.categoria === 'Becerra') ? 'Mauta' : 'Maute';
+            let historialPesos = data.historialPesos || [];
+            historialPesos.push({ fecha: fechaDestete, peso: pesoDestete });
+            await updateDoc(docRef, { categoria: nuevaCat, peso: pesoDestete, historialPesos: historialPesos });
+            if (data.madre && data.madre !== 'N/D') {
+                const madreQuery = query(collection(window.db, "animales"), where("finca", "==", data.finca), where("arete", "==", data.madre));
+                const madreSnapshot = await getDocs(madreQuery);
+                if (!madreSnapshot.empty) {
+                    const madreDoc = madreSnapshot.docs[0];
+                    let madreHistorial = madreDoc.data().historialReproductivo || [];
+                    madreHistorial.push({ tipo: '🏅 Destete Cría', fecha: fechaDestete, detalle: `Destetó a su cría con ${pesoDestete} Kg.` });
+                    await updateDoc(doc(window.db, "animales", madreDoc.id), { historialReproductivo: madreHistorial });
+                }
+            }
+            alert(`✅ Destete completado.`); document.getElementById('form-destete').style.display = 'none'; window.abrirFicha(idDoc);
+        } catch (err) { alert("Error: " + err.message); }
+    });
+}
+
+// ==========================================
+// REGISTRO DE NUEVO ANIMAL (BLINDADO)
+// ==========================================
+const formAnimal = document.getElementById('form-animal');
+if (formAnimal) {
+    formAnimal.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        if (!window.db || !window.auth.currentUser) {
+            alert("⚠️ Sesión expirada o base de datos desconectada. Por favor, vuelva a iniciar sesión.");
+            location.reload();
+            return;
+        }
+
+        const btn = formAnimal.querySelector('button[type="submit"]');
+        btn.innerText = "Guardando..."; 
+        btn.disabled = true;
+
+        try {
+            const pesoInput = document.getElementById('a-peso').value.trim();
+            const pesoValor = pesoInput !== '' ? Number(pesoInput) : null;
+            const fechaNac = document.getElementById('a-nacimiento').value || null;
+
+            await addDoc(collection(window.db, "animales"), {
+                finca: document.getElementById('a-finca-select').value,
+                arete: document.getElementById('a-arete').value.trim(),
+                categoria: document.getElementById('a-categoria').value,
+                peso: pesoValor,
+                fechaNacimiento: fechaNac,
+                historialPesos: pesoValor ? [{ fecha: new Date().toISOString().split('T')[0], peso: pesoValor }] : [],
+                historialReproductivo: [],
+                padre: document.getElementById('a-padre').value.trim() || 'N/D',
+                madre: document.getElementById('a-madre').value.trim() || 'N/D',
+                estado: document.getElementById('a-estado').value,
+                salud: "🟢 Sano",
+                fechaRegistro: serverTimestamp()
+            });
+
+            formAnimal.reset(); 
+            document.getElementById('modal-animal').style.display = 'none';
+            alert("✅ Animal guardado con éxito.");
+        } catch (err) { 
+            console.error("Error al guardar animal: ", err);
+            alert("❌ Error al guardar: " + err.message); 
+        } finally { 
+            btn.innerText = "Guardar Animal"; 
+            btn.disabled = false; 
+        }
+    });
+}
+
+// ==========================================
+// MOTOR DE TIEMPO Y TORRE DE CONTROL
+// ==========================================
+function actualizarDashboard(datosHato) {
+    const listSecado = document.getElementById('dash-list-secado');
+    const countSecado = document.getElementById('dash-count-secado');
+    const listDestete = document.getElementById('dash-list-destete');
+    const countDestete = document.getElementById('dash-count-destete');
+    
+    if(!listSecado || !listDestete) return;
+
+    let htmlSecado = "";
+    let htmlDestete = "";
+    let numSecado = 0;
+    let numDestete = 0;
+    const hoy = new Date();
+
+    datosHato.forEach(a => {
+        if (a.estado === "Gestante" && a.historialReproductivo) {
+            let ultimaFep = null;
+            a.historialReproductivo.forEach(ev => {
+                if(ev.tipo === 'Palpación (+ Preñada)' && ev.fep !== '-') ultimaFep = ev.fep;
+            });
+            if (ultimaFep) {
+                const diasParaParto = Math.ceil((new Date(ultimaFep) - hoy) / (1000 * 60 * 60 * 24));
+                if (diasParaParto <= 75) {
+                    numSecado++;
+                    let alertaStyle = diasParaParto < 0 ? "color:#dc2626; font-weight:bold;" : "color:#b45309; font-weight:bold;";
