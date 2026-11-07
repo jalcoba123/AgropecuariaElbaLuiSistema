@@ -723,4 +723,75 @@ function actualizarDashboard(datosHato) {
     
     countDestete.innerText = numDestete;
     listDestete.innerHTML = numDestete > 0 ? htmlDestete : `<p style="color: var(--text-muted); font-style: italic; padding: 10px 0;">🟢 Ningún becerro ha alcanzado la edad de destete aún.</p>`;
-}
+// ==========================================
+// 📍 ADMINISTRACIÓN DE LOTES Y POTREROS
+// ==========================================
+window.cargarListaLotes = function() {
+    const listaUI = document.getElementById('lista-lotes-ui');
+    if (!listaUI || !window.db) return;
+
+    // Escuchamos la colección "config_lotes" en Firebase
+    onSnapshot(query(collection(window.db, "config_lotes")), (snapshot) => {
+        listaUI.innerHTML = '';
+        
+        // Siempre mostramos el Lote General por defecto (no se puede borrar)
+        listaUI.innerHTML += `<li style="padding: 8px 5px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center;">
+                                <span>👉 General / Sin Asignar</span>
+                              </li>`;
+
+        let hayLotes = false;
+
+        snapshot.forEach((docSnap) => {
+            hayLotes = true;
+            const data = docSnap.data();
+            const loteId = docSnap.id;
+            const nombreLote = data.nombre || 'Lote Sin Nombre';
+            
+            // Creamos cada lote con su botón rojo para eliminar (❌)
+            listaUI.innerHTML += `
+                <li style="padding: 8px 5px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center;">
+                    <span style="font-weight: bold; color: var(--green-dark);">👉 ${nombreLote}</span>
+                    <button onclick="window.eliminarLoteActivo('${loteId}', '${nombreLote.replace(/'/g, "\\'")}')" style="background: #fef2f2; color: #ef4444; border: 1px solid #fecdd3; border-radius: 4px; padding: 2px 6px; cursor: pointer; font-size: 0.8rem;" title="Borrar Lote">❌</button>
+                </li>
+            `;
+        });
+    }, (err) => console.error("Error cargando lotes:", err));
+};
+
+window.agregarLoteNuevo = async function() {
+    const inputLote = document.getElementById('input-nuevo-lote');
+    const nombreLote = inputLote.value.trim();
+    
+    if (!nombreLote) return alert("⚠️ Escriba un nombre para el lote (Ej. Lote 100 Vacías).");
+    if (!window.db) return alert("⚠️ Base de datos desconectada.");
+
+    try {
+        await addDoc(collection(window.db, "config_lotes"), {
+            nombre: nombreLote,
+            fechaCreacion: serverTimestamp()
+        });
+        inputLote.value = ''; // Limpiamos el campo
+    } catch (err) {
+        alert("❌ Error al crear lote: " + err.message);
+    }
+};
+
+window.eliminarLoteActivo = async function(idLote, nombreLote) {
+    if (confirm(`¿Estás seguro de eliminar el lote "${nombreLote}"?\n\nOjo: Los animales que ya tengan este lote asignado no se borrarán, pero el lote dejará de aparecer en esta lista.`)) {
+        try {
+            await deleteDoc(doc(window.db, "config_lotes", idLote));
+        } catch (err) {
+            alert("❌ Error al borrar el lote: " + err.message);
+        }
+    }
+};
+
+// Arrancamos la carga de lotes apenas cargue la página
+document.addEventListener('DOMContentLoaded', () => {
+    // Le damos un segundito a Firebase para que despierte
+    setTimeout(() => {
+        if (window.db && window.cargarListaLotes) {
+            window.cargarListaLotes();
+        }
+    }, 1500); 
+});
