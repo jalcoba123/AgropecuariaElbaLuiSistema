@@ -27,35 +27,56 @@ window.datosHatoCache = [];
 // ==========================================
 // 🏷️ LECTOR RFID (ESCANEO RÁPIDO EN MANGA)
 // ==========================================
-// Envuelto en una función segura para no interrumpir la carga de Firebase
 function inicializarLectorRFID() {
     const seccionHato = document.getElementById('tab-hato');
-    if (!seccionHato) return; // Si no existe el contenedor, salir silenciosamente
+    if (!seccionHato) return; 
     
-    if (!document.getElementById('rfid-scanner-input')) {
+    if (!document.getElementById('rfid-scanner-container')) {
         const contenedorLector = document.createElement('div');
-        contenedorLector.id = 'rfid-container'; // ID para control
-        contenedorLector.style.cssText = "background: #f0fdf4; border: 1px solid #bbf7d0; padding: 10px 15px; border-radius: 8px; margin-bottom: 15px; display: flex; align-items: center; gap: 10px;";
+        contenedorLector.id = 'rfid-scanner-container';
+        
+        // Diseño estético, ancho completo, separado de las tarjetas
+        contenedorLector.style.cssText = "background: #f0fdf4; border: 2px dashed #4ade80; padding: 20px 25px; border-radius: 12px; margin: 25px 0; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; width: 100%; box-sizing: border-box; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); clear: both;";
+        
         contenedorLector.innerHTML = `
-            <span style="font-size: 1.2rem;">📡</span>
-            <div style="flex: 1;">
-                <strong style="font-size: 0.85rem; color: #166534;">Modo Lector RFID Activo:</strong>
-                <p style="margin: 0; font-size: 0.75rem; color: #15803d;">Pase el bastón lector por el arete electrónico del animal en la manga.</p>
+            <div style="display: flex; align-items: center; gap: 18px; min-width: 300px;">
+                <div style="background: #dcfce7; padding: 12px; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+                    <span style="font-size: 1.8rem;">📡</span>
+                </div>
+                <div>
+                    <h3 style="margin: 0 0 4px 0; font-size: 1.25rem; color: #166534; font-weight: bold;">Lector RFID en Manga</h3>
+                    <p style="margin: 0; font-size: 0.9rem; color: #15803d;">Pase el bastón por el chip del animal para abrir su expediente automáticamente.</p>
+                </div>
             </div>
-            <input type="text" id="rfid-scanner-input" placeholder="Esperando lectura de chip..." autocomplete="off" style="padding: 6px 10px; border: 1px solid #86efac; border-radius: 6px; font-size: 0.85rem; width: 220px; background: white;">
+            <div style="flex-grow: 1; text-align: right; display: flex; justify-content: flex-end; margin-top: 10px; min-width: 250px;">
+                <input type="text" id="rfid-scanner-input" placeholder="📟 Esperando lectura..." autocomplete="off" style="padding: 12px 20px; border: 2px solid #22c55e; border-radius: 8px; font-size: 1.1rem; width: 100%; max-width: 350px; background: white; outline: none; color: #166534; font-weight: bold; box-shadow: inset 0 2px 4px rgba(0,0,0,0.05); transition: border-color 0.3s;" onfocus="this.style.borderColor='#15803d'" onblur="this.style.borderColor='#22c55e'">
+            </div>
         `;
         
-        // 🛠️ CORRECCIÓN: Insertarlo específicamente arriba de la tabla de Inventario
-        // Buscamos el contenedor blanco que tiene la tabla (el tercer panel principal del tab)
-        const contenedorTabla = seccionHato.querySelector('div[style*="background: white"]:nth-of-type(2)');
-        
-        if (contenedorTabla) {
-            contenedorTabla.parentNode.insertBefore(contenedorLector, contenedorTabla);
+        // 🛠️ ESTRATEGIA A PRUEBA DE BALAS: 
+        // Buscar exactamente el título "Inventario y Hoja de Vida" para inyectarlo arriba de esa tabla
+        let targetCard = null;
+        const elementos = seccionHato.querySelectorAll('*');
+        for (let el of elementos) {
+            if (el.innerText && el.innerText.trim().includes('Inventario y Hoja de Vida')) {
+                // Subimos en el DOM hasta encontrar la tarjeta contenedora
+                let parent = el;
+                while (parent && parent.parentNode && parent.parentNode.id !== 'tab-hato' && !parent.parentNode.className.includes('container')) {
+                    parent = parent.parentNode;
+                }
+                targetCard = parent;
+                break;
+            }
+        }
+
+        if (targetCard && targetCard.parentNode) {
+            targetCard.parentNode.insertBefore(contenedorLector, targetCard);
         } else {
-            // Si por alguna razón no lo encuentra, lo pone al final para no romper los KPIs
+            // Plan B: Anexar al final de la vista para no romper los indicadores de arriba
             seccionHato.appendChild(contenedorLector);
         }
 
+        // Lógica del lector
         const inputLector = document.getElementById('rfid-scanner-input');
         if (inputLector) {
             inputLector.addEventListener('keypress', function(e) {
@@ -77,7 +98,7 @@ function inicializarLectorRFID() {
                                 window.abrirFicha(animalEncontrado.id);
                             }
                         } else {
-                            alert(`⚠️ El chip leído (${codigoRFID}) no está registrado en el sistema. Verifique o registre el animal.`);
+                            alert(`⚠️ El chip leído (${codigoRFID}) no está registrado. Verifique o registre el animal.`);
                         }
                     } else {
                         alert("⚠️ Aún no se han cargado los datos del hato. Intente de nuevo en unos segundos.");
@@ -88,7 +109,6 @@ function inicializarLectorRFID() {
     }
 }
 
-// Ejecutar cuando el DOM esté completamente listo sin bloquear la carga
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', inicializarLectorRFID);
 } else {
