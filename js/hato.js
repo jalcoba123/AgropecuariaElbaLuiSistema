@@ -1,3 +1,10 @@
+Tienes toda la razón, compadre. Si el lector se queda pegado y aparece en las pestañas de Lechería, Palma o Finanzas, no tiene ningún sentido y estorba visualmente. El lector es una herramienta de manga y **solo debería existir donde está el inventario**.
+
+El problema es que lo estábamos inyectando "suelto" en la sección general. Para que quede **100% amarrado a la pestaña del Hato**, la jugada maestra es meter el cajón del escáner **físicamente adentro de la tarjeta blanca del inventario**, justo arribita de los encabezados de la tabla. Así, si cambias de pestaña y la tabla se oculta, el escáner desaparece con ella automáticamente. Además, lo hice un poquito más compacto para que se vea elegante e integrado a esa tarjeta.
+
+Borra tu `js/hato.js` y pega este. Con esto queda perfecto, localizado solo en tu tabla de animales:
+
+```javascript
 // js/hato.js
 import { 
     collection, 
@@ -29,51 +36,38 @@ window.datosHatoCache = [];
 // ==========================================
 function inicializarLectorRFID() {
     try {
-        const seccionHato = document.getElementById('tab-hato');
-        if (!seccionHato) return; 
-        
-        // Si ya existe, no lo volvemos a crear
+        // Evitar duplicados
         if (document.getElementById('rfid-scanner-container')) return; 
+
+        // 🛠️ ESTRATEGIA DEFINITIVA: Buscar la tabla HTML real
+        const tablaCuerpo = document.getElementById('tabla-hato-body');
+        if (!tablaCuerpo) return; // Si la tabla aún no existe, esperamos
+        
+        const tablaHTML = tablaCuerpo.closest('table');
+        if (!tablaHTML) return;
 
         const contenedorLector = document.createElement('div');
         contenedorLector.id = 'rfid-scanner-container';
         
-        // Diseño estético, ancho completo, separado de las tarjetas
-        contenedorLector.style.cssText = "background: #f0fdf4; border: 2px dashed #4ade80; padding: 20px 25px; border-radius: 12px; margin: 25px 0; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; width: 100%; box-sizing: border-box; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); clear: both;";
+        // Diseño más compacto y estético, integrado a la tarjeta de la tabla
+        contenedorLector.style.cssText = "background: #f0fdf4; border: 1px solid #86efac; padding: 15px 20px; border-radius: 8px; margin-bottom: 20px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; width: 100%; box-sizing: border-box;";
         
         contenedorLector.innerHTML = `
-            <div style="display: flex; align-items: center; gap: 18px; min-width: 300px;">
-                <div style="background: #dcfce7; padding: 12px; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
-                    <span style="font-size: 1.8rem;">📡</span>
-                </div>
+            <div style="display: flex; align-items: center; gap: 15px; min-width: 250px;">
+                <span style="font-size: 1.5rem; background: #dcfce7; padding: 8px; border-radius: 50%;">📡</span>
                 <div>
-                    <h3 style="margin: 0 0 4px 0; font-size: 1.25rem; color: #166534; font-weight: bold;">Lector RFID en Manga</h3>
-                    <p style="margin: 0; font-size: 0.9rem; color: #15803d;">Pase el bastón por el chip del animal para abrir su expediente automáticamente.</p>
+                    <h3 style="margin: 0; font-size: 1.1rem; color: #166534; font-weight: bold;">Lector RFID en Manga</h3>
+                    <p style="margin: 2px 0 0 0; font-size: 0.8rem; color: #15803d;">Escanee el arete para abrir el expediente del animal.</p>
                 </div>
             </div>
-            <div style="flex-grow: 1; text-align: right; display: flex; justify-content: flex-end; margin-top: 10px; min-width: 250px;">
-                <input type="text" id="rfid-scanner-input" placeholder="📟 Esperando lectura..." autocomplete="off" style="padding: 12px 20px; border: 2px solid #22c55e; border-radius: 8px; font-size: 1.1rem; width: 100%; max-width: 350px; background: white; outline: none; color: #166534; font-weight: bold; box-shadow: inset 0 2px 4px rgba(0,0,0,0.05); transition: border-color 0.3s;" onfocus="this.style.borderColor='#15803d'" onblur="this.style.borderColor='#22c55e'">
+            <div style="flex-grow: 1; text-align: right; display: flex; justify-content: flex-end; margin-top: 5px; min-width: 200px;">
+                <input type="text" id="rfid-scanner-input" placeholder="📟 Esperando lectura de chip..." autocomplete="off" style="padding: 10px 15px; border: 2px solid #22c55e; border-radius: 6px; font-size: 1rem; width: 100%; max-width: 280px; background: white; outline: none; color: #166534; font-weight: bold; transition: border-color 0.3s;" onfocus="this.style.borderColor='#15803d'" onblur="this.style.borderColor='#22c55e'">
             </div>
         `;
         
-        // 🛠️ ESTRATEGIA BLINDADA: 
-        // Partimos de la tabla, y subimos de forma nativa y segura hasta su contenedor blanco
-        const tablaCuerpo = document.getElementById('tabla-hato-body');
-        let inyectado = false;
-
-        if (tablaCuerpo) {
-            const tarjetaContenedora = tablaCuerpo.closest('.container') || tablaCuerpo.closest('div[style*="background: white"]');
-            
-            if (tarjetaContenedora && tarjetaContenedora.parentNode) {
-                tarjetaContenedora.parentNode.insertBefore(contenedorLector, tarjetaContenedora);
-                inyectado = true;
-            }
-        }
-
-        // Plan B: Si no se pudo arriba, se anexa de forma segura al final
-        if (!inyectado) {
-            seccionHato.appendChild(contenedorLector);
-        }
+        // Lo insertamos EXACTAMENTE adentro de la tarjeta blanca, justo arriba de la tabla.
+        // Así, si la pestaña se oculta, el lector se oculta con ella. Cero fugas a otras pestañas.
+        tablaHTML.parentNode.insertBefore(contenedorLector, tablaHTML);
 
         // Lógica del lector
         const inputLector = document.getElementById('rfid-scanner-input');
@@ -268,7 +262,7 @@ window.cargarHato = function() {
     const tabla = document.getElementById('tabla-hato-body');
     const panelAlertas = document.getElementById('panel-alertas');
     
-    // 🛠️ Ejecutamos el Lector directamente aquí para asegurar sincronía
+    // 🛠️ Ejecutamos el Lector directamente aquí para asegurar sincronía y que aparezca solo en Hato
     inicializarLectorRFID();
 
     if (!tabla || !window.db) return;
@@ -687,3 +681,5 @@ function actualizarDashboard(datosHato) {
     countDestete.innerText = numDestete;
     listDestete.innerHTML = numDestete > 0 ? htmlDestete : `<p style="color: var(--text-muted); font-style: italic; padding: 10px 0;">🟢 Ningún becerro ha alcanzado la edad de destete aún.</p>`;
 }
+
+```
