@@ -8,6 +8,36 @@
     <link rel="stylesheet" href="style.css">
     <!-- 📱 MANIFEST PARA INSTALACIÓN COMO APP NATIVA -->
     <link rel="manifest" href="manifest.json">
+    
+    <!-- 🖨️ ESTILOS PARA IMPRESIÓN LIMPIA -->
+    <style>
+        @media print {
+            body { background: white; margin: 0; padding: 0; }
+            header, .category-nav, .finca-banner, .tabs-hato-container, 
+            .btn-action, #offline-status-bar, #modal-animal, #login-screen,
+            .finca-toggle, button[onclick="window.print()"] { 
+                display: none !important; 
+            }
+            .section-view, #app-container, .modulo-hato { 
+                display: block !important; 
+                box-shadow: none !important;
+                border: none !important;
+            }
+            /* Ocultar tarjetas de KPIs y otras pestañas */
+            #tab-dashboard, #tab-lecheria, #tab-palma, #tab-operaciones, #tab-finanzas,
+            #subtab-lector, #subtab-config, #subtab-calendario,
+            div[style*="grid-template-columns: repeat(auto-fit, minmax(140px, 1fr))"] {
+                display: none !important;
+            }
+            /* Ocultar la primera y última columna (Checkbox y Botones) en las tablas al imprimir */
+            th:first-child, td:first-child, 
+            th:last-child, td:last-child {
+                display: none !important;
+            }
+            table { border: 1px solid #ccc !important; width: 100% !important; }
+            th, td { padding: 6px !important; font-size: 10pt !important; border-bottom: 1px solid #ddd !important; }
+        }
+    </style>
 </head>
 <body>
 
@@ -119,7 +149,7 @@
                 </div>
             </div>
 
-            <!-- MÓDULO 2: HATO Y SANIDAD (Con Mini-Menús) -->
+            <!-- MÓDULO 2: HATO Y SANIDAD -->
             <div id="tab-hato" class="section-view">
                 
                 <!-- BARRA DE MINI-MENÚS -->
@@ -134,7 +164,7 @@
                 <div id="subtab-inventario" class="modulo-hato" style="display: block;">
                     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-bottom: 20px;">
                         <div style="background: white; padding: 15px; border-radius: 8px; border: 1px solid var(--border-light);">
-                            <div style="font-size: 0.75rem; color: var(--text-muted); font-weight: bold;">Censo Total</div>
+                            <div style="font-size: 0.75rem; color: var(--text-muted); font-weight: bold;">Censo Total Activo</div>
                             <div id="kpi-total" style="font-size: 1.8rem; font-weight: bold;">0</div>
                         </div>
                         <div style="background: white; padding: 15px; border-radius: 8px; border: 1px solid var(--border-light);">
@@ -154,24 +184,38 @@
                         </div>
                     </div>
 
+                    <!-- NUEVA ZONA DE BUSCADOR Y EXPORTACIÓN -->
                     <div style="background: white; border-radius: 12px; border: 1px solid var(--border-light); padding: 16px;">
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;">
                             <h3 style="font-size: 1rem; color: var(--green-dark); margin: 0;">🐮 Inventario y Hoja de Vida</h3>
-                            <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
-                                <select id="filtro-categoria" onchange="aplicarFiltroHato()" style="padding: 6px; border-radius: 6px; border: 1px solid var(--border-light); font-size: 0.85rem;">
-                                    <option value="Todos">Todas las Categorías</option>
+                            
+                            <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap; flex-grow: 1; justify-content: flex-end;">
+                                <input type="text" id="buscador-hato" placeholder="🔍 Buscar Arete..." onkeyup="window.aplicarFiltroHato()" style="padding: 6px 12px; border-radius: 6px; border: 1px solid var(--border-light); font-size: 0.85rem; width: 150px; outline: none;">
+                                
+                                <select id="filtro-categoria" onchange="window.aplicarFiltroHato()" style="padding: 6px; border-radius: 6px; border: 1px solid var(--border-light); font-size: 0.85rem;">
+                                    <option value="Todos">Activos: Todos</option>
                                     <option value="Becerros">Solo Becerros(as)</option>
                                     <option value="Mautes">Solo Mautes(as)</option>
                                     <option value="Vacas">Solo Vacas</option>
                                     <option value="Gestantes">Solo Gestantes</option>
+                                    <option value="Bajas">☠️ Ver Bajas/Muertes</option>
                                 </select>
+                                
+                                <div style="display: flex; gap: 5px; border-left: 2px solid #e2e8f0; padding-left: 10px;">
+                                    <button class="btn-action" onclick="window.exportarExcel('tabla-hato', 'Inventario_ElbaLui')" style="background: #10b981; color: white; font-size: 0.8rem;" title="Descargar a Excel">⬇️ Excel</button>
+                                    <button class="btn-action" onclick="window.print()" style="background: #475569; color: white; font-size: 0.8rem;" title="Imprimir Lista">🖨️ Imprimir</button>
+                                    
+                                    <!-- Importar CSV Oculto -->
+                                    <input type="file" id="input-importar-csv" accept=".csv" style="display: none;" onchange="window.importarCSV(event)">
+                                    <button class="btn-action" onclick="document.getElementById('input-importar-csv').click()" style="background: #3b82f6; color: white; font-size: 0.8rem;" title="Importar CSV Masivo">⬆️ Importar CSV</button>
+                                </div>
                                 <button class="btn-action" onclick="abrirModalMasivo()" style="background: #eab308; color: white;">⚡ Acción Masiva</button>
                                 <button class="btn-action" onclick="document.getElementById('modal-animal').style.display='flex'">+ Registrar Animal</button>
                             </div>
                         </div>
                         
                         <div style="overflow-x: auto;">
-                            <table style="width: 100%; border-collapse: collapse; font-size: 0.85rem;">
+                            <table id="tabla-hato" style="width: 100%; border-collapse: collapse; font-size: 0.85rem;">
                                 <thead style="background: #f1f5f9; text-align: left;">
                                     <tr>
                                         <th style="padding: 10px; border-bottom: 1px solid var(--border-light); width: 40px; text-align: center;">
@@ -180,7 +224,7 @@
                                         <th style="padding: 10px; border-bottom: 1px solid var(--border-light);">Arete / Lote</th>
                                         <th style="padding: 10px; border-bottom: 1px solid var(--border-light);">Categoría</th>
                                         <th style="padding: 10px; border-bottom: 1px solid var(--border-light);">Tiempo/Gestación</th>
-                                        <th style="padding: 10px; border-bottom: 1px solid var(--border-light);">🏥 Estado de Salud</th>
+                                        <th style="padding: 10px; border-bottom: 1px solid var(--border-light);">🏥 Estado</th>
                                         <th style="padding: 10px; border-bottom: 1px solid var(--border-light); text-align: center;">Acciones</th>
                                     </tr>
                                 </thead>
@@ -192,11 +236,10 @@
                     </div>
                 </div>
 
-                <!-- SUB-PÁGINA 2: LECTOR RFID DE MANGA E INTELIGENCIA OFFLINE -->
+                <!-- SUB-PÁGINA 2: LECTOR RFID DE MANGA -->
                 <div id="subtab-lector" class="modulo-hato" style="display: none;">
                     <div style="background: #f8fafc; padding: 20px; border-radius: 12px; border: 1px solid #e2e8f0; margin-bottom: 20px;">
                         
-                        <!-- BARRA DE SELECCIÓN DE MODO DE TRABAJO -->
                         <div style="display: flex; flex-wrap: wrap; gap: 15px; align-items: center; justify-content: space-between; background: white; padding: 15px; border-radius: 8px; border: 1px solid #cbd5e1; margin-bottom: 20px;">
                             <div>
                                 <label style="font-weight: bold; color: #0f172a; display: block; font-size: 0.85rem; margin-bottom: 5px;">Modo de Trabajo en Manga:</label>
@@ -214,27 +257,22 @@
                             </div>
                         </div>
 
-                        <!-- ALERTA EN VIVO PARA ANIMALES DUPLICADOS O NIVELES DE ALERTA -->
                         <div id="manga-alerta-banner" style="display: none; background: #fef2f2; border: 2px solid #ef4444; color: #991b1b; padding: 12px; border-radius: 8px; font-weight: bold; text-align: center; margin-bottom: 15px; font-size: 1.1rem; animation: pulse 1s infinite;">
                             ⚠️ ALERTA EN MANGA
                         </div>
 
-                        <!-- INPUT PRINCIPAL DEL LECTOR BASTÓN (Con Enfoque Forzado) -->
                         <div style="text-align: center; max-width: 600px; margin: 0 auto; position: relative;">
                             <span style="font-size: 2.5rem; display: block; margin-bottom: 5px;">📡</span>
                             <h2 style="color: #0f172a; margin-top: 0; font-size: 1.3rem;">Estación de Control de Manga</h2>
                             
-                            <!-- El formulario envuelve el input para atrapar el "Enter" del bastón -->
                             <form id="form-rfid-scanner" onsubmit="event.preventDefault(); window.procesarLecturaManga(document.getElementById('rfid-scanner-input').value);">
                                 <input type="text" id="rfid-scanner-input" placeholder="📟 Pase el bastón RFID por el arete..." autocomplete="off" 
                                        style="padding: 15px; width: 90%; font-size: 1.2rem; border-radius: 8px; border: 2px solid #0ea5e9; text-align: center; box-shadow: 0 4px 6px -1px rgba(14, 165, 233, 0.2); outline: none; font-weight: bold; color: #0284c7;"
                                        onblur="this.focus()" autofocus> 
                             </form>
-                            
                             <p style="font-size: 0.75rem; color: #64748b; margin-top: 10px;">🟢 El sistema está escuchando al bastón automáticamente.</p>
                         </div>
 
-                        <!-- DESGLOSE EN TIEMPO REAL DE LA FAENA ACTUAL -->
                         <div style="margin-top: 25px; display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
                             <div style="background: white; padding: 15px; border-radius: 8px; border: 1px solid #e2e8f0; text-align: center;">
                                 <span style="font-size: 0.8rem; color: #64748b; font-weight: bold;">TOTAL FAENA HOY</span>
@@ -259,9 +297,8 @@
                             <button onclick="window.reiniciarSesionManga()" style="background: white; border: 1px solid #cbd5e1; padding: 6px 12px; border-radius: 6px; cursor: pointer; color: #64748b; font-size: 0.8rem; font-weight: bold;">🔄 Reiniciar Faena</button>
                         </div>
 
-                        <!-- TABLA DE FAENA EN VIVO -->
                         <div style="background: white; border-radius: 8px; border: 1px solid #e2e8f0; margin-top: 10px; overflow-x: auto;">
-                            <table style="width: 100%; border-collapse: collapse; font-size: 0.85rem;">
+                            <table id="tabla-faena-manga" style="width: 100%; border-collapse: collapse; font-size: 0.85rem;">
                                 <thead style="background: #f1f5f9; text-align: left;">
                                     <tr>
                                         <th style="padding: 8px; border-bottom: 1px solid #e2e8f0;">#</th>
@@ -276,27 +313,23 @@
                                     <tr><td colspan="6" style="padding: 15px; text-align: center; color: #94a3b8;">No se han pasado animales por la manga en esta sesión.</td></tr>
                                 </tbody>
                             </table>
+                            <!-- Botón Extra para Exportar la Faena -->
+                            <button onclick="window.exportarExcel('tabla-faena-manga', 'Faena_Manga_ElbaLui')" style="width: 100%; padding: 10px; background: #e2e8f0; border: none; cursor: pointer; color: #334155; font-weight: bold;">⬇️ Descargar Faena a Excel para Imprimir</button>
                         </div>
-
                     </div>
                 </div>
 
                 <!-- SUB-PÁGINA 3: CONFIGURACIÓN Y LOTES -->
                 <div id="subtab-config" class="modulo-hato" style="display: none;">
                     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;">
-                        
-                        <!-- TARJETA DE LOTES Y POTREROS -->
+                        <!-- TARJETA DE LOTES -->
                         <div style="background: white; padding: 20px; border-radius: 12px; border: 1px solid var(--border-light); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
                             <h3 style="color: var(--green-dark); margin-top: 0; border-bottom: 2px solid #bbf7d0; padding-bottom: 10px;">📍 Administrar Lotes y Potreros</h3>
-                            <p style="font-size: 0.85rem; color: var(--text-muted);">Crea los grupos para organizar a tus animales en campo y saber con cuántos toros andan.</p>
-                            
                             <div style="display: flex; gap: 10px; margin-bottom: 15px;">
                                 <input type="text" id="input-nuevo-lote" placeholder="Ej. Lote 100 Vacías + 5 Toros" style="flex-grow: 1; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.9rem; outline: none;">
                                 <button onclick="window.agregarLoteNuevo()" style="background: var(--green-primary); color: white; border: none; padding: 10px 15px; border-radius: 6px; cursor: pointer; font-weight: bold;">+ Crear Lote</button>
                             </div>
-                            
                             <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 10px;">
-                                <h4 style="margin: 0 0 10px 0; font-size: 0.85rem; color: #475569;">Lotes Activos:</h4>
                                 <ul id="lista-lotes-ui" style="list-style: none; padding: 0; margin: 0; font-size: 0.9rem; color: #1e293b; max-height: 250px; overflow-y: auto;">
                                     <li style="padding: 5px 0; border-bottom: 1px solid #e2e8f0; font-style: italic; color: #94a3b8;">Cargando lotes...</li>
                                 </ul>
@@ -306,21 +339,16 @@
                         <!-- TARJETA DE VACUNAS -->
                         <div style="background: white; padding: 20px; border-radius: 12px; border: 1px solid var(--border-light); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
                             <h3 style="color: #b45309; margin-top: 0; border-bottom: 2px solid #fde68a; padding-bottom: 10px;">💉 Catálogo de Tratamientos</h3>
-                            <p style="font-size: 0.85rem; color: var(--text-muted);">Registra las vacunas y minerales para aplicarlos rápido en la manga.</p>
-                            
                             <div style="display: flex; gap: 10px; margin-bottom: 15px;">
                                 <input type="text" id="input-nueva-vacuna" placeholder="Ej. Aftosa, Complejo AD3E..." style="flex-grow: 1; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.9rem; outline: none;">
                                 <button id="btn-add-vacuna" style="background: #eab308; color: white; border: none; padding: 10px 15px; border-radius: 6px; cursor: pointer; font-weight: bold;">+ Añadir</button>
                             </div>
-
                             <div style="background: #fefce8; border: 1px solid #fef08a; border-radius: 6px; padding: 10px;">
-                                <h4 style="margin: 0 0 10px 0; font-size: 0.85rem; color: #854d0e;">Tratamientos Disponibles:</h4>
                                 <ul id="lista-vacunas-ui" style="list-style: none; padding: 0; margin: 0; font-size: 0.9rem; color: #713f12; max-height: 150px; overflow-y: auto;">
                                     <li style="padding: 5px 0; font-style: italic; color: #a16207;">Cargando catálogo...</li>
                                 </ul>
                             </div>
                         </div>
-
                     </div>
                 </div>
 
@@ -329,26 +357,19 @@
                     <div style="background: white; padding: 20px; border-radius: 12px; border: 1px solid var(--border-light); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
                         <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #bae6fd; padding-bottom: 15px; margin-bottom: 20px;">
                             <h2 style="color: #0369a1; margin: 0;">📅 Planificación de Faenas (ElbaLui)</h2>
-                            <button style="background: #0ea5e9; color: white; border: none; padding: 10px 15px; border-radius: 6px; cursor: pointer; font-weight: bold;">+ Nuevo Evento</button>
                         </div>
-                        
                         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px;">
                             <div style="background: #f0f9ff; border-left: 4px solid #0284c7; padding: 15px; border-radius: 6px;">
                                 <span style="font-size: 0.8rem; font-weight: bold; color: #0284c7;">OBLIGATORIO</span>
                                 <h4 style="margin: 5px 0; color: #0f172a;">Ciclo de Vacunación Aftosa</h4>
-                                <p style="margin: 0; font-size: 0.85rem; color: #475569;">Pasar todo el rebaño por la manga para cumplir con el certificado del INSAI.</p>
-                            </div>
-                            <div style="background: #fef2f2; border-left: 4px solid #ef4444; padding: 15px; border-radius: 6px;">
-                                <span style="font-size: 0.8rem; font-weight: bold; color: #ef4444;">ALERTA REPRODUCTIVA</span>
-                                <h4 style="margin: 5px 0; color: #0f172a;">Partos Próximos</h4>
-                                <p style="margin: 0; font-size: 0.85rem; color: #475569;">Revisar vacas gestantes en su último tercio y pasarlas al potrero de maternidad.</p>
                             </div>
                         </div>
                     </div>
                 </div>
 
             </div>
-
+            
+            <!-- Módulos en construcción -->
             <div id="tab-lecheria" class="section-view">En construcción...</div>
             <div id="tab-palma" class="section-view">En construcción...</div>
             <div id="tab-operaciones" class="section-view">En construcción...</div>
@@ -397,11 +418,12 @@
                     <div class="form-field"><label>Padre</label><input type="text" id="a-padre" placeholder="Opcional"></div>
                     <div class="form-field"><label>Madre</label><input type="text" id="a-madre" placeholder="Opcional"></div>
                 </div>
-                <div class="form-field"><label>Estado Reproductivo</label>
+                <div class="form-field"><label>Estado del Animal</label>
                     <select id="a-estado">
                         <option value="Activo/Creciendo">Activo / Creciendo</option>
-                        <option value="Vacía">Vacía</option>
-                        <option value="Gestante">Gestante</option>
+                        <option value="Vacía">Vientre - Vacía</option>
+                        <option value="Gestante">Vientre - Gestante</option>
+                        <option value="Baja (Vendido/Muerto)">☠️ Baja (Vendido/Muerto)</option>
                     </select>
                 </div>
                 <button type="submit" class="btn-action" style="width:100%; margin-top:10px;">Guardar Animal</button>
@@ -488,8 +510,11 @@
                 <div style="display: flex; gap: 8px; margin-top: 15px; flex-wrap: wrap;">
                     <button class="btn-action" onclick="document.getElementById('form-nuevo-repro').style.display='block'; document.getElementById('form-destete').style.display='none'" style="font-size: 0.8rem; padding: 6px 12px; background: white; color: var(--green-dark); border: 1px solid var(--green-primary);">+ Evento Reproductivo</button>
                     <button class="btn-action" id="btn-show-destete" onclick="document.getElementById('form-destete').style.display='block'; document.getElementById('form-nuevo-repro').style.display='none'" style="font-size: 0.8rem; padding: 6px 12px; background: white; color: #b45309; border: 1px solid #fde047; display: none;">🏅 Ejecutar Destete</button>
-                    <button class="btn-action" onclick="document.getElementById('form-cambio-categoria').style.display='block'" style="font-size: 0.8rem; padding: 6px 12px; background: white; color: #0369a1; border: 1px solid #bae6fd;">🔄 Ascender / Cambiar Categoría</button>
-                    <button class="btn-action" onclick="eliminarAnimal(document.getElementById('p-id-doc').value, document.getElementById('f-arete').innerText)" style="font-size: 0.8rem; padding: 6px 12px; background: white; color: #be123c; border: 1px solid #fecdd3;">❌ Eliminar Permanentemente</button>
+                    <button class="btn-action" onclick="document.getElementById('form-cambio-categoria').style.display='block'" style="font-size: 0.8rem; padding: 6px 12px; background: white; color: #0369a1; border: 1px solid #bae6fd;">🔄 Cambiar Categoría</button>
+                    
+                    <!-- BOTÓN DE BAJA Y ELIMINAR -->
+                    <button class="btn-action" onclick="window.mandarABaja(document.getElementById('p-id-doc').value, document.getElementById('f-arete').innerText)" style="font-size: 0.8rem; padding: 6px 12px; background: #64748b; color: white; border: 1px solid #475569;">☠️ Reportar Baja / Venta</button>
+                    <button class="btn-action" onclick="window.eliminarAnimal(document.getElementById('p-id-doc').value, document.getElementById('f-arete').innerText)" style="font-size: 0.8rem; padding: 6px 12px; background: white; color: #be123c; border: 1px solid #fecdd3;">❌ Eliminar Permanentemente</button>
                 </div>
             </div>
 
@@ -592,7 +617,7 @@
         </div>
     </div>
 
-    <!-- SCRIPT DE FIREBASE CON PERSISTENCIA LOCAL Y NAVEGACIÓN -->
+    <!-- SCRIPT DE FIREBASE -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
         import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
@@ -611,7 +636,6 @@
         const app = initializeApp(firebaseConfig);
         window.auth = getAuth(app);
         
-        // 🔒 ACTIVACIÓN DE PERSISTENCIA OFFLINE LOCAL
         window.db = initializeFirestore(app, {
             localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() })
         });
@@ -656,7 +680,6 @@
     </script>
     <script type="module" src="js/hato.js"></script>
 
-    <!-- REGISTRO DE SERVICE WORKER PARA APERTURA SIN INTERNET -->
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
