@@ -45,11 +45,14 @@ function inicializarLectorRFID() {
             <input type="text" id="rfid-scanner-input" placeholder="Esperando lectura de chip..." autocomplete="off" style="padding: 6px 10px; border: 1px solid #86efac; border-radius: 6px; font-size: 0.85rem; width: 220px; background: white;">
         `;
         
-        // Insertarlo arriba de la tabla de inventario de forma segura
-        const tablaInventario = seccionHato.querySelector('.container div:last-child') || seccionHato.children[2];
-        if (tablaInventario && tablaInventario.parentNode) {
-            tablaInventario.parentNode.insertBefore(contenedorLector, tablaInventario);
+        // 🛠️ CORRECCIÓN: Insertarlo específicamente arriba de la tabla de Inventario
+        // Buscamos el contenedor blanco que tiene la tabla (el tercer panel principal del tab)
+        const contenedorTabla = seccionHato.querySelector('div[style*="background: white"]:nth-of-type(2)');
+        
+        if (contenedorTabla) {
+            contenedorTabla.parentNode.insertBefore(contenedorLector, contenedorTabla);
         } else {
+            // Si por alguna razón no lo encuentra, lo pone al final para no romper los KPIs
             seccionHato.appendChild(contenedorLector);
         }
 
