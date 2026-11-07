@@ -114,11 +114,9 @@ document.addEventListener('DOMContentLoaded', () => {
 // 🧭 CONTROL DE MINI-MENÚS (PESTAÑAS DEL HATO)
 // ==========================================
 window.cambiarModuloHato = function(evento, idModulo) {
-    // 1. Ocultar todos los módulos del hato
     const modulos = document.querySelectorAll('.modulo-hato');
     modulos.forEach(mod => mod.style.display = 'none');
 
-    // 2. Apagar botones
     const botones = document.querySelectorAll('.tab-btn');
     botones.forEach(btn => {
         btn.style.background = 'white';
@@ -126,16 +124,14 @@ window.cambiarModuloHato = function(evento, idModulo) {
         btn.style.border = '1px solid #cbd5e1';
     });
 
-    // 3. Mostrar módulo seleccionado
     document.getElementById(idModulo).style.display = 'block';
 
-    // 4. Encender botón
     const btnActivo = evento.currentTarget;
     btnActivo.style.background = '#0f172a';
     btnActivo.style.color = 'white';
     btnActivo.style.border = 'none';
 
-    // 5. Enfocar el lector si entramos a la Manga
+    // Enfocar el lector si entramos a la Manga
     if (idModulo === 'subtab-lector') {
         const inputLector = document.getElementById('rfid-scanner-input');
         if (inputLector) inputLector.focus();
@@ -323,7 +319,6 @@ window.cargarHato = function() {
             if (a.estado === "Gestante") gestantes++;
             if (!saludActual.includes("Sano")) conteoSalud[saludActual] = (conteoSalud[saludActual] || 0) + 1;
 
-            const textoPeso = a.peso ? `${a.peso} kg` : `<span style="color:#94a3b8;">S/P</span>`;
             const escapeStr = (val) => String(val || '').replace(/'/g, "\\'");
             const nombreLote = a.lote ? a.lote : 'General';
 
@@ -353,7 +348,6 @@ window.cargarHato = function() {
                 }
             }
 
-            // 🆕 Agregamos el "Lote" visible debajo de la finca en la tabla
             tabla.innerHTML += `
                 <tr>
                     <td style="padding: 10px; border-bottom: 1px solid var(--border-light); text-align: center;">
@@ -623,7 +617,6 @@ if (formAnimal) {
             const pesoValor = pesoInput !== '' ? Number(pesoInput) : null;
             const fechaNac = document.getElementById('a-nacimiento').value || null;
             
-            // 🆕 CAPTURAMOS EL LOTE (O DEJAMOS 'General' SI ESTÁ VACÍO)
             const loteInput = document.getElementById('a-lote');
             const loteValor = (loteInput && loteInput.value.trim() !== '') ? loteInput.value.trim() : 'General';
 
@@ -647,7 +640,6 @@ if (formAnimal) {
             document.getElementById('modal-animal').style.display = 'none';
             alert("✅ Animal guardado con éxito.");
         } catch (err) { 
-            console.error("Error al guardar animal: ", err);
             alert("❌ Error al guardar: " + err.message); 
         } finally { 
             btn.innerText = "Guardar Animal"; 
@@ -723,6 +715,8 @@ function actualizarDashboard(datosHato) {
     
     countDestete.innerText = numDestete;
     listDestete.innerHTML = numDestete > 0 ? htmlDestete : `<p style="color: var(--text-muted); font-style: italic; padding: 10px 0;">🟢 Ningún becerro ha alcanzado la edad de destete aún.</p>`;
+}
+
 // ==========================================
 // 📍 ADMINISTRACIÓN DE LOTES Y POTREROS
 // ==========================================
@@ -730,28 +724,21 @@ window.cargarListaLotes = function() {
     const listaUI = document.getElementById('lista-lotes-ui');
     if (!listaUI || !window.db) return;
 
-    // Escuchamos la colección "config_lotes" en Firebase
     onSnapshot(query(collection(window.db, "config_lotes")), (snapshot) => {
         listaUI.innerHTML = '';
-        
-        // Siempre mostramos el Lote General por defecto (no se puede borrar)
         listaUI.innerHTML += `<li style="padding: 8px 5px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center;">
                                 <span>👉 General / Sin Asignar</span>
                               </li>`;
 
-        let hayLotes = false;
-
         snapshot.forEach((docSnap) => {
-            hayLotes = true;
             const data = docSnap.data();
             const loteId = docSnap.id;
             const nombreLote = data.nombre || 'Lote Sin Nombre';
             
-            // Creamos cada lote con su botón rojo para eliminar (❌)
             listaUI.innerHTML += `
                 <li style="padding: 8px 5px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center;">
                     <span style="font-weight: bold; color: var(--green-dark);">👉 ${nombreLote}</span>
-                    <button onclick="window.eliminarLoteActivo('${loteId}', '${nombreLote.replace(/'/g, "\\'")}')" style="background: #fef2f2; color: #ef4444; border: 1px solid #fecdd3; border-radius: 4px; padding: 2px 6px; cursor: pointer; font-size: 0.8rem;" title="Borrar Lote">❌</button>
+                    <button onclick="window.eliminarLoteActivo('${loteId}', '${nombreLote.replace(/'/g, "\\'")}')" style="background: #fef2f2; color: #ef4444; border: 1px solid #fecdd3; border-radius: 4px; padding: 2px 6px; cursor: pointer; font-weight: bold;" title="Borrar Lote">❌</button>
                 </li>
             `;
         });
@@ -770,14 +757,14 @@ window.agregarLoteNuevo = async function() {
             nombre: nombreLote,
             fechaCreacion: serverTimestamp()
         });
-        inputLote.value = ''; // Limpiamos el campo
+        inputLote.value = ''; 
     } catch (err) {
         alert("❌ Error al crear lote: " + err.message);
     }
 };
 
 window.eliminarLoteActivo = async function(idLote, nombreLote) {
-    if (confirm(`¿Estás seguro de eliminar el lote "${nombreLote}"?\n\nOjo: Los animales que ya tengan este lote asignado no se borrarán, pero el lote dejará de aparecer en esta lista.`)) {
+    if (confirm(`¿Estás seguro de eliminar el lote "${nombreLote}"?\n\nOjo: Los animales asignados a este lote no se borrarán del sistema.`)) {
         try {
             await deleteDoc(doc(window.db, "config_lotes", idLote));
         } catch (err) {
@@ -785,13 +772,3 @@ window.eliminarLoteActivo = async function(idLote, nombreLote) {
         }
     }
 };
-
-// Arrancamos la carga de lotes apenas cargue la página
-document.addEventListener('DOMContentLoaded', () => {
-    // Le damos un segundito a Firebase para que despierte
-    setTimeout(() => {
-        if (window.db && window.cargarListaLotes) {
-            window.cargarListaLotes();
-        }
-    }, 1500); 
-});
