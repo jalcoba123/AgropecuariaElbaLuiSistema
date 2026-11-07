@@ -4,6 +4,13 @@ import {
     doc, deleteDoc, updateDoc, getDoc, getDocs, writeBatch
 } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
+// ID único del dispositivo local para rastrear eventos offline sin conflicto
+let ID_DISPOSITIVO = localStorage.getItem('elbalui_dispositivo_id');
+if (!ID_DISPOSITIVO) {
+    ID_DISPOSITIVO = 'DEV-' + Math.random().toString(36).substring(2, 9).toUpperCase();
+    localStorage.setItem('elbalui_dispositivo_id', ID_DISPOSITIVO);
+}
+
 function obtenerFincaActual() {
     const tag = document.getElementById('finca-tag');
     if (!tag) return 'Agua Clara';
@@ -15,9 +22,122 @@ function obtenerFincaActual() {
 window.datosHatoCache = [];
 
 // ==========================================
-// 🏷️ LECTOR RFID (CONTROL DE LOTE + FICHA)
+// 🌐 MONITOREO DE CONEXIÓN A INTERNET (STATUS BAR)
 // ==========================================
-window.animalesPasadosHoy = new Set(); // Memoria para el lote en la manga
+function actualizarEstadoConexion() {
+    const statusBar = document.getElementById('offline-status-bar');
+    if (!statusBar) return;
+    
+    if (navigator.onLine) {
+        statusBar.style.background = '#10b981';
+        statusBar.innerText = '🟢 Conectado - Sincronizado en Nube (Starlink / Datos)';
+    } else {
+        statusBar.style.background = '#334155';
+        statusBar.innerText = '⚠️ Modo Sin Conexión - Guardando en memoria local del dispositivo';
+    }
+}
+window.addEventListener('online', actualizarEstadoConexion);
+window.addEventListener('offline', actualizarEstadoConexion);
+actualizarEstadoConexion();
+
+// ==========================================
+// 🏷️ ESTACIÓN DE CONTROL DE MANGA (SESIÓN & FAENA)
+// ==========================================
+window.faenaActualLista = []; // Memoria de animales pasados en la sesión actual
+window.modoMangaActual = 'conteo'; // 'conteo' o 'rafaga'
+
+window.cambiarModoManga = function(nuevoModo) {
+    window.modoMangaActual = nuevoModo;
+    const containerRafaga = document.getElementById('manga-container-rafaga');
+    if (containerRafaga) {
+        containerRafaga.style.display = (nuevoModo === 'rafaga') ? 'block' : 'none';
+    }
+};
+
+window.reiniciarSesionManga = function() {
+    if (confirm("¿Desea iniciar una nueva faena? El contador actual se reiniciará a cero.")) {
+        window.faenaActualLista = [];
+        actualizarTableroManga();
+        const banner = document.getElementById('manga-alerta-banner');
+        if (banner) banner.style.display = 'none';
+    }
+};
+
+function reproducirAlertaAudio() {
+    try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(440, ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.3);
+        gain.gain.setValueAtTime(0.3, ctx.currentTime);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start();
+        osc.stop(ctx.currentTime + 0.3);
+    } catch (e) { console.log("Audio not supported or blocked."); }
+}
+
+function mostrarAlertaManga(mensaje, esError = true) {
+    const banner = document.getElementById('manga-alerta-banner');
+    if (!banner) return;
+    banner.innerText = mensaje;
+    banner.style.background = esError ? '#fef2f2' : '#f0fdf4';
+    banner.style.borderColor = esError ? '#ef4444' : '#22c55e';
+    banner.style.color = esError ? '#991b1b' : '#15803d';
+    banner.style.display = 'block';
+    reproducirAlertaAudio();
+}
+
+function actualizarTableroManga() {
+    const contadorUi = document.getElementById('contador-lote-manga');
+    const desgloseCatUi = document.getElementById('manga-desglose-categoria');
+    const desgloseLoteUi = document.getElementById('manga-desglose-lote');
+    const tablaFaenaUi = document.getElementById('manga-tabla-faena-body');
+
+    if (!contadorUi) return;
+    
+    contadorUi.innerText = window.faenaActualLista.length;
+
+    let conteoCat = {};
+    let conteoLote = {};
+
+    tablaFaenaUi.innerHTML = '';
+    
+    if (window.faenaActualLista.length === 0) {
+        tablaFaenaUi.innerHTML = `<tr><td colspan="6" style="padding: 15px; text-align: center; color: #94a3b8;">No se han pasado animales por la manga en esta sesión.</td></tr>`;
+        desgloseCatUi.innerHTML = '<em>Sin lecturas aún.</em>';
+        desgloseLoteUi.innerHTML = '<em>Sin lecturas aún.</em>';
+        return;
+    }
+
+    window.faenaActualLista.slice().reverse().forEach((item, index) => {
+        const cat = item.categoria || 'N/D';
+        const lote = item.lote || 'General';
+
+        conteoCat[cat] = (conteoCat[cat] || 0) + 1;
+        conteoLote[lote] = (conteoLote[lote] || 0) + 1;
+
+        const idxInverso = window.faenaActualLista.length - index;
+
+        tablaFaenaUi.innerHTML += `
+            <tr>
+                <td style="padding: 8px; border-bottom: 1px solid #e2e8f0; font-weight: bold; color: #64748b;">${idxInverso}</td>
+                <td style="padding: 8px; border-bottom: 1px solid #e2e8f0;"><strong>${item.arete}</strong></td>
+                <td style="padding: 8px; border-bottom: 1px solid #e2e8f0;">${cat}</td>
+                <td style="padding: 8px; border-bottom: 1px solid #e2e8f0;">${lote}</td>
+                <td style="padding: 8px; border-bottom: 1px solid #e2e8f0; font-weight: 600; color: #0369a1;">${item.accionAplicada}</td>
+                <td style="padding: 8px; border-bottom: 1px solid #e2e8f0; text-align: center;">
+                    <button onclick="abrirFicha('${item.id}')" style="background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; padding: 2px 6px; border-radius: 4px; cursor: pointer;">👁️</button>
+                </td>
+            </tr>
+        `;
+    });
+
+    desgloseCatUi.innerHTML = Object.entries(conteoCat).map(([c, n]) => `<div><strong>${c}:</strong> ${n}</div>`).join('');
+    desgloseLoteUi.innerHTML = Object.entries(conteoLote).map(([l, n]) => `<div><strong>${l}:</strong> ${n}</div>`).join('');
+}
 
 document.addEventListener('DOMContentLoaded', () => {
     const intervalID = setInterval(() => {
@@ -30,60 +150,90 @@ document.addEventListener('DOMContentLoaded', () => {
                     e.preventDefault();
                     
                     const codigoRFID = inputLector.value ? inputLector.value.trim().toLowerCase() : '';
-                    inputLector.value = ''; // Limpieza segura
+                    inputLector.value = ''; 
 
                     if (!codigoRFID) return;
 
-                    console.log("📡 Chip escaneado en manga:", codigoRFID);
+                    const animalEncontrado = window.datosHatoCache.find(a => {
+                        const chipDb = a.chipRFID ? String(a.chipRFID).trim().toLowerCase() : '';
+                        const areteDb = a.arete ? String(a.arete).trim().toLowerCase() : '';
+                        return (chipDb === codigoRFID) || (areteDb === codigoRFID);
+                    });
 
-                    if (window.datosHatoCache && window.datosHatoCache.length > 0) {
-                        const animalEncontrado = window.datosHatoCache.find(a => {
-                            const chipDb = a.chipRFID ? String(a.chipRFID).trim().toLowerCase() : '';
-                            const areteDb = a.arete ? String(a.arete).trim().toLowerCase() : '';
-                            return (chipDb === codigoRFID) || (areteDb === codigoRFID);
-                        });
+                    if (animalEncontrado) {
+                        // 1️⃣ Detección de duplicado en la misma sesión
+                        const yaPaso = window.faenaActualLista.some(item => item.id === animalEncontrado.id);
+                        if (yaPaso) {
+                            mostrarAlertaManga(`⚠️ ¡ATENCIÓN! Arete #${animalEncontrado.arete} YA FUE PROCESADO en esta faena.`);
+                            return;
+                        }
 
-                        if (animalEncontrado) {
-                            window.animalesPasadosHoy.add(animalEncontrado.id);
-                            
-                            const totalPasados = window.animalesPasadosHoy.size;
-                            const contadorUi = document.getElementById('contador-lote-manga');
-                            if (contadorUi) contadorUi.innerText = totalPasados;
+                        let accionRealizada = 'Conteo / Lectura de Manga';
 
-                            console.log(`✅ LOTE MANGA: Animal ${animalEncontrado.arete} registrado. Total pasados: ${totalPasados}`);
-
-                            if (typeof window.abrirFicha === 'function') {
-                                window.abrirFicha(animalEncontrado.id);
-                            } else {
-                                alert(`✅ Animal: Arete ${animalEncontrado.arete}\n📊 Lote actual en manga: ${totalPasados} animales.`);
+                        // 2️⃣ Si estamos en Modo Ráfaga, aplicamos tratamiento automáticamente
+                        if (window.modoMangaActual === 'rafaga') {
+                            const vacunaSel = document.getElementById('manga-vacuna-rafaga').value;
+                            if (!vacunaSel) {
+                                mostrarAlertaManga("⚠️ Por favor seleccione una vacuna activa para el Modo Ráfaga.");
+                                return;
                             }
-                        } else {
-                            const areteAsociar = prompt(`📡 ¡Chip nuevo detectado (${codigoRFID})!\n\nEste código no está registrado. Escriba el número de arete físico exacto:`);
                             
-                            if (areteAsociar && areteAsociar.trim() !== '') {
-                                const animalPorArete = window.datosHatoCache.find(a => 
-                                    a.arete.trim().toLowerCase() === areteAsociar.trim().toLowerCase()
-                                );
-
-                                if (animalPorArete) {
-                                    try {
-                                        await updateDoc(doc(window.db, "animales", animalPorArete.id), {
-                                            chipRFID: codigoRFID
-                                        });
-                                        alert(`✅ ¡Chip vinculado al arete ${animalPorArete.arete} con éxito!`);
-                                        
-                                        if (typeof window.cargarHato === 'function') window.cargarHato();
-
-                                        window.animalesPasadosHoy.add(animalPorArete.id);
-                                        const contadorUi = document.getElementById('contador-lote-manga');
-                                        if (contadorUi) contadorUi.innerText = window.animalesPasadosHoy.size;
-
-                                        window.abrirFicha(animalPorArete.id);
-                                    } catch (err) { alert("❌ Error al guardar el chip: " + err.message); }
-                                } else { alert(`⚠️ No se encontró ningún animal con el arete "${areteAsociar}" en esta finca.`); }
+                            accionRealizada = `💉 Vacunado: ${vacunaSel}`;
+                            
+                            // Guardado append-only seguro
+                            try {
+                                const hoy = new Date().toISOString().split('T')[0];
+                                const docRef = doc(window.db, "animales", animalEncontrado.id);
+                                let historialEventos = animalEncontrado.historialReproductivo || [];
+                                historialEventos.push({
+                                    tipo: '💉 Vacunación Ráfaga',
+                                    fecha: hoy,
+                                    detalle: vacunaSel,
+                                    dispositivo: ID_DISPOSITIVO
+                                });
+                                await updateDoc(docRef, {
+                                    salud: `🟢 Sano (Vacunado: ${vacunaSel})`,
+                                    historialReproductivo: historialEventos
+                                });
+                            } catch (err) {
+                                console.error("Error aplicando ráfaga:", err);
                             }
                         }
-                    } else { alert("⚠️ Sincronizando datos del hato. Espere un segundo e intente de nuevo."); }
+
+                        // Agregar a faena actual
+                        window.faenaActualLista.push({
+                            id: animalEncontrado.id,
+                            arete: animalEncontrado.arete,
+                            categoria: animalEncontrado.categoria,
+                            lote: animalEncontrado.lote || 'General',
+                            accionAplicada: accionRealizada
+                        });
+
+                        actualizarTableroManga();
+                        mostrarAlertaManga(`✅ Registrado: Arete #${animalEncontrado.arete} (${animalEncontrado.categoria})`, false);
+
+                        if (window.modoMangaActual === 'conteo') {
+                            window.abrirFicha(animalEncontrado.id);
+                        }
+                    } else {
+                        mostrarAlertaManga(`📡 Chip No Registrado: ${codigoRFID}`);
+                        const areteAsociar = prompt(`📡 ¡Chip nuevo detectado (${codigoRFID})!\n\nEscriba el número de arete físico para vincularlo:`);
+                        
+                        if (areteAsociar && areteAsociar.trim() !== '') {
+                            const animalPorArete = window.datosHatoCache.find(a => 
+                                a.arete.trim().toLowerCase() === areteAsociar.trim().toLowerCase()
+                            );
+
+                            if (animalPorArete) {
+                                try {
+                                    await updateDoc(doc(window.db, "animales", animalPorArete.id), {
+                                        chipRFID: codigoRFID
+                                    });
+                                    alert(`✅ Chip vinculado al arete ${animalPorArete.arete}`);
+                                } catch (err) { alert("❌ Error vinculando chip: " + err.message); }
+                            } else { alert(`⚠️ Arete "${areteAsociar}" no encontrado.`); }
+                        }
+                    }
                 }
             });
         }
@@ -91,7 +241,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // ==========================================
-// 🧭 CONTROL DE MINI-MENÚS (PESTAÑAS DEL HATO)
+// 🧭 CONTROL DE MINI-MENÚS HATO
 // ==========================================
 window.cambiarModuloHato = function(evento, idModulo) {
     const modulos = document.querySelectorAll('.modulo-hato');
@@ -190,7 +340,18 @@ if (formMasivo) {
                     const docRef = doc(window.db, "animales", idDoc);
                     const docSnap = await getDoc(docRef);
                     if (docSnap.exists()) {
-                        batch.update(docRef, { salud: `🟢 Sano (Vacunado: ${vacunaStr})` });
+                        const data = docSnap.data();
+                        let historialRepro = data.historialReproductivo || [];
+                        historialRepro.push({
+                            tipo: '💉 Vacunación Masiva',
+                            fecha: hoy,
+                            detalle: vacunaStr,
+                            dispositivo: ID_DISPOSITIVO
+                        });
+                        batch.update(docRef, { 
+                            salud: `🟢 Sano (Vacunado: ${vacunaStr})`,
+                            historialReproductivo: historialRepro
+                        });
                     }
                 }
                 await batch.commit();
@@ -210,13 +371,13 @@ if (formMasivo) {
                         if (data.categoria.includes("Becerr")) {
                             let nuevaCat = (data.categoria === 'Becerra') ? 'Mauta' : 'Maute';
                             let historialPesos = data.historialPesos || [];
-                            historialPesos.push({ fecha: hoy, peso: pesoPromedio });
+                            historialPesos.push({ fecha: hoy, peso: pesoPromedio, dispositivo: ID_DISPOSITIVO });
                             batch.update(docRef, { categoria: nuevaCat, peso: pesoPromedio, historialPesos: historialPesos });
                         }
                     }
                 }
                 await batch.commit();
-                alert(`✅ Destete completado. Los becerros seleccionados han ascendido a Mautes.`);
+                alert(`✅ Destete completado. Los becerros pasaron a Mautes.`);
             }
 
             document.getElementById('modal-masivo').style.display = 'none';
@@ -256,7 +417,18 @@ if (formNovedad) {
         
         btn.innerText = "Guardando..."; btn.disabled = true;
         try {
-            await updateDoc(doc(window.db, "animales", idDoc), { salud: nuevoEstado });
+            const docRef = doc(window.db, "animales", idDoc);
+            const docSnap = await getDoc(docRef);
+            if (docSnap.exists()) {
+                let historialRepro = docSnap.data().historialReproductivo || [];
+                historialRepro.push({
+                    tipo: '🏥 Novedad Salud',
+                    fecha: new Date().toISOString().split('T')[0],
+                    detalle: nuevoEstado,
+                    dispositivo: ID_DISPOSITIVO
+                });
+                await updateDoc(docRef, { salud: nuevoEstado, historialReproductivo: historialRepro });
+            }
             document.getElementById('modal-novedad').style.display = 'none';
         } catch (err) { alert("Error: " + err.message); } 
         finally { btn.innerText = "Guardar Novedad"; btn.disabled = false; }
@@ -525,12 +697,12 @@ if (formNuevoRepro) {
                     await addDoc(collection(window.db, "animales"), {
                         finca: data.finca || 'Agua Clara', arete: areteCria, categoria: document.getElementById('r-cria-sexo').value,
                         peso: document.getElementById('r-cria-peso').value || null, fechaNacimiento: fecha,
-                        historialPesos: document.getElementById('r-cria-peso').value ? [{ fecha: fecha, peso: document.getElementById('r-cria-peso').value }] : [],
+                        historialPesos: document.getElementById('r-cria-peso').value ? [{ fecha: fecha, peso: document.getElementById('r-cria-peso').value, dispositivo: ID_DISPOSITIVO }] : [],
                         historialReproductivo: [], padre: 'N/D', madre: data.arete || 'N/D', estado: 'Activo/Creciendo', salud: "🟢 Sano", fechaRegistro: serverTimestamp()
                     });
                 }
             }
-            historialRepro.push({ tipo: tipoEvento, fecha: fecha, tercio: tercioStr, fep: fep, detalle: detalle });
+            historialRepro.push({ tipo: tipoEvento, fecha: fecha, tercio: tercioStr, fep: fep, detalle: detalle, dispositivo: ID_DISPOSITIVO });
             await updateDoc(docRef, { estado: nuevoEstado, categoria: nuevaCat, historialReproductivo: historialRepro });
             document.getElementById('form-nuevo-repro').style.display = 'none'; alert(`✅ Evento guardado.`); window.abrirFicha(idDoc);
         } catch (err) { alert("Error: " + err.message); }
@@ -550,7 +722,7 @@ if (formDestete) {
             const data = docSnap.data();
             let nuevaCat = (data.categoria === 'Becerra') ? 'Mauta' : 'Maute';
             let historialPesos = data.historialPesos || [];
-            historialPesos.push({ fecha: fechaDestete, peso: pesoDestete });
+            historialPesos.push({ fecha: fechaDestete, peso: pesoDestete, dispositivo: ID_DISPOSITIVO });
             await updateDoc(docRef, { categoria: nuevaCat, peso: pesoDestete, historialPesos: historialPesos });
             if (data.madre && data.madre !== 'N/D') {
                 const madreQuery = query(collection(window.db, "animales"), where("finca", "==", data.finca), where("arete", "==", data.madre));
@@ -558,7 +730,7 @@ if (formDestete) {
                 if (!madreSnapshot.empty) {
                     const madreDoc = madreSnapshot.docs[0];
                     let madreHistorial = madreDoc.data().historialReproductivo || [];
-                    madreHistorial.push({ tipo: '🏅 Destete Cría', fecha: fechaDestete, detalle: `Destetó a su cría con ${pesoDestete} Kg.` });
+                    madreHistorial.push({ tipo: '🏅 Destete Cría', fecha: fechaDestete, detalle: `Destetó a su cría con ${pesoDestete} Kg.`, dispositivo: ID_DISPOSITIVO });
                     await updateDoc(doc(window.db, "animales", madreDoc.id), { historialReproductivo: madreHistorial });
                 }
             }
@@ -568,7 +740,7 @@ if (formDestete) {
 }
 
 // ==========================================
-// REGISTRO DE NUEVO ANIMAL (CON LOTE AUTOMATIZADO)
+// REGISTRO DE NUEVO ANIMAL (CON LOTE)
 // ==========================================
 const formAnimal = document.getElementById('form-animal');
 if (formAnimal) {
@@ -576,8 +748,7 @@ if (formAnimal) {
         e.preventDefault();
         
         if (!window.db || !window.auth.currentUser) {
-            alert("⚠️ Sesión expirada o base de datos desconectada. Por favor, vuelva a iniciar sesión.");
-            location.reload();
+            alert("⚠️ Sesión expirada o base de datos desconectada.");
             return;
         }
 
@@ -600,7 +771,7 @@ if (formAnimal) {
                 lote: loteValor, 
                 peso: pesoValor,
                 fechaNacimiento: fechaNac,
-                historialPesos: pesoValor ? [{ fecha: new Date().toISOString().split('T')[0], peso: pesoValor }] : [],
+                historialPesos: pesoValor ? [{ fecha: new Date().toISOString().split('T')[0], peso: pesoValor, dispositivo: ID_DISPOSITIVO }] : [],
                 historialReproductivo: [],
                 padre: document.getElementById('a-padre').value.trim() || 'N/D',
                 madre: document.getElementById('a-madre').value.trim() || 'N/D',
@@ -652,7 +823,7 @@ window.cargarListaLotes = function() {
 window.agregarLoteNuevo = async function() {
     const inputLote = document.getElementById('input-nuevo-lote');
     const nombreLote = inputLote.value.trim();
-    if (!nombreLote) return alert("⚠️ Escriba un nombre para el lote (Ej. Lote 100 Vacías).");
+    if (!nombreLote) return alert("⚠️ Escriba un nombre para el lote.");
     
     try {
         await addDoc(collection(window.db, "config_lotes"), { nombre: nombreLote, fechaCreacion: serverTimestamp() });
@@ -673,11 +844,14 @@ window.eliminarLoteActivo = async function(idLote, nombreLote) {
 window.cargarListaVacunas = function() {
     const listaVacunasUI = document.getElementById('lista-vacunas-ui');
     const selectMasivoVacunas = document.getElementById('m-vacuna-nombre');
+    const selectRafagaVacunas = document.getElementById('manga-vacuna-rafaga');
+
     if (!listaVacunasUI || !window.db) return;
 
     onSnapshot(query(collection(window.db, "config_vacunas")), (snapshot) => {
         listaVacunasUI.innerHTML = '';
         if(selectMasivoVacunas) selectMasivoVacunas.innerHTML = '<option value="">Seleccione un tratamiento...</option>';
+        if(selectRafagaVacunas) selectRafagaVacunas.innerHTML = '<option value="">Seleccione vacuna activa...</option>';
 
         let hayVacunas = false;
         snapshot.forEach((docSnap) => {
@@ -693,6 +867,7 @@ window.cargarListaVacunas = function() {
                 </li>
             `;
             if(selectMasivoVacunas) selectMasivoVacunas.innerHTML += `<option value="${nombreVacuna}">${nombreVacuna}</option>`;
+            if(selectRafagaVacunas) selectRafagaVacunas.innerHTML += `<option value="${nombreVacuna}">${nombreVacuna}</option>`;
         });
 
         if(!hayVacunas) listaVacunasUI.innerHTML = '<li style="padding: 5px 0; font-style: italic; color: #a16207;">No hay tratamientos registrados.</li>';
@@ -799,5 +974,5 @@ document.addEventListener('DOMContentLoaded', () => {
             if (window.cargarListaLotes) window.cargarListaLotes();
             if (window.cargarListaVacunas) window.cargarListaVacunas();
         }
-    }, 1500); 
+    }, 1200); 
 });
