@@ -1,885 +1,838 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GanadoControl ERP - Agropecuaria ElbaLui</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css">
-    <!-- 📱 MANIFEST PARA INSTALACIÓN COMO APP NATIVA -->
-    <link rel="manifest" href="manifest.json">
+import { 
+    collection, addDoc, getDocs, updateDoc, doc, deleteDoc, query, where, orderBy, getDoc, writeBatch, serverTimestamp
+} from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+
+// --- GESTIÓN DE PESTAÑAS (Módulos de Hato) ---
+window.cambiarModuloHato = function(event, idTab) {
+    document.querySelectorAll('.modulo-hato').forEach(el => el.style.display = 'none');
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.remove('active');
+        btn.style.background = 'white';
+        btn.style.color = '#334155';
+        btn.style.border = '1px solid #cbd5e1';
+    });
     
-    <!-- 🖨️ ESTILOS PARA IMPRESIÓN LIMPIA -->
-    <style>
-        @media print {
-            body { background: white; margin: 0; padding: 0; }
-            header, .category-nav, .finca-banner, .tabs-hato-container, 
-            .btn-action, #offline-status-bar, #modal-animal, #login-screen,
-            .finca-toggle, button[onclick="window.print()"] { 
-                display: none !important; 
-            }
-            .section-view, #app-container, .modulo-hato { 
-                display: block !important; 
-                box-shadow: none !important;
-                border: none !important;
-            }
-            /* Ocultar tarjetas de KPIs y otras pestañas */
-            #tab-dashboard, #tab-lecheria, #tab-palma, #tab-operaciones, #tab-finanzas, #tab-documentos,
-            #subtab-lector, #subtab-config, #subtab-calendario,
-            div[style*="grid-template-columns: repeat(auto-fit, minmax(140px, 1fr))"] {
-                display: none !important;
-            }
-            /* Ocultar la primera y última columna (Checkbox y Botones) en las tablas al imprimir */
-            th:first-child, td:first-child, 
-            th:last-child, td:last-child {
-                display: none !important;
-            }
-            table { border: 1px solid #ccc !important; width: 100% !important; }
-            th, td { padding: 6px !important; font-size: 10pt !important; border-bottom: 1px solid #ddd !important; }
+    document.getElementById(idTab).style.display = 'block';
+    event.currentTarget.classList.add('active');
+    event.currentTarget.style.background = '#0f172a';
+    event.currentTarget.style.color = 'white';
+    event.currentTarget.style.border = 'none';
+
+    if(idTab === 'subtab-config') cargarConfiguracionHato();
+    if(idTab === 'subtab-lector') document.getElementById('rfid-scanner-input').focus();
+};
+
+// --- CARGA INICIAL Y KPI ---
+window.cargarHato = async function() {
+    const fincaActual = document.getElementById('finca-tag').innerText.replace('FINCA ACTIVA: ', '').replace('VISTA: ', '').trim();
+    const tbody = document.getElementById('tabla-hato-body');
+    const panelAlertas = document.getElementById('panel-alertas');
+    tbody.innerHTML = '<tr><td colspan="6" style="padding: 15px; text-align: center; color: var(--text-muted);">Sincronizando rebaño...</td></tr>';
+    panelAlertas.innerHTML = '<span style="color: #9f1239; font-style: italic;">Sincronizando estado sanitario...</span>';
+
+    try {
+        let q = query(collection(window.db, "animales"), orderBy("arete", "asc"));
+        if (fincaActual !== 'CONSOLIDADO') {
+            q = query(collection(window.db, "animales"), where("finca", "==", fincaActual), orderBy("arete", "asc"));
         }
-    </style>
-</head>
-<body>
-
-    <!-- 🌐 BARRERA E INDICADOR DE ESTADO CONEXIÓN / OFFLINE -->
-    <div id="offline-status-bar" style="background: #10b981; color: white; text-align: center; padding: 6px 12px; font-size: 0.85rem; font-weight: bold; transition: background 0.3s ease;">
-        🟢 Conectado - Sincronizado en Nube (Starlink / Datos)
-    </div>
-
-    <!-- 🔒 PANTALLA DE SEGURIDAD (LOGIN) -->
-    <div id="login-screen" class="login-container">
-        <div class="login-box">
-            <img src="logo.jpg" alt="Agropecuaria ElbaLui" class="login-logo-img">
-            <h2 style="color: var(--green-dark); margin-bottom: 5px;">GanadoControl ERP</h2>
-            <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 25px;">Agropecuaria ElbaLui • Fincas El Sur & Agua Clara</p>
-            
-            <form id="login-form">
-                <div class="form-field" style="text-align: left;">
-                    <label>Correo Electrónico</label>
-                    <input type="email" id="login-email" placeholder="ejemplo@gmail.com" required>
-                </div>
-                <div class="form-field" style="text-align: left;">
-                    <label>Contraseña</label>
-                    <input type="password" id="login-password" placeholder="••••••••" required>
-                </div>
-                <button type="submit" id="btn-submit-login" class="btn-action" style="width: 100%; margin-top: 15px; font-size: 1rem;">Ingresar al Sistema</button>
-            </form>
-            <p id="login-error" style="color: #ef4444; font-size: 0.85rem; margin-top: 15px; display: none; font-weight: 600;"></p>
-        </div>
-    </div>
-
-    <!-- 📱 APLICACIÓN PRINCIPAL -->
-    <div id="app-container" style="display: none;">
-        <header>
-            <div class="brand">
-                <img src="logo.jpg" alt="Agropecuaria ElbaLui" class="brand-logo-img">
-                <div>
-                    <div class="brand-title">GanadoControl ERP</div>
-                    <div class="brand-sub">Agropecuaria ElbaLui</div>
-                </div>
-            </div>
-
-            <div class="finca-toggle">
-                <button class="finca-btn active" onclick="setFinca('Agua Clara')">💧 Agua Clara</button>
-                <button class="finca-btn" onclick="setFinca('El Sur')">☀️ El Sur</button>
-                <button class="finca-btn" onclick="setFinca('Global')">🌎 Consolidado</button>
-            </div>
-            <button id="btn-logout" style="background: transparent; border: 1px solid white; color: white; padding: 5px 10px; border-radius: 6px; cursor: pointer; margin-left: 10px;">Salir</button>
-        </header>
-
-        <nav class="category-nav">
-            <button class="cat-chip active" onclick="switchTab('dashboard', this)">📊 Torre de Control</button>
-            <button class="cat-chip" onclick="switchTab('hato', this)">🐮 Hato & Sanidad</button>
-            <button class="cat-chip" onclick="switchTab('lecheria', this)">🥛 Lechería & Raciones</button>
-            <button class="cat-chip" onclick="switchTab('palma', this)">🌴 Palma & Agronomía</button>
-            <button class="cat-chip" onclick="switchTab('operaciones', this)">🚜 Operaciones & Activos</button>
-            <button class="cat-chip" onclick="switchTab('finanzas', this)">💰 Finanzas & Costos</button>
-            <button class="cat-chip" onclick="switchTab('documentos', this)">📁 Documentos & Planillas</button>
-        </nav>
-
-        <div class="container">
-            <div class="finca-banner">
-                <div>
-                    <span class="finca-tag" id="finca-tag">FINCA ACTIVA: AGUA CLARA</span>
-                    <h2 id="finca-title">Finca Agua Clara</h2>
-                    <p id="finca-desc">Manejo intensivo/extensivo, palma aceitera en establecimiento y áreas de siembra.</p>
-                </div>
-            </div>
-
-            <!-- MÓDULO 1: TORRE DE CONTROL -->
-            <div id="tab-dashboard" class="section-view active">
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;">
-                    <div style="display: flex; flex-direction: column; gap: 20px;">
-                        <div style="background: white; border-radius: 12px; border: 1px solid var(--border-light); padding: 20px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
-                            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #fde68a; padding-bottom: 10px; margin-bottom: 15px;">
-                                <h3 style="color: #b45309; margin: 0; font-size: 1.1rem;">🟡 Próximos Secados & Partos</h3>
-                                <span style="background: #fef3c7; color: #b45309; padding: 4px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: bold;" id="dash-count-secado">0</span>
-                            </div>
-                            <div id="dash-list-secado" style="font-size: 0.85rem; max-height: 200px; overflow-y: auto;">
-                                <p style="color: var(--text-muted); font-style: italic;">Escaneando rebaño...</p>
-                            </div>
-                        </div>
-
-                        <div style="background: white; border-radius: 12px; border: 1px solid var(--border-light); padding: 20px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
-                            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #fde047; padding-bottom: 10px; margin-bottom: 15px;">
-                                <h3 style="color: #a16207; margin: 0; font-size: 1.1rem;">🍼 Lotes Listos para Destete</h3>
-                                <span style="background: #fef9c3; color: #a16207; padding: 4px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: bold;" id="dash-count-destete">0</span>
-                            </div>
-                            <div id="dash-list-destete" style="font-size: 0.85rem; max-height: 200px; overflow-y: auto;">
-                                <p style="color: var(--text-muted); font-style: italic;">Escaneando rebaño...</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div style="background: white; border-radius: 12px; border: 1px solid var(--border-light); padding: 20px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
-                        <div style="border-bottom: 2px solid #bbf7d0; padding-bottom: 10px; margin-bottom: 15px;">
-                            <h3 style="color: var(--green-dark); margin: 0; font-size: 1.1rem;">📅 Calendario Sanitario Anual</h3>
-                            <p style="margin: 5px 0 0 0; font-size: 0.8rem; color: var(--text-muted);">Programa preventivo oficial de Agropecuaria ElbaLui.</p>
-                        </div>
-                        <div style="display: flex; flex-direction: column; gap: 12px;">
-                            <div style="background: #f8fafc; border-left: 4px solid #ef4444; padding: 12px; border-radius: 4px;">
-                                <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
-                                    <strong style="color: #1e293b; font-size: 0.9rem;">Vacunación Fiebre Aftosa & Rabia</strong>
-                                    <span style="font-size: 0.8rem; color: #ef4444; font-weight: bold;">Mayo y Noviembre</span>
-                                </div>
-                                <p style="margin: 0; font-size: 0.8rem; color: var(--text-muted);">Aplicación obligatoria a todo el rebaño.</p>
-                            </div>
-                        </div>
-                        <button onclick="switchTab('hato')" style="width: 100%; margin-top: 15px; background: white; border: 1px solid var(--green-primary); color: var(--green-dark); padding: 8px; border-radius: 6px; cursor: pointer; font-weight: 600;">Ir a Ejecutar Vacunación Masiva 💉</button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- MÓDULO 2: HATO Y SANIDAD -->
-            <div id="tab-hato" class="section-view">
-                
-                <!-- BARRA DE MINI-MENÚS -->
-                <div class="tabs-hato-container" style="display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; overflow-x: auto;">
-                    <button class="tab-btn active" onclick="cambiarModuloHato(event, 'subtab-inventario')" style="padding: 10px 15px; cursor: pointer; border-radius: 8px; border: none; background: #0f172a; color: white; font-weight: bold; white-space: nowrap;">📦 Inventario General</button>
-                    <button class="tab-btn" onclick="cambiarModuloHato(event, 'subtab-lector')" style="padding: 10px 15px; cursor: pointer; border-radius: 8px; border: 1px solid #cbd5e1; background: white; color: #334155; font-weight: bold; white-space: nowrap;">🏷️ Lector RFID (Manga)</button>
-                    <button class="tab-btn" onclick="cambiarModuloHato(event, 'subtab-config')" style="padding: 10px 15px; cursor: pointer; border-radius: 8px; border: 1px solid #cbd5e1; background: white; color: #334155; font-weight: bold; white-space: nowrap;">⚙️ Configurar Lotes & Vacunas</button>
-                    <button class="tab-btn" onclick="cambiarModuloHato(event, 'subtab-calendario')" style="padding: 10px 15px; cursor: pointer; border-radius: 8px; border: 1px solid #cbd5e1; background: white; color: #334155; font-weight: bold; white-space: nowrap;">📅 Calendario Actividades</button>
-                </div>
-
-                <!-- SUB-PÁGINA 1: INVENTARIO COMPLETO -->
-                <div id="subtab-inventario" class="modulo-hato" style="display: block;">
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-bottom: 20px;">
-                        <div style="background: white; padding: 15px; border-radius: 8px; border: 1px solid var(--border-light);">
-                            <div style="font-size: 0.75rem; color: var(--text-muted); font-weight: bold;">Censo Total Activo</div>
-                            <div id="kpi-total" style="font-size: 1.8rem; font-weight: bold;">0</div>
-                        </div>
-                        <div style="background: white; padding: 15px; border-radius: 8px; border: 1px solid var(--border-light);">
-                            <div style="font-size: 0.75rem; color: var(--text-muted); font-weight: bold;">Mautes/Mautas</div>
-                            <div id="kpi-mautes" style="font-size: 1.8rem; font-weight: bold;">0</div>
-                        </div>
-                        <div style="background: white; padding: 15px; border-radius: 8px; border: 1px solid var(--border-light);">
-                            <div style="font-size: 0.75rem; color: var(--text-muted); font-weight: bold;">Vientres Gestantes</div>
-                            <div id="kpi-gestantes" style="font-size: 1.8rem; font-weight: bold;">0</div>
-                        </div>
-                    </div>
-
-                    <div style="background: #fff1f2; border-radius: 12px; border: 1px solid #fecdd3; padding: 16px; margin-bottom: 20px;">
-                        <h3 style="color: #be123c; margin-bottom: 10px; font-size: 0.95rem;">🏥 Animales en Observación Médica</h3>
-                        <div id="panel-alertas" style="display: flex; gap: 10px; flex-wrap: wrap; font-size: 0.85rem;">
-                            <span style="color: #9f1239; font-style: italic;">Cargando estado sanitario...</span>
-                        </div>
-                    </div>
-
-                    <!-- ZONA DE BUSCADOR Y EXPORTACIÓN -->
-                    <div style="background: white; border-radius: 12px; border: 1px solid var(--border-light); padding: 16px;">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;">
-                            <h3 style="font-size: 1rem; color: var(--green-dark); margin: 0;">🐮 Inventario y Hoja de Vida</h3>
-                            
-                            <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap; flex-grow: 1; justify-content: flex-end;">
-                                <input type="text" id="buscador-hato" placeholder="🔍 Buscar Arete..." onkeyup="window.aplicarFiltroHato()" style="padding: 6px 12px; border-radius: 6px; border: 1px solid var(--border-light); font-size: 0.85rem; width: 150px; outline: none;">
-                                
-                                <select id="filtro-categoria" onchange="window.aplicarFiltroHato()" style="padding: 6px; border-radius: 6px; border: 1px solid var(--border-light); font-size: 0.85rem;">
-                                    <option value="Todos">Activos: Todos</option>
-                                    <option value="Becerros">Solo Becerros(as)</option>
-                                    <option value="Mautes">Solo Mautes(as)</option>
-                                    <option value="Vacas">Solo Vacas</option>
-                                    <option value="Gestantes">Solo Gestantes</option>
-                                    <option value="Bajas">☠️ Ver Bajas/Muertes</option>
-                                </select>
-                                
-                                <div style="display: flex; gap: 5px; border-left: 2px solid #e2e8f0; padding-left: 10px;">
-                                    <button class="btn-action" onclick="window.exportarExcel('tabla-hato', 'Inventario_ElbaLui')" style="background: #10b981; color: white; font-size: 0.8rem;" title="Descargar a Excel">⬇️ Excel</button>
-                                    <button class="btn-action" onclick="window.print()" style="background: #475569; color: white; font-size: 0.8rem;" title="Imprimir Lista">🖨️ Imprimir</button>
-                                    
-                                    <!-- Importar CSV Oculto -->
-                                    <input type="file" id="input-importar-csv" accept=".csv" style="display: none;" onchange="window.importarCSV(event)">
-                                    <button class="btn-action" onclick="document.getElementById('input-importar-csv').click()" style="background: #3b82f6; color: white; font-size: 0.8rem;" title="Importar CSV Masivo">⬆️ Importar CSV</button>
-                                </div>
-                                <button class="btn-action" onclick="abrirModalMasivo()" style="background: #eab308; color: white;">⚡ Acción Masiva</button>
-                                <button class="btn-action" onclick="document.getElementById('modal-animal').style.display='flex'">+ Registrar Animal</button>
-                            </div>
-                        </div>
-                        
-                        <div style="overflow-x: auto;">
-                            <table id="tabla-hato" style="width: 100%; border-collapse: collapse; font-size: 0.85rem;">
-                                <thead style="background: #f1f5f9; text-align: left;">
-                                    <tr>
-                                        <th style="padding: 10px; border-bottom: 1px solid var(--border-light); width: 40px; text-align: center;">
-                                            <input type="checkbox" id="chk-all" onchange="toggleAllCheckboxes(this)">
-                                        </th>
-                                        <th style="padding: 10px; border-bottom: 1px solid var(--border-light);">Arete / Lote</th>
-                                        <th style="padding: 10px; border-bottom: 1px solid var(--border-light);">Categoría</th>
-                                        <th style="padding: 10px; border-bottom: 1px solid var(--border-light);">Tiempo/Gestación</th>
-                                        <th style="padding: 10px; border-bottom: 1px solid var(--border-light);">🏥 Estado</th>
-                                        <th style="padding: 10px; border-bottom: 1px solid var(--border-light); text-align: center;">Acciones</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="tabla-hato-body">
-                                    <tr><td colspan="6" style="padding: 15px; text-align: center; color: var(--text-muted);">Cargando inventario...</td></tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- SUB-PÁGINA 2: LECTOR RFID DE MANGA -->
-                <div id="subtab-lector" class="modulo-hato" style="display: none;">
-                    <div style="background: #f8fafc; padding: 20px; border-radius: 12px; border: 1px solid #e2e8f0; margin-bottom: 20px;">
-                        
-                        <div style="display: flex; flex-wrap: wrap; gap: 15px; align-items: center; justify-content: space-between; background: white; padding: 15px; border-radius: 8px; border: 1px solid #cbd5e1; margin-bottom: 20px;">
-                            <div>
-                                <label style="font-weight: bold; color: #0f172a; display: block; font-size: 0.85rem; margin-bottom: 5px;">Modo de Trabajo en Manga:</label>
-                                <select id="manga-modo-operacion" onchange="window.cambiarModoManga(this.value)" style="padding: 8px; border-radius: 6px; border: 2px solid #0ea5e9; font-weight: bold; color: #0369a1; background: #f0f9ff;">
-                                    <option value="conteo">📊 Modo Conteo & Expediente (Ver Ficha)</option>
-                                    <option value="rafaga">⚡ Modo Ráfaga (Vacunación Masiva Automática)</option>
-                                </select>
-                            </div>
-
-                            <div id="manga-container-rafaga" style="display: none; background: #fefce8; padding: 10px; border-radius: 6px; border: 1px solid #fde047;">
-                                <label style="font-weight: bold; color: #854d0e; font-size: 0.85rem; display: block;">Tratamiento Activo para Aplicar:</label>
-                                <select id="manga-vacuna-rafaga" style="padding: 6px; border-radius: 6px; border: 1px solid #ca8a04; font-weight: bold; color: #713f12;">
-                                    <option value="">Cargando tratamientos...</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        <div id="manga-alerta-banner" style="display: none; background: #fef2f2; border: 2px solid #ef4444; color: #991b1b; padding: 12px; border-radius: 8px; font-weight: bold; text-align: center; margin-bottom: 15px; font-size: 1.1rem; animation: pulse 1s infinite;">
-                            ⚠️ ALERTA EN MANGA
-                        </div>
-
-                        <div style="text-align: center; max-width: 600px; margin: 0 auto; position: relative;">
-                            <span style="font-size: 2.5rem; display: block; margin-bottom: 5px;">📡</span>
-                            <h2 style="color: #0f172a; margin-top: 0; font-size: 1.3rem;">Estación de Control de Manga</h2>
-                            
-                            <form id="form-rfid-scanner" onsubmit="event.preventDefault(); window.procesarLecturaManga(document.getElementById('rfid-scanner-input').value);">
-                                <input type="text" id="rfid-scanner-input" placeholder="📟 Pase el bastón RFID por el arete..." autocomplete="off" 
-                                       style="padding: 15px; width: 90%; font-size: 1.2rem; border-radius: 8px; border: 2px solid #0ea5e9; text-align: center; box-shadow: 0 4px 6px -1px rgba(14, 165, 233, 0.2); outline: none; font-weight: bold; color: #0284c7;"
-                                       onblur="this.focus()" autofocus> 
-                            </form>
-                            <p style="font-size: 0.75rem; color: #64748b; margin-top: 10px;">🟢 El sistema está escuchando al bastón automáticamente.</p>
-                        </div>
-
-                        <div style="margin-top: 25px; display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
-                            <div style="background: white; padding: 15px; border-radius: 8px; border: 1px solid #e2e8f0; text-align: center;">
-                                <span style="font-size: 0.8rem; color: #64748b; font-weight: bold;">TOTAL FAENA HOY</span>
-                                <div id="contador-lote-manga" style="font-size: 2.5rem; font-weight: bold; color: #15803d; line-height: 1;">0</div>
-                            </div>
-                            <div style="background: white; padding: 15px; border-radius: 8px; border: 1px solid #e2e8f0;">
-                                <span style="font-size: 0.8rem; color: #64748b; font-weight: bold; display: block; margin-bottom: 5px;">DESGLOSE POR CATEGORÍA</span>
-                                <div id="manga-desglose-categoria" style="font-size: 0.8rem; color: #334155; max-height: 80px; overflow-y: auto;">
-                                    <em>Sin lecturas aún.</em>
-                                </div>
-                            </div>
-                            <div style="background: white; padding: 15px; border-radius: 8px; border: 1px solid #e2e8f0;">
-                                <span style="font-size: 0.8rem; color: #64748b; font-weight: bold; display: block; margin-bottom: 5px;">DESGLOSE POR LOTE</span>
-                                <div id="manga-desglose-lote" style="font-size: 0.8rem; color: #334155; max-height: 80px; overflow-y: auto;">
-                                    <em>Sin lecturas aún.</em>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 20px;">
-                            <h3 style="margin: 0; font-size: 1rem; color: #0f172a;">📋 Lista de Animales Procesados en esta Faena</h3>
-                            <button onclick="window.reiniciarSesionManga()" style="background: white; border: 1px solid #cbd5e1; padding: 6px 12px; border-radius: 6px; cursor: pointer; color: #64748b; font-size: 0.8rem; font-weight: bold;">🔄 Reiniciar Faena</button>
-                        </div>
-
-                        <div style="background: white; border-radius: 8px; border: 1px solid #e2e8f0; margin-top: 10px; overflow-x: auto;">
-                            <table id="tabla-faena-manga" style="width: 100%; border-collapse: collapse; font-size: 0.85rem;">
-                                <thead style="background: #f1f5f9; text-align: left;">
-                                    <tr>
-                                        <th style="padding: 8px; border-bottom: 1px solid #e2e8f0;">#</th>
-                                        <th style="padding: 8px; border-bottom: 1px solid #e2e8f0;">Arete / ID</th>
-                                        <th style="padding: 8px; border-bottom: 1px solid #e2e8f0;">Categoría</th>
-                                        <th style="padding: 8px; border-bottom: 1px solid #e2e8f0;">Lote</th>
-                                        <th style="padding: 8px; border-bottom: 1px solid #e2e8f0;">Acción Aplicada</th>
-                                        <th style="padding: 8px; border-bottom: 1px solid #e2e8f0; text-align: center;">Ficha</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="manga-tabla-faena-body">
-                                    <tr><td colspan="6" style="padding: 15px; text-align: center; color: #94a3b8;">No se han pasado animales por la manga en esta sesión.</td></tr>
-                                </tbody>
-                            </table>
-                            <button onclick="window.exportarExcel('tabla-faena-manga', 'Faena_Manga_ElbaLui')" style="width: 100%; padding: 10px; background: #e2e8f0; border: none; cursor: pointer; color: #334155; font-weight: bold;">⬇️ Descargar Faena a Excel para Imprimir</button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- SUB-PÁGINA 3: CONFIGURACIÓN Y LOTES -->
-                <div id="subtab-config" class="modulo-hato" style="display: none;">
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;">
-                        <div style="background: white; padding: 20px; border-radius: 12px; border: 1px solid var(--border-light); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
-                            <h3 style="color: var(--green-dark); margin-top: 0; border-bottom: 2px solid #bbf7d0; padding-bottom: 10px;">📍 Administrar Lotes y Potreros</h3>
-                            <div style="display: flex; gap: 10px; margin-bottom: 15px;">
-                                <input type="text" id="input-nuevo-lote" placeholder="Ej. Lote 100 Vacías + 5 Toros" style="flex-grow: 1; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.9rem; outline: none;">
-                                <button onclick="window.agregarLoteNuevo()" style="background: var(--green-primary); color: white; border: none; padding: 10px 15px; border-radius: 6px; cursor: pointer; font-weight: bold;">+ Crear Lote</button>
-                            </div>
-                            <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 10px;">
-                                <ul id="lista-lotes-ui" style="list-style: none; padding: 0; margin: 0; font-size: 0.9rem; color: #1e293b; max-height: 250px; overflow-y: auto;">
-                                    <li style="padding: 5px 0; border-bottom: 1px solid #e2e8f0; font-style: italic; color: #94a3b8;">Cargando lotes...</li>
-                                </ul>
-                            </div>
-                        </div>
-
-                        <div style="background: white; padding: 20px; border-radius: 12px; border: 1px solid var(--border-light); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
-                            <h3 style="color: #b45309; margin: 0; border-bottom: 2px solid #fde68a; padding-bottom: 10px;">💉 Catálogo de Tratamientos</h3>
-                            <div style="display: flex; gap: 10px; margin-bottom: 15px;">
-                                <input type="text" id="input-nueva-vacuna" placeholder="Ej. Aftosa, Complejo AD3E..." style="flex-grow: 1; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.9rem; outline: none;">
-                                <button id="btn-add-vacuna" style="background: #eab308; color: white; border: none; padding: 10px 15px; border-radius: 6px; cursor: pointer; font-weight: bold;">+ Añadir</button>
-                            </div>
-                            <div style="background: #fefce8; border: 1px solid #fef08a; border-radius: 6px; padding: 10px;">
-                                <ul id="lista-vacunas-ui" style="list-style: none; padding: 0; margin: 0; font-size: 0.9rem; color: #713f12; max-height: 150px; overflow-y: auto;">
-                                    <li style="padding: 5px 0; font-style: italic; color: #a16207;">Cargando catálogo...</li>
-                                </ul>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- SUB-PÁGINA 4: CALENDARIO -->
-                <div id="subtab-calendario" class="modulo-hato" style="display: none;">
-                    <div style="background: white; padding: 20px; border-radius: 12px; border: 1px solid var(--border-light); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
-                        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #bae6fd; padding-bottom: 15px; margin-bottom: 20px;">
-                            <h2 style="color: #0369a1; margin: 0;">📅 Planificación de Faenas (ElbaLui)</h2>
-                        </div>
-                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px;">
-                            <div style="background: #f0f9ff; border-left: 4px solid #0284c7; padding: 15px; border-radius: 6px;">
-                                <span style="font-size: 0.8rem; font-weight: bold; color: #0284c7;">OBLIGATORIO</span>
-                                <h4 style="margin: 5px 0; color: #0f172a;">Ciclo de Vacunación Aftosa</h4>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- MÓDULO NUEVO: DOCUMENTOS Y PLANILLAS (BIBLIOTECA) -->
-            <div id="tab-documentos" class="section-view">
-                <div style="background: white; padding: 20px; border-radius: 12px; border: 1px solid var(--border-light); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
-                    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #bae6fd; padding-bottom: 15px; margin-bottom: 20px; flex-wrap: wrap; gap: 15px;">
-                        <div>
-                            <h2 style="color: #0369a1; margin: 0;">📁 Biblioteca de Documentos ElbaLui</h2>
-                            <span style="font-size: 0.85rem; color: var(--text-muted);">Sube y administra planillas, manuales y registros de la finca.</span>
-                        </div>
-                        <button onclick="document.getElementById('modal-subir-doc').style.display='flex'" style="background: #0ea5e9; color: white; border: none; padding: 10px 15px; border-radius: 6px; cursor: pointer; font-weight: bold; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">⬆️ Subir Nuevo Documento</button>
-                    </div>
-
-                    <!-- Contenedor donde aparecerán las tarjetas de los documentos -->
-                    <div id="contenedor-documentos" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px;">
-                        <!-- Aquí se inyectarán las tarjetas desde Firebase -->
-                        <div style="grid-column: 1 / -1; text-align: center; padding: 30px; color: var(--text-muted);">
-                            <span style="font-size: 2rem;">⏳</span><br>Cargando documentos de la nube...
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Módulos en construcción -->
-            <div id="tab-lecheria" class="section-view">En construcción...</div>
-            <div id="tab-palma" class="section-view">En construcción...</div>
-            <div id="tab-operaciones" class="section-view">En construcción...</div>
-            <div id="tab-finanzas" class="section-view">En construcción...</div>
-        </div>
-    </div>
-
-    <!-- MODAL REGISTRO ANIMAL -->
-    <div id="modal-animal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 1000; padding: 20px;">
-        <div style="background: white; padding: 24px; border-radius: 12px; width: 100%; max-width: 450px;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                <h3 style="color: var(--green-dark);">Registrar Animal</h3>
-                <button onclick="document.getElementById('modal-animal').style.display='none'" style="background:none; border:none; font-size:1.5rem; cursor:pointer;">&times;</button>
-            </div>
-            <form id="form-animal">
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                    <div class="form-field"><label>Finca</label><select id="a-finca-select"><option value="Agua Clara">Agua Clara</option><option value="El Sur">El Sur</option></select></div>
-                    <div class="form-field"><label>Arete / ID</label><input type="text" id="a-arete" required></div>
-                </div>
-                
-                <div class="form-field">
-                    <label>Lote / Potrero Asignado</label>
-                    <select id="a-lote">
-                        <option value="General">👉 General / Sin Asignar</option>
-                    </select>
-                </div>
-                
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                    <div class="form-field">
-                        <label>Categoría</label>
-                        <select id="a-categoria">
-                            <option value="Becerro">Becerro (Macho)</option>
-                            <option value="Becerra">Becerra (Hembra)</option>
-                            <option value="Maute">Maute (Macho)</option>
-                            <option value="Mauta">Mauta (Hembra)</option>
-                            <option value="Novilla">Novilla</option>
-                            <option value="Vaca Ordeño">Vaca en Ordeño</option>
-                            <option value="Vaca Seca / Escampa">Vaca Seca / Escampa</option>
-                            <option value="Toro Reproductor">Toro Reproductor</option>
-                        </select>
-                    </div>
-                    <div class="form-field"><label>Fecha de Nac.</label><input type="date" id="a-nacimiento"></div>
-                </div>
-                <div class="form-field"><label>Peso Inicial (Kg)</label><input type="number" id="a-peso" placeholder="Opcional"></div>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                    <div class="form-field"><label>Padre</label><input type="text" id="a-padre" placeholder="Opcional"></div>
-                    <div class="form-field"><label>Madre</label><input type="text" id="a-madre" placeholder="Opcional"></div>
-                </div>
-                <div class="form-field"><label>Estado del Animal</label>
-                    <select id="a-estado">
-                        <option value="Activo/Creciendo">Activo / Creciendo</option>
-                        <option value="Vacía">Vientre - Vacía</option>
-                        <option value="Gestante">Vientre - Gestante</option>
-                        <option value="Baja (Vendido/Muerto)">☠️ Baja (Vendido/Muerto)</option>
-                    </select>
-                </div>
-                <button type="submit" class="btn-action" style="width:100%; margin-top:10px;">Guardar Animal</button>
-            </form>
-        </div>
-    </div>
-
-    <!-- MODAL DE ACCIÓN MASIVA -->
-    <div id="modal-masivo" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 1000; padding: 20px;">
-        <div style="background: white; padding: 24px; border-radius: 12px; width: 100%; max-width: 400px;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                <h3 style="color: #eab308; margin: 0;">⚡ Acción Masiva Lote</h3>
-                <button onclick="document.getElementById('modal-masivo').style.display='none'" style="background:none; border:none; font-size:1.5rem; cursor:pointer;">&times;</button>
-            </div>
-            <p style="font-size: 0.9rem; margin-bottom: 15px;">Animales seleccionados: <strong id="m-count">0</strong></p>
-            <form id="form-masivo">
-                <div class="form-field">
-                    <label>Tipo de Acción</label>
-                    <select id="m-tipo" onchange="document.getElementById('m-div-vacuna').style.display = this.value === 'Sanidad' ? 'block' : 'none'; document.getElementById('m-div-destete').style.display = this.value === 'Destete' ? 'block' : 'none';">
-                        <option value="Sanidad">💉 Aplicar Tratamiento / Vacuna</option>
-                        <option value="Destete">🏅 Destetar Lote (Pasan a Mautes)</option>
-                    </select>
-                </div>
-                
-                <div id="m-div-vacuna" class="form-field">
-                    <label>Seleccione el Tratamiento</label>
-                    <select id="m-vacuna-nombre">
-                        <option value="">Seleccione una opción...</option>
-                    </select>
-                </div>
-
-                <div id="m-div-destete" class="form-field" style="display:none;">
-                    <label>Peso Promedio Destete (Kg)</label>
-                    <input type="number" id="m-destete-peso" placeholder="Ej. 180">
-                </div>
-
-                <button type="submit" id="btn-submit-masivo" class="btn-action" style="width:100%; margin-top:10px; background: #eab308; color: white;">Ejecutar Acción a Todos</button>
-            </form>
-        </div>
-    </div>
-
-    <!-- MODAL DE NOVEDADES -->
-    <div id="modal-novedad" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 1000; padding: 20px;">
-        <div style="background: white; padding: 24px; border-radius: 12px; width: 100%; max-width: 400px;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                <h3 style="color: #be123c; margin: 0;">🏥 Reportar Novedad</h3>
-                <button onclick="document.getElementById('modal-novedad').style.display='none'" style="background:none; border:none; font-size:1.5rem; cursor:pointer;">&times;</button>
-            </div>
-            <p style="font-size: 0.9rem; margin-bottom: 15px;">Arete: <strong id="n-arete-display"></strong></p>
-            <form id="form-novedad">
-                <input type="hidden" id="n-id">
-                <div class="form-field">
-                    <label>Estado de Salud / Síntomas</label>
-                    <input type="text" id="n-estado-salud" placeholder="Ej. Cojera, Mastitis, Gusarapa..." required>
-                </div>
-                <div style="display: flex; gap: 10px;">
-                    <button type="button" class="btn-action" onclick="document.getElementById('n-estado-salud').value='🟢 Sano'" style="background: #10b981; color: white; flex: 1;">Marcar Sano</button>
-                    <button type="submit" class="btn-action" style="background: #be123c; color: white; flex: 1;">Guardar Novedad</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- MODAL DE EXPEDIENTE -->
-    <div id="modal-ficha" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 1000; padding: 20px;">
-        <div style="background: #f8fafc; padding: 24px; border-radius: 12px; width: 100%; max-width: 600px; max-height: 90vh; overflow-y: auto;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                <h2 style="color: var(--green-dark); margin: 0;">Expediente Clínico</h2>
-                <button onclick="document.getElementById('modal-ficha').style.display='none'" style="background:none; border:none; font-size:1.5rem; cursor:pointer;">&times;</button>
-            </div>
-            
-            <div style="background: white; border-radius: 8px; padding: 15px; border: 1px solid var(--border-light); margin-bottom: 15px;">
-                <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-light); padding-bottom: 10px; margin-bottom: 10px;">
-                    <div><span style="font-size: 1.5rem; font-weight: bold; color: var(--text-dark);" id="f-arete">---</span><br><span style="font-size: 0.8rem; color: #64748b;" id="f-finca-tag">---</span></div>
-                    <div style="text-align: right;"><span style="background: #e2e8f0; padding: 4px 10px; border-radius: 20px; font-size: 0.85rem; font-weight: bold;" id="f-categoria">---</span><br><span style="font-size: 0.8rem; color: #64748b; font-weight: 600;" id="f-estado">---</span></div>
-                </div>
-                <div style="display: flex; gap: 15px; font-size: 0.85rem;">
-                    <div><strong>Padre:</strong> <span id="f-padre">---</span></div>
-                    <div><strong>Madre:</strong> <span id="f-madre">---</span></div>
-                </div>
-                <div id="f-historial-salud" style="margin-top: 15px; padding: 10px; border-radius: 6px; border: 1px solid var(--border-light); font-size: 0.85rem; text-align: center;">🟢 Sano</div>
-                
-                <input type="hidden" id="p-id-doc">
-                <div style="display: flex; gap: 8px; margin-top: 15px; flex-wrap: wrap;">
-                    <button class="btn-action" onclick="document.getElementById('form-nuevo-repro').style.display='block'; document.getElementById('form-destete').style.display='none'" style="font-size: 0.8rem; padding: 6px 12px; background: white; color: var(--green-dark); border: 1px solid var(--green-primary);">+ Evento Reproductivo</button>
-                    <button class="btn-action" id="btn-show-destete" onclick="document.getElementById('form-destete').style.display='block'; document.getElementById('form-nuevo-repro').style.display='none'" style="font-size: 0.8rem; padding: 6px 12px; background: white; color: #b45309; border: 1px solid #fde047; display: none;">🏅 Ejecutar Destete</button>
-                    <button class="btn-action" onclick="document.getElementById('form-cambio-categoria').style.display='block'" style="font-size: 0.8rem; padding: 6px 12px; background: white; color: #0369a1; border: 1px solid #bae6fd;">🔄 Cambiar Categoría</button>
-                    
-                    <!-- BOTÓN DE BAJA Y ELIMINAR -->
-                    <button class="btn-action" onclick="window.mandarABaja(document.getElementById('p-id-doc').value, document.getElementById('f-arete').innerText)" style="font-size: 0.8rem; padding: 6px 12px; background: #64748b; color: white; border: 1px solid #475569;">☠️ Reportar Baja / Venta</button>
-                    <button class="btn-action" onclick="window.eliminarAnimal(document.getElementById('p-id-doc').value, document.getElementById('f-arete').innerText)" style="font-size: 0.8rem; padding: 6px 12px; background: white; color: #be123c; border: 1px solid #fecdd3;">❌ Eliminar Permanentemente</button>
-                </div>
-            </div>
-
-            <!-- Formularios ocultos de la ficha -->
-            <form id="form-cambio-categoria" style="display:none; background: #e0f2fe; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
-                <h4 style="margin:0 0 10px 0; color: #0369a1;">Cambiar Categoría Manual</h4>
-                <select id="c-nueva-categoria" style="padding: 8px; width: 100%; margin-bottom: 10px; border-radius: 6px; border: 1px solid #bae6fd;">
-                    <option value="Becerro">Becerro (Macho)</option>
-                    <option value="Becerra">Becerra (Hembra)</option>
-                    <option value="Maute">Maute (Macho)</option>
-                    <option value="Mauta">Mauta (Hembra)</option>
-                    <option value="Novilla">Novilla</option>
-                    <option value="Vaca Ordeño">Vaca en Ordeño</option>
-                    <option value="Vaca Seca / Escampa">Vaca Seca / Escampa</option>
-                    <option value="Toro Reproductor">Toro Reproductor</option>
-                </select>
-                <div style="display:flex; gap:10px;">
-                    <button type="submit" class="btn-action" style="flex:1;">Guardar Cambio</button>
-                    <button type="button" class="btn-action" style="background:white; color:#333; border:1px solid #ccc; flex:1;" onclick="document.getElementById('form-cambio-categoria').style.display='none'">Cancelar</button>
-                </div>
-            </form>
-
-            <form id="form-nuevo-repro" style="display:none; background: #f0fdf4; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
-                <h4 style="margin:0 0 10px 0; color: var(--green-dark);">Registrar Evento Reproductivo</h4>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                    <div><label style="font-size:0.8rem;">Fecha</label><input type="date" id="r-fecha" style="width:100%; padding:6px;" required></div>
-                    <div>
-                        <label style="font-size:0.8rem;">Tipo de Evento</label>
-                        <select id="r-tipo" style="width:100%; padding:6px;" onchange="
-                            document.getElementById('div-tercio').style.display = (this.value==='Palpación (+ Preñada)') ? 'block' : 'none';
-                            document.getElementById('div-parto-cria').style.display = (this.value==='Parto') ? 'block' : 'none';
-                        ">
-                            <option value="Palpación (+ Preñada)">Palpación (+ Preñada)</option>
-                            <option value="Palpación (- Vacía)">Palpación (- Vacía)</option>
-                            <option value="Servicio/Monta">Servicio / Monta</option>
-                            <option value="Parto">Parto</option>
-                            <option value="Aborto">Aborto</option>
-                        </select>
-                    </div>
-                </div>
-                <div id="div-tercio" style="margin-top:10px;">
-                    <label style="font-size:0.8rem;">Tercio de Gestación</label>
-                    <select id="r-tercio" style="width:100%; padding:6px;">
-                        <option value="1">1er Tercio (Reciente)</option>
-                        <option value="2">2do Tercio</option>
-                        <option value="3">3er Tercio (Próxima a parir)</option>
-                    </select>
-                </div>
-                <div id="div-parto-cria" style="margin-top:10px; display:none; background:#fff; padding:10px; border:1px solid #ccc; border-radius:6px;">
-                    <strong style="font-size:0.85rem; color:#333;">Opcional: Registrar Cría Automáticamente</strong>
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top:5px;">
-                        <div><label style="font-size:0.8rem;">Arete Cría</label><input type="text" id="r-cria-arete" placeholder="Ej. B-01" style="width:100%; padding:6px;"></div>
-                        <div><label style="font-size:0.8rem;">Sexo</label>
-                            <select id="r-cria-sexo" style="width:100%; padding:6px;">
-                                <option value="Becerro">Macho</option>
-                                <option value="Becerra">Hembra</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div style="margin-top:5px;"><label style="font-size:0.8rem;">Peso Nacer (Kg)</label><input type="number" id="r-cria-peso" placeholder="Opcional" style="width:100%; padding:6px;"></div>
-                </div>
-                <div style="display:flex; gap:10px; margin-top:10px;">
-                    <button type="submit" class="btn-action" style="flex:1;">Guardar Evento</button>
-                    <button type="button" class="btn-action" style="background:white; color:#333; border:1px solid #ccc; flex:1;" onclick="document.getElementById('form-nuevo-repro').style.display='none'">Cancelar</button>
-                </div>
-            </form>
-            
-            <form id="form-destete" style="display:none; background: #fef9c3; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
-                <h4 style="margin:0 0 10px 0; color: #a16207;">Ejecutar Destete</h4>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                    <div><label style="font-size:0.8rem;">Fecha</label><input type="date" id="d-fecha" style="width:100%; padding:6px;" required></div>
-                    <div><label style="font-size:0.8rem;">Peso al destetar (Kg)</label><input type="number" id="d-peso" style="width:100%; padding:6px;" required></div>
-                </div>
-                <div style="display:flex; gap:10px; margin-top:10px;">
-                    <button type="submit" class="btn-action" style="background:#eab308; color:white; flex:1;">Confirmar Destete</button>
-                    <button type="button" class="btn-action" style="background:white; color:#333; border:1px solid #ccc; flex:1;" onclick="document.getElementById('form-destete').style.display='none'">Cancelar</button>
-                </div>
-            </form>
-            <div id="f-alerta-repro"></div>
-
-            <div style="margin-top: 20px;">
-                <h4 style="margin: 0 0 10px 0; color: var(--text-dark); border-bottom: 2px solid var(--border-light); padding-bottom: 5px;">Historial Reproductivo & Eventos</h4>
-                <table style="width: 100%; border-collapse: collapse; font-size: 0.8rem; background: white;">
-                    <thead style="background: #f1f5f9; text-align: left;">
-                        <tr><th style="padding: 6px; border-bottom: 1px solid var(--border-light);">Evento</th><th style="padding: 6px; border-bottom: 1px solid var(--border-light);">Fecha</th><th style="padding: 6px; border-bottom: 1px solid var(--border-light);">Detalle / FEP</th></tr>
-                    </thead>
-                    <tbody id="f-tabla-repro"></tbody>
-                </table>
-            </div>
-
-            <div style="margin-top: 20px;">
-                <h4 style="margin: 0 0 10px 0; color: var(--text-dark); border-bottom: 2px solid var(--border-light); padding-bottom: 5px;">Evolución de Peso</h4>
-                <table style="width: 100%; border-collapse: collapse; font-size: 0.8rem; background: white;">
-                    <thead style="background: #f1f5f9; text-align: left;">
-                        <tr><th style="padding: 6px; border-bottom: 1px solid var(--border-light);">Fecha</th><th style="padding: 6px; border-bottom: 1px solid var(--border-light);">Peso</th><th style="padding: 6px; border-bottom: 1px solid var(--border-light);">GDP</th></tr>
-                    </thead>
-                    <tbody id="f-tabla-pesajes"></tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-
-    <!-- MODAL PARA SUBIR DOCUMENTO -->
-    <div id="modal-subir-doc" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 1000; padding: 20px;">
-        <div style="background: white; padding: 24px; border-radius: 12px; width: 100%; max-width: 450px;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                <h3 style="color: #0369a1; margin: 0;">⬆️ Subir Documento al ERP</h3>
-                <button onclick="document.getElementById('modal-subir-doc').style.display='none'" style="background:none; border:none; font-size:1.5rem; cursor:pointer;">&times;</button>
-            </div>
-            <form id="form-subir-doc">
-                <div class="form-field">
-                    <label>Título del Documento</label>
-                    <input type="text" id="doc-titulo" placeholder="Ej. Planilla Control Manga 2026" required style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #cbd5e1;">
-                </div>
-                <div class="form-field" style="margin-top: 15px;">
-                    <label>Descripción / Nota (Opcional)</label>
-                    <input type="text" id="doc-desc" placeholder="Ej. Formato en blanco para imprimir" style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #cbd5e1;">
-                </div>
-                <div class="form-field" style="margin-top: 15px; background: #f0f9ff; padding: 15px; border-radius: 8px; border: 1px dashed #0ea5e9;">
-                    <label style="color: #0369a1; font-weight: bold;">Seleccionar Archivo (PDF, Word, Excel, Imagen)</label>
-                    <input type="file" id="doc-archivo" required style="width: 100%; margin-top: 10px; font-size: 0.9rem;">
-                </div>
-                
-                <div id="barra-progreso-container" style="display: none; margin-top: 15px; background: #e2e8f0; border-radius: 4px; overflow: hidden; height: 10px;">
-                    <div id="barra-progreso" style="height: 100%; background: #0ea5e9; width: 0%; transition: width 0.3s;"></div>
-                </div>
-                <p id="texto-progreso" style="text-align: center; font-size: 0.8rem; color: #64748b; margin-top: 5px; display: none;">Subiendo... 0%</p>
-
-                <button type="submit" id="btn-submit-doc" class="btn-action" style="width: 100%; margin-top: 20px; background: #0ea5e9; color: white; padding: 12px; font-size: 1rem;">Subir y Guardar</button>
-            </form>
-        </div>
-    </div>
-
-    <!-- SCRIPT DE FIREBASE -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-        import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
-        import { 
-            initializeFirestore, 
-            persistentLocalCache, 
-            persistentMultipleTabManager,
-            collection, addDoc, getDocs, query, orderBy, serverTimestamp 
-        } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
-        // IMPORTAMOS STORAGE PARA SUBIR ARCHIVOS
-        import { getStorage, ref, uploadBytesResumable, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-storage.js";
-
-        const firebaseConfig = {
-            apiKey: "AIzaSyBHKDSUWKYICbu6vJ1UKUuY8Y6tOfZkoKs",
-            authDomain: "finca-agropecuaria-elbalui.firebaseapp.com",
-            projectId: "finca-agropecuaria-elbalui",
-            // IMPORTANTE: Asegúrate de que este bucket sea el correcto de tu proyecto
-            storageBucket: "finca-agropecuaria-elbalui.appspot.com" 
-        };
-
-        const app = initializeApp(firebaseConfig);
-        window.auth = getAuth(app);
-        window.storage = getStorage(app); // Inicializamos Storage
         
-        window.db = initializeFirestore(app, {
-            localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() })
+        const snapshot = await getDocs(q);
+        window.animalesGlobal = [];
+        snapshot.forEach(doc => {
+            window.animalesGlobal.push({ id: doc.id, ...doc.data() });
         });
-
-        const loginScreen = document.getElementById('login-screen');
-        const appContainer = document.getElementById('app-container');
         
-        onAuthStateChanged(window.auth, (user) => {
-            if (user) {
-                loginScreen.style.display = 'none';
-                appContainer.style.display = 'block';
-                if (window.cargarHato) window.cargarHato();
-                cargarBibliotecaDocumentos(); // Cargamos los documentos al iniciar sesión
-            } else {
-                loginScreen.style.display = 'flex';
-                appContainer.style.display = 'none';
-            }
-        });
-
-        document.getElementById('login-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            try {
-                await signInWithEmailAndPassword(window.auth, document.getElementById('login-email').value, document.getElementById('login-password').value);
-                e.target.reset();
-            } catch (error) { alert("Error: " + error.message); }
-        });
-        document.getElementById('btn-logout').addEventListener('click', () => signOut(window.auth));
-
-        window.switchTab = function(tabId, element) {
-            document.querySelectorAll('.section-view').forEach(s => s.classList.remove('active'));
-            document.querySelectorAll('.cat-chip').forEach(c => c.classList.remove('active'));
-            document.getElementById('tab-' + tabId).classList.add('active');
-            if (element) element.classList.add('active');
-            
-            // Si entra a la pestaña documentos, recargamos la vista
-            if(tabId === 'documentos') {
-                cargarBibliotecaDocumentos();
-            }
-        };
-
-        window.setFinca = function(fincaNombre) {
-            document.querySelectorAll('.finca-btn').forEach(b => {
-                b.classList.toggle('active', b.innerText.includes(fincaNombre === 'Global' ? 'Consolidado' : fincaNombre));
-            });
-            document.getElementById('finca-tag').innerText = fincaNombre === 'Global' ? 'VISTA: CONSOLIDADO' : 'FINCA ACTIVA: ' + fincaNombre.toUpperCase();
-            if (window.cargarHato) window.cargarHato();
-        };
-
-        // ==========================================
-        // LÓGICA DE LA BIBLIOTECA DE DOCUMENTOS
-        // ==========================================
+        renderizarTablaHato(window.animalesGlobal);
+        actualizarKpiHato(window.animalesGlobal);
+        actualizarAlertasSanitarias(window.animalesGlobal);
+        actualizarDashTorreControl(window.animalesGlobal);
+        cargarSelectLotes(fincaActual);
         
-        // 1. Cargar documentos de Firestore
-        async function cargarBibliotecaDocumentos() {
-            const contenedor = document.getElementById('contenedor-documentos');
-            if(!contenedor) return;
-            
-            contenedor.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; padding: 30px; color: var(--text-muted);"><span style="font-size: 2rem;">⏳</span><br>Cargando documentos de la nube...</div>';
-            
-            try {
-                const q = query(collection(window.db, "biblioteca_documentos"), orderBy("fechaSubida", "desc"));
-                const querySnapshot = await getDocs(q);
-                
-                if (querySnapshot.empty) {
-                    contenedor.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; padding: 30px; color: var(--text-muted); background: #f8fafc; border-radius: 8px; border: 1px dashed #cbd5e1;">Aún no hay documentos en la biblioteca. ¡Sube el primero!</div>';
-                    return;
-                }
+    } catch (error) {
+        console.error("Error cargando hato:", error);
+        tbody.innerHTML = `<tr><td colspan="6" style="padding: 15px; text-align: center; color: #ef4444;">❌ Error cargando datos: ${error.message}</td></tr>`;
+    }
+};
 
-                let htmlContent = '';
-                querySnapshot.forEach((doc) => {
-                    const data = doc.data();
-                    
-                    // Icono dependiendo del tipo de archivo
-                    let icono = '📄';
-                    if(data.tipoArchivo && data.tipoArchivo.includes('pdf')) icono = '📋';
-                    if(data.tipoArchivo && data.tipoArchivo.includes('image')) icono = '🖼️';
-                    if(data.tipoArchivo && (data.tipoArchivo.includes('spreadsheet') || data.tipoArchivo.includes('excel'))) icono = '📊';
+function actualizarKpiHato(animales) {
+    const activos = animales.filter(a => a.estado !== 'Baja (Vendido/Muerto)');
+    document.getElementById('kpi-total').innerText = activos.length;
+    document.getElementById('kpi-mautes').innerText = activos.filter(a => ['Maute', 'Mauta'].includes(a.categoria)).length;
+    document.getElementById('kpi-gestantes').innerText = activos.filter(a => a.estado === 'Gestante').length;
+}
 
-                    htmlContent += `
-                        <div style="background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 15px; display: flex; flex-direction: column; justify-content: space-between;">
-                            <div>
-                                <span style="font-size: 1.5rem;">${icono}</span>
-                                <h4 style="margin: 10px 0 5px 0; color: #0f172a;">${data.titulo}</h4>
-                                <p style="font-size: 0.85rem; color: #475569; margin: 0 0 15px 0;">${data.descripcion || 'Sin descripción'}</p>
-                            </div>
-                            <div style="display: flex; gap: 10px;">
-                                <button onclick="window.open('${data.urlDescarga}', '_blank')" style="background: #0ea5e9; color: white; border: none; padding: 8px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 0.85rem; flex: 1;">Ver Documento</button>
-                            </div>
-                        </div>
-                    `;
-                });
-                contenedor.innerHTML = htmlContent;
+function renderizarTablaHato(animales) {
+    const tbody = document.getElementById('tabla-hato-body');
+    tbody.innerHTML = '';
+    if (animales.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" style="padding: 15px; text-align: center; color: var(--text-muted);">No hay animales registrados.</td></tr>';
+        return;
+    }
+
+    animales.forEach(a => {
+        let badgeEstado = '<span style="background: #d1fae5; color: #065f46; padding: 3px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: bold;">🟢 Sano</span>';
+        if (a.novedadSalud && a.novedadSalud !== '🟢 Sano') {
+            badgeEstado = `<span style="background: #fee2e2; color: #991b1b; padding: 3px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: bold; cursor: pointer;" onclick="window.abrirModalNovedad('${a.id}', '${a.arete}')" title="${a.novedadSalud}">🔴 ${a.novedadSalud}</span>`;
+        } else {
+            badgeEstado = `<span style="background: #d1fae5; color: #065f46; padding: 3px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: bold; cursor: pointer;" onclick="window.abrirModalNovedad('${a.id}', '${a.arete}')">🟢 Sano</span>`;
+        }
+
+        let tiempoTxt = '-';
+        if (a.fechaNacimiento) {
+            const meses = Math.floor((new Date() - new Date(a.fechaNacimiento)) / (1000 * 60 * 60 * 24 * 30));
+            tiempoTxt = `${meses} meses`;
+        }
+        if (a.estado === 'Gestante') {
+            tiempoTxt = `Gest. Tercio ${a.tercioGestacion || '?'}`;
+        }
+
+        const tr = document.createElement('tr');
+        tr.style.background = a.estado === 'Baja (Vendido/Muerto)' ? '#f8fafc' : 'white';
+        tr.style.color = a.estado === 'Baja (Vendido/Muerto)' ? '#94a3b8' : 'inherit';
+        
+        tr.innerHTML = `
+            <td style="padding: 10px; border-bottom: 1px solid var(--border-light); text-align: center;">
+                <input type="checkbox" class="chk-animal" value="${a.id}" data-categoria="${a.categoria}">
+            </td>
+            <td style="padding: 10px; border-bottom: 1px solid var(--border-light);">
+                <strong>${a.arete}</strong><br>
+                <span style="font-size: 0.75rem; color: var(--text-muted);">📍 ${a.lote || 'General'}</span>
+            </td>
+            <td style="padding: 10px; border-bottom: 1px solid var(--border-light);">${a.categoria}</td>
+            <td style="padding: 10px; border-bottom: 1px solid var(--border-light);">${tiempoTxt}</td>
+            <td style="padding: 10px; border-bottom: 1px solid var(--border-light);">${badgeEstado}</td>
+            <td style="padding: 10px; border-bottom: 1px solid var(--border-light); text-align: center;">
+                <button onclick="window.verFichaAnimal('${a.id}')" style="background: #f1f5f9; border: 1px solid #cbd5e1; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 0.8rem; font-weight: bold; color: #0f172a;">📋 Ficha</button>
+            </td>
+        `;
+        tbody.appendChild(tr);
+    });
+}
+
+// --- FILTROS ---
+window.aplicarFiltroHato = function() {
+    const texto = document.getElementById('buscador-hato').value.toLowerCase();
+    const catFiltro = document.getElementById('filtro-categoria').value;
+    
+    let filtrados = window.animalesGlobal;
+    
+    if (catFiltro === 'Bajas') {
+        filtrados = filtrados.filter(a => a.estado === 'Baja (Vendido/Muerto)');
+    } else {
+        filtrados = filtrados.filter(a => a.estado !== 'Baja (Vendido/Muerto)');
+        if (catFiltro === 'Becerros') filtrados = filtrados.filter(a => ['Becerro', 'Becerra'].includes(a.categoria));
+        if (catFiltro === 'Mautes') filtrados = filtrados.filter(a => ['Maute', 'Mauta'].includes(a.categoria));
+        if (catFiltro === 'Vacas') filtrados = filtrados.filter(a => ['Vaca Ordeño', 'Vaca Seca / Escampa'].includes(a.categoria));
+        if (catFiltro === 'Gestantes') filtrados = filtrados.filter(a => a.estado === 'Gestante');
+    }
+    
+    if (texto) {
+        filtrados = filtrados.filter(a => a.arete.toLowerCase().includes(texto) || (a.lote && a.lote.toLowerCase().includes(texto)));
+    }
+    
+    renderizarTablaHato(filtrados);
+};
+
+// --- ALERTAS SANITARIAS ---
+function actualizarAlertasSanitarias(animales) {
+    const panel = document.getElementById('panel-alertas');
+    const enfermos = animales.filter(a => a.estado !== 'Baja (Vendido/Muerto)' && a.novedadSalud && a.novedadSalud !== '🟢 Sano');
+    
+    if (enfermos.length === 0) {
+        panel.innerHTML = '<span style="color: #059669; font-weight: bold;">✅ Todos los animales activos están sanos.</span>';
+        return;
+    }
+    
+    panel.innerHTML = '';
+    enfermos.forEach(a => {
+        panel.innerHTML += `<span style="background: #fecdd3; color: #9f1239; padding: 4px 10px; border-radius: 12px; border: 1px solid #fda4af; cursor: pointer;" onclick="window.verFichaAnimal('${a.id}')"><strong>${a.arete}</strong>: ${a.novedadSalud}</span>`;
+    });
+}
+
+function actualizarDashTorreControl(animales) {
+    // Próximos secados
+    const gestantes = animales.filter(a => a.estado === 'Gestante' && parseInt(a.tercioGestacion) >= 2);
+    document.getElementById('dash-count-secado').innerText = gestantes.length;
+    const listaSecado = document.getElementById('dash-list-secado');
+    listaSecado.innerHTML = gestantes.length > 0 
+        ? gestantes.map(a => `<div style="padding: 5px 0; border-bottom: 1px solid #fef3c7;"><strong>${a.arete}</strong> - Tercio ${a.tercioGestacion}</div>`).join('') 
+        : '<p style="color: var(--text-muted); font-style: italic;">No hay vientres en 2do o 3er tercio.</p>';
+
+    // Lotes destete (Becerros > 6 meses)
+    const becerros = animales.filter(a => ['Becerro', 'Becerra'].includes(a.categoria) && a.fechaNacimiento);
+    const destetes = becerros.filter(a => {
+        const meses = Math.floor((new Date() - new Date(a.fechaNacimiento)) / (1000 * 60 * 60 * 24 * 30));
+        return meses >= 6;
+    });
+    
+    document.getElementById('dash-count-destete').innerText = destetes.length;
+    const listaDestete = document.getElementById('dash-list-destete');
+    listaDestete.innerHTML = destetes.length > 0 
+        ? destetes.map(a => `<div style="padding: 5px 0; border-bottom: 1px solid #fef9c3;"><strong>${a.arete}</strong> - Listo para destete</div>`).join('') 
+        : '<p style="color: var(--text-muted); font-style: italic;">No hay becerros en edad de destete (>6 meses).</p>';
+}
+
+// --- CHECKBOX MASIVO ---
+window.toggleAllCheckboxes = function(source) {
+    const checkboxes = document.querySelectorAll('.chk-animal');
+    checkboxes.forEach(chk => chk.checked = source.checked);
+};
+
+window.abrirModalMasivo = async function() {
+    const seleccionados = document.querySelectorAll('.chk-animal:checked');
+    if (seleccionados.length === 0) {
+        alert("Selecciona al menos un animal.");
+        return;
+    }
+    document.getElementById('m-count').innerText = seleccionados.length;
+    
+    // Cargar vacunas al select del modal masivo
+    try {
+        const q = query(collection(window.db, "configuracion_vacunas"));
+        const snap = await getDocs(q);
+        const select = document.getElementById('m-vacuna-nombre');
+        select.innerHTML = '<option value="">Seleccione una opción...</option>';
+        snap.forEach(doc => {
+            select.innerHTML += `<option value="${doc.data().nombre}">${doc.data().nombre}</option>`;
+        });
+    } catch (e) { console.error("Error vacunas masivo", e); }
+
+    document.getElementById('modal-masivo').style.display = 'flex';
+};
+
+// --- EJECUCIÓN MASIVA (BATCH FIRESTORE) ---
+document.getElementById('form-masivo').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btn = document.getElementById('btn-submit-masivo');
+    const seleccionados = document.querySelectorAll('.chk-animal:checked');
+    const tipoAccion = document.getElementById('m-tipo').value;
+    const vacunaSelect = document.getElementById('m-vacuna-nombre').value;
+    const destetePeso = document.getElementById('m-destete-peso').value;
+
+    if (tipoAccion === 'Sanidad' && !vacunaSelect) { alert("Selecciona la vacuna."); return; }
+    if (tipoAccion === 'Destete' && !destetePeso) { alert("Ingresa el peso promedio de destete."); return; }
+
+    btn.disabled = true;
+    btn.innerText = "Procesando Batch...";
+
+    try {
+        const batch = writeBatch(window.db);
+        const hoy = new Date().toISOString().split('T')[0];
+
+        for (const chk of seleccionados) {
+            const idDoc = chk.value;
+            const docRef = doc(window.db, "animales", idDoc);
+            
+            if (tipoAccion === 'Sanidad') {
+                const eventoRef = doc(collection(window.db, "animales", idDoc, "historial_reproductivo"));
+                batch.set(eventoRef, { fecha: hoy, tipo: 'Sanidad', detalle: `Aplicación Masiva: ${vacunaSelect}` });
+            } 
+            else if (tipoAccion === 'Destete') {
+                const catActual = chk.getAttribute('data-categoria');
+                let nuevaCat = catActual;
+                if(catActual === 'Becerro') nuevaCat = 'Maute';
+                if(catActual === 'Becerra') nuevaCat = 'Mauta';
+
+                batch.update(docRef, { categoria: nuevaCat });
+                const eventoRef = doc(collection(window.db, "animales", idDoc, "historial_reproductivo"));
+                batch.set(eventoRef, { fecha: hoy, tipo: 'Destete', detalle: `Destete Masivo. Peso prom: ${destetePeso}Kg` });
                 
-            } catch (error) {
-                console.error("Error cargando documentos:", error);
-                contenedor.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; padding: 30px; color: #ef4444;">❌ Error cargando la biblioteca. Verifica tu conexión y los permisos de Firestore.</div>';
+                const pesajeRef = doc(collection(window.db, "animales", idDoc, "pesajes"));
+                batch.set(pesajeRef, { fecha: hoy, peso: Number(destetePeso), nota: 'Destete Masivo' });
             }
         }
 
-        // 2. Subir nuevo documento
-        document.getElementById('form-subir-doc').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            const btnSubmit = document.getElementById('btn-submit-doc');
-            const titulo = document.getElementById('doc-titulo').value;
-            const desc = document.getElementById('doc-desc').value;
-            const archivoInput = document.getElementById('doc-archivo');
-            const barraContenedor = document.getElementById('barra-progreso-container');
-            const barra = document.getElementById('barra-progreso');
-            const textoProgreso = document.getElementById('texto-progreso');
-            
-            if (archivoInput.files.length === 0) {
-                alert("Selecciona un archivo primero.");
-                return;
-            }
+        await batch.commit();
+        alert("¡Acción masiva ejecutada exitosamente!");
+        document.getElementById('modal-masivo').style.display = 'none';
+        document.getElementById('chk-all').checked = false;
+        window.cargarHato();
+    } catch (error) {
+        console.error("Error masivo", error);
+        alert("Error en operación masiva: " + error.message);
+    }
+    btn.disabled = false;
+    btn.innerText = "Ejecutar Acción a Todos";
+});
 
-            const archivo = archivoInput.files[0];
-            btnSubmit.disabled = true;
-            btnSubmit.innerText = "Subiendo archivo...";
-            barraContenedor.style.display = 'block';
-            textoProgreso.style.display = 'block';
 
-            // Crear referencia en Storage (carpeta 'documentos_erp/')
-            const storageRef = ref(window.storage, 'documentos_erp/' + Date.now() + '_' + archivo.name);
-            
-            // Iniciar subida con progreso
-            const uploadTask = uploadBytesResumable(storageRef, archivo);
+// ==========================================
+// LÓGICA DE MANGA (LECTOR RFID) OPTIMIZADA
+// ==========================================
+let bufferManga = []; 
 
-            uploadTask.on('state_changed', 
-                (snapshot) => {
-                    // Actualizar barra de progreso
-                    const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-                    barra.style.width = progress + '%';
-                    textoProgreso.innerText = `Subiendo... ${Math.round(progress)}%`;
-                }, 
-                (error) => {
-                    console.error("Error en la subida:", error);
-                    alert("Error subiendo el archivo: " + error.message);
-                    resetFormularioDocs();
-                }, 
-                async () => {
-                    // Subida completada exitosamente
+window.cambiarModoManga = function(modo) {
+    document.getElementById('manga-container-rafaga').style.display = modo === 'rafaga' ? 'block' : 'none';
+    if(modo === 'rafaga') {
+        cargarVacunasSelect('manga-vacuna-rafaga');
+    }
+    document.getElementById('rfid-scanner-input').focus();
+};
+
+window.procesarLecturaManga = async function(areteIngresado) {
+    const input = document.getElementById('rfid-scanner-input');
+    const arete = areteIngresado.trim();
+    input.value = ''; 
+    input.focus(); 
+
+    if (!arete) return;
+
+    // Buscar en memoria global (instantáneo)
+    const animal = window.animalesGlobal.find(a => a.arete.toLowerCase() === arete.toLowerCase() || (a.rfid && a.rfid === arete));
+
+    if (!animal) {
+        mostrarAlertaManga(`❌ Arete/RFID ${arete} no encontrado en Base de Datos.`);
+        
+        // 🔴🔴 AQUÍ ESTÁ LA SOLUCIÓN AL ASIGNAR NUEVOS CHIPS 🔴🔴
+        // Si el chip no existe, preguntamos si se lo queremos asignar a un animal existente
+        const asignar = confirm(`El chip [${arete}] no está registrado.\n¿Deseas asignarlo a un animal existente?`);
+        if (asignar) {
+            const areteAsociar = prompt(`Ingresa el NÚMERO DE ARETE VISUAL del animal para asociar el chip [${arete}]:`);
+            if (areteAsociar) {
+                const animalExistente = window.animalesGlobal.find(a => a.arete.toLowerCase() === areteAsociar.toLowerCase());
+                if (animalExistente) {
                     try {
-                        const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-                        
-                        // Guardar referencia en Firestore
-                        await addDoc(collection(window.db, "biblioteca_documentos"), {
-                            titulo: titulo,
-                            descripcion: desc,
-                            urlDescarga: downloadURL,
-                            nombreArchivoOriginal: archivo.name,
-                            tipoArchivo: archivo.type,
-                            fechaSubida: serverTimestamp(),
-                            usuario: window.auth.currentUser ? window.auth.currentUser.email : 'Usuario Desconocido'
-                        });
-
-                        alert("¡Documento subido y guardado exitosamente!");
-                        document.getElementById('modal-subir-doc').style.display = 'none';
-                        cargarBibliotecaDocumentos(); // Refrescar vista
-                        resetFormularioDocs();
-                        
-                    } catch (firestoreError) {
-                        console.error("Error guardando en BD:", firestoreError);
-                        alert("El archivo se subió, pero hubo un error al guardar los datos.");
-                        resetFormularioDocs();
+                        await updateDoc(doc(window.db, "animales", animalExistente.id), { rfid: arete });
+                        alert(`✅ Chip RFID [${arete}] asociado exitosamente al arete visual ${animalExistente.arete}.`);
+                        window.cargarHato(); // Recargar memoria
+                    } catch (e) {
+                        alert("Error asociando chip: " + e.message);
                     }
+                } else {
+                    alert(`El arete visual ${areteAsociar} tampoco existe.`);
                 }
-            );
-
-            function resetFormularioDocs() {
-                btnSubmit.disabled = false;
-                btnSubmit.innerText = "Subir y Guardar";
-                barraContenedor.style.display = 'none';
-                textoProgreso.style.display = 'none';
-                barra.style.width = '0%';
-                document.getElementById('form-subir-doc').reset();
             }
-        });
-    </script>
-    <script type="module" src="js/hato.js"></script>
+        }
+        return;
+    }
 
-    <script>
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./sw.js')
-                    .then(reg => console.log('✅ App lista para abrir sin internet (Service Worker Activo)'))
-                    .catch(err => console.error('❌ Error instalando soporte Offline:', err));
+    // Evitar duplicados en la faena actual
+    if (bufferManga.some(item => item.id === animal.id)) {
+        console.log(`El arete ${animal.arete} ya pasó por la manga hoy.`);
+        return;
+    }
+
+    const modo = document.getElementById('manga-modo-operacion').value;
+    let accionTxt = "Solo Lectura (Conteo)";
+    
+    // --- MODO RÁFAGA (GUARDADO ASÍNCRONO BATCH) ---
+    if (modo === 'rafaga') {
+        const vacunaSelect = document.getElementById('manga-vacuna-rafaga').value;
+        if (!vacunaSelect) {
+            mostrarAlertaManga("⚠️ MODO RÁFAGA ACTIVO: Selecciona el tratamiento antes de leer el chip.");
+            return;
+        }
+        accionTxt = `Vacunado: ${vacunaSelect}`;
+        
+        // ⚡ Guardado asíncrono (no bloquea la pantalla)
+        guardarLecturaMangaNube(animal.id, vacunaSelect).catch(err => {
+            console.error("Fallo al guardar en nube el RFID:", err);
+            // Podríamos meterlo en un array de "pendientes_por_subir" aquí para soporte full offline
+        });
+    }
+
+    // Agregar al buffer visual instantáneamente
+    bufferManga.push({
+        id: animal.id,
+        arete: animal.arete,
+        categoria: animal.categoria,
+        lote: animal.lote || 'General',
+        accion: accionTxt
+    });
+
+    actualizarTablaFaenaManga();
+
+    if (modo === 'conteo') {
+        window.verFichaAnimal(animal.id);
+    }
+};
+
+// ⚡ Función asíncrona que guarda en Firebase sin congelar la app
+async function guardarLecturaMangaNube(idDoc, vacuna) {
+    const hoy = new Date().toISOString().split('T')[0];
+    const eventoRef = doc(collection(window.db, "animales", idDoc, "historial_reproductivo"));
+    await addDoc(collection(window.db, "animales", idDoc, "historial_reproductivo"), {
+        fecha: hoy,
+        tipo: 'Sanidad',
+        detalle: `Aplicación Manga RFID: ${vacuna}`
+    });
+}
+
+function actualizarTablaFaenaManga() {
+    const tbody = document.getElementById('manga-tabla-faena-body');
+    tbody.innerHTML = '';
+    
+    if (bufferManga.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" style="padding: 15px; text-align: center; color: #94a3b8;">No se han pasado animales por la manga en esta sesión.</td></tr>';
+        document.getElementById('contador-lote-manga').innerText = '0';
+        document.getElementById('manga-desglose-categoria').innerHTML = '<em>Sin lecturas aún.</em>';
+        document.getElementById('manga-desglose-lote').innerHTML = '<em>Sin lecturas aún.</em>';
+        return;
+    }
+
+    // Renderizar tabla invertida (el último escaneado sale de primero)
+    [...bufferManga].reverse().forEach((item, index) => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td style="padding: 8px; border-bottom: 1px solid #e2e8f0;">${bufferManga.length - index}</td>
+            <td style="padding: 8px; border-bottom: 1px solid #e2e8f0; font-weight: bold; color: #0284c7;">${item.arete}</td>
+            <td style="padding: 8px; border-bottom: 1px solid #e2e8f0;">${item.categoria}</td>
+            <td style="padding: 8px; border-bottom: 1px solid #e2e8f0;">${item.lote}</td>
+            <td style="padding: 8px; border-bottom: 1px solid #e2e8f0;">
+                <span style="background: #f0fdf4; color: #166534; padding: 2px 6px; border-radius: 4px; font-size: 0.75rem;">${item.accion}</span>
+            </td>
+            <td style="padding: 8px; border-bottom: 1px solid #e2e8f0; text-align: center;">
+                <button onclick="window.verFichaAnimal('${item.id}')" style="background: #f1f5f9; border: 1px solid #cbd5e1; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 0.75rem;">Ficha</button>
+            </td>
+        `;
+        tbody.appendChild(tr);
+    });
+
+    document.getElementById('contador-lote-manga').innerText = bufferManga.length;
+
+    // Desgloses
+    let countsCat = {};
+    let countsLote = {};
+    bufferManga.forEach(i => {
+        countsCat[i.categoria] = (countsCat[i.categoria] || 0) + 1;
+        countsLote[i.lote] = (countsLote[i.lote] || 0) + 1;
+    });
+
+    document.getElementById('manga-desglose-categoria').innerHTML = Object.entries(countsCat).map(([k, v]) => `<div>${k}: <strong>${v}</strong></div>`).join('');
+    document.getElementById('manga-desglose-lote').innerHTML = Object.entries(countsLote).map(([k, v]) => `<div>${k}: <strong>${v}</strong></div>`).join('');
+}
+
+window.reiniciarSesionManga = function() {
+    if(confirm("¿Estás seguro de reiniciar la sesión de manga? Esto limpiará la pantalla (los datos ya guardados en ficha se mantienen).")) {
+        bufferManga = [];
+        actualizarTablaFaenaManga();
+        document.getElementById('rfid-scanner-input').focus();
+    }
+};
+
+function mostrarAlertaManga(mensaje) {
+    const banner = document.getElementById('manga-alerta-banner');
+    banner.innerText = mensaje;
+    banner.style.display = 'block';
+    setTimeout(() => { banner.style.display = 'none'; }, 4000);
+}
+
+
+// --- CONFIGURACIÓN DE LOTES Y VACUNAS ---
+async function cargarConfiguracionHato() {
+    try {
+        const qLotes = query(collection(window.db, "configuracion_lotes"));
+        const snapLotes = await getDocs(qLotes);
+        const ulLotes = document.getElementById('lista-lotes-ui');
+        ulLotes.innerHTML = '';
+        snapLotes.forEach(doc => {
+            ulLotes.innerHTML += `<li style="padding: 5px 0; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between;">
+                <span>📍 ${doc.data().nombre}</span>
+                <button onclick="window.eliminarItemConfig('configuracion_lotes', '${doc.id}')" style="background:none; border:none; color: #ef4444; cursor:pointer;">❌</button>
+            </li>`;
+        });
+
+        const qVacunas = query(collection(window.db, "configuracion_vacunas"));
+        const snapVacunas = await getDocs(qVacunas);
+        const ulVacunas = document.getElementById('lista-vacunas-ui');
+        ulVacunas.innerHTML = '';
+        snapVacunas.forEach(doc => {
+            ulVacunas.innerHTML += `<li style="padding: 5px 0; display: flex; justify-content: space-between;">
+                <span>💉 ${doc.data().nombre}</span>
+                <button onclick="window.eliminarItemConfig('configuracion_vacunas', '${doc.id}')" style="background:none; border:none; color: #ef4444; cursor:pointer;">❌</button>
+            </li>`;
+        });
+
+    } catch (e) { console.error("Error cargando configs", e); }
+}
+
+window.agregarLoteNuevo = async function() {
+    const input = document.getElementById('input-nuevo-lote');
+    if(!input.value.trim()) return;
+    await addDoc(collection(window.db, "configuracion_lotes"), { nombre: input.value.trim() });
+    input.value = '';
+    cargarConfiguracionHato();
+};
+
+document.getElementById('btn-add-vacuna').addEventListener('click', async () => {
+    const input = document.getElementById('input-nueva-vacuna');
+    if(!input.value.trim()) return;
+    await addDoc(collection(window.db, "configuracion_vacunas"), { nombre: input.value.trim() });
+    input.value = '';
+    cargarConfiguracionHato();
+});
+
+window.eliminarItemConfig = async function(coleccion, id) {
+    if(confirm("¿Eliminar este ítem de la configuración?")) {
+        await deleteDoc(doc(window.db, coleccion, id));
+        cargarConfiguracionHato();
+    }
+};
+
+async function cargarSelectLotes(finca) {
+    try {
+        const qLotes = query(collection(window.db, "configuracion_lotes"));
+        const snap = await getDocs(qLotes);
+        const select = document.getElementById('a-lote');
+        select.innerHTML = '<option value="General">👉 General / Sin Asignar</option>';
+        snap.forEach(doc => {
+            select.innerHTML += `<option value="${doc.data().nombre}">${doc.data().nombre}</option>`;
+        });
+    } catch (e) { console.error("Error lotes modal animal", e); }
+}
+async function cargarVacunasSelect(selectId) {
+    try {
+        const q = query(collection(window.db, "configuracion_vacunas"));
+        const snap = await getDocs(q);
+        const select = document.getElementById(selectId);
+        select.innerHTML = '<option value="">Seleccione un tratamiento...</option>';
+        snap.forEach(doc => {
+            select.innerHTML += `<option value="${doc.data().nombre}">${doc.data().nombre}</option>`;
+        });
+    } catch (e) { console.error("Error vacunas modal", e); }
+}
+
+// --- CREAR ANIMAL NUEVO ---
+document.getElementById('form-animal').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btn = e.target.querySelector('button');
+    btn.disabled = true; btn.innerText = "Guardando...";
+
+    try {
+        const data = {
+            finca: document.getElementById('a-finca-select').value,
+            arete: document.getElementById('a-arete').value.trim(),
+            lote: document.getElementById('a-lote').value,
+            categoria: document.getElementById('a-categoria').value,
+            fechaNacimiento: document.getElementById('a-nacimiento').value || null,
+            padre: document.getElementById('a-padre').value.trim() || null,
+            madre: document.getElementById('a-madre').value.trim() || null,
+            estado: document.getElementById('a-estado').value,
+            novedadSalud: '🟢 Sano',
+            tercioGestacion: null,
+            fechaRegistro: serverTimestamp(),
+            rfid: null // Se inicializa vacío para asignar chip después
+        };
+
+        const docRef = await addDoc(collection(window.db, "animales"), data);
+        
+        const peso = document.getElementById('a-peso').value;
+        if(peso) {
+            await addDoc(collection(window.db, "animales", docRef.id, "pesajes"), {
+                fecha: new Date().toISOString().split('T')[0], peso: Number(peso), nota: 'Registro Inicial'
             });
         }
-    </script>
-</body>
-</html>
+        
+        document.getElementById('modal-animal').style.display = 'none';
+        e.target.reset();
+        window.cargarHato();
+
+    } catch (error) {
+        console.error("Error agregando animal:", error);
+        alert("Error: " + error.message);
+    }
+    btn.disabled = false; btn.innerText = "Guardar Animal";
+});
+
+// --- EXPORTAR A EXCEL ---
+window.exportarExcel = function(tableID, filename = 'Data_ElbaLui') {
+    let downloadLink;
+    let dataType = 'application/vnd.ms-excel';
+    let tableSelect = document.getElementById(tableID);
+    let tableHTML = tableSelect.outerHTML.replace(/ /g, '%20');
+
+    filename = filename ? filename + '.xls' : 'excel_data.xls';
+    downloadLink = document.createElement("a");
+    document.body.appendChild(downloadLink);
+
+    if (navigator.msSaveOrOpenBlob) {
+        var blob = new Blob(['\ufeff', tableHTML], { type: dataType });
+        navigator.msSaveOrOpenBlob(blob, filename);
+    } else {
+        downloadLink.href = 'data:' + dataType + ', ' + tableHTML;
+        downloadLink.download = filename;
+        downloadLink.click();
+    }
+};
+
+// --- IMPORTAR CSV MASIVO ---
+window.importarCSV = function(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = async function(e) {
+        const text = e.target.result;
+        const rows = text.split('\n');
+        let importados = 0;
+        
+        const fincaStr = document.getElementById('finca-tag').innerText;
+        let fincaActual = 'Agua Clara';
+        if(fincaStr.includes('EL SUR')) fincaActual = 'El Sur';
+        
+        try {
+            const batch = writeBatch(window.db);
+            // Ignorar encabezados y líneas vacías
+            for(let i=1; i < rows.length; i++) {
+                if(!rows[i].trim()) continue;
+                // Asumiendo formato: Arete, Categoria, Lote, FechaNac
+                const cols = rows[i].split(',');
+                if(cols.length >= 2) {
+                    const docRef = doc(collection(window.db, "animales"));
+                    batch.set(docRef, {
+                        finca: fincaActual,
+                        arete: cols[0].trim(),
+                        categoria: cols[1].trim(),
+                        lote: cols[2] ? cols[2].trim() : 'General',
+                        fechaNacimiento: cols[3] ? cols[3].trim() : null,
+                        estado: 'Activo/Creciendo',
+                        novedadSalud: '🟢 Sano',
+                        fechaRegistro: serverTimestamp(),
+                        rfid: null
+                    });
+                    importados++;
+                }
+            }
+            if(importados > 0) {
+                await batch.commit();
+                alert(`✅ Se importaron ${importados} animales exitosamente.`);
+                window.cargarHato();
+            }
+        } catch (error) {
+            console.error("Error importando CSV", error);
+            alert("Hubo un error importando el CSV. Verifica el formato.");
+        }
+        event.target.value = ''; // Reset input
+    };
+    reader.readAsText(file);
+};
+
+
+// --- EXPEDIENTE CLINICO (FICHA) ---
+window.verFichaAnimal = async function(id) {
+    document.getElementById('modal-ficha').style.display = 'flex';
+    document.getElementById('p-id-doc').value = id;
+    
+    document.getElementById('form-nuevo-repro').style.display = 'none';
+    document.getElementById('form-destete').style.display = 'none';
+    document.getElementById('form-cambio-categoria').style.display = 'none';
+
+    try {
+        const docRef = doc(window.db, "animales", id);
+        const docSnap = await getDoc(docRef);
+        const data = docSnap.data();
+
+        document.getElementById('f-arete').innerText = data.arete;
+        document.getElementById('f-finca-tag').innerText = `📍 ${data.finca} | Lote: ${data.lote || 'General'}`;
+        document.getElementById('f-categoria').innerText = data.categoria;
+        document.getElementById('f-estado').innerText = data.estado === 'Gestante' ? `Gestante (T${data.tercioGestacion})` : data.estado;
+        document.getElementById('f-padre').innerText = data.padre || 'Desconocido';
+        document.getElementById('f-madre').innerText = data.madre || 'Desconocida';
+        
+        const histSalud = document.getElementById('f-historial-salud');
+        if(data.novedadSalud && data.novedadSalud !== '🟢 Sano') {
+            histSalud.innerHTML = `🔴 <strong>Alerta:</strong> ${data.novedadSalud}`;
+            histSalud.style.background = '#fecdd3';
+            histSalud.style.color = '#9f1239';
+            histSalud.style.borderColor = '#fda4af';
+        } else {
+            histSalud.innerHTML = '🟢 Sano (Sin Novedades)';
+            histSalud.style.background = '#d1fae5';
+            histSalud.style.color = '#065f46';
+            histSalud.style.borderColor = '#a7f3d0';
+        }
+
+        const btnDestete = document.getElementById('btn-show-destete');
+        if (['Becerro', 'Becerra'].includes(data.categoria)) {
+            btnDestete.style.display = 'inline-block';
+        } else {
+            btnDestete.style.display = 'none';
+        }
+        
+        cargarHistorialFicha(id);
+
+    } catch (e) { console.error("Error ficha:", e); }
+};
+
+async function cargarHistorialFicha(id) {
+    const tRepro = document.getElementById('f-tabla-repro');
+    const tPesajes = document.getElementById('f-tabla-pesajes');
+    tRepro.innerHTML = ''; tPesajes.innerHTML = '';
+
+    try {
+        const qR = query(collection(window.db, "animales", id, "historial_reproductivo"), orderBy("fecha", "desc"));
+        const snapR = await getDocs(qR);
+        snapR.forEach(doc => {
+            const d = doc.data();
+            let row = `<tr>
+                <td style="padding: 6px; border-bottom: 1px solid var(--border-light);"><strong>${d.tipo}</strong></td>
+                <td style="padding: 6px; border-bottom: 1px solid var(--border-light);">${d.fecha}</td>
+                <td style="padding: 6px; border-bottom: 1px solid var(--border-light);">${d.detalle || ''}</td>
+            </tr>`;
+            tRepro.innerHTML += row;
+        });
+
+        const qP = query(collection(window.db, "animales", id, "pesajes"), orderBy("fecha", "asc"));
+        const snapP = await getDocs(qP);
+        let lastPeso = 0;
+        let lastFecha = null;
+        
+        snapP.forEach(doc => {
+            const d = doc.data();
+            let gdp = '-';
+            
+            if (lastPeso > 0 && lastFecha) {
+                const dias = (new Date(d.fecha) - new Date(lastFecha)) / (1000*60*60*24);
+                if (dias > 0) {
+                    const dif = d.peso - lastPeso;
+                    gdp = (dif / dias).toFixed(2) + ' kg/d';
+                }
+            }
+            
+            let row = `<tr>
+                <td style="padding: 6px; border-bottom: 1px solid var(--border-light);">${d.fecha}</td>
+                <td style="padding: 6px; border-bottom: 1px solid var(--border-light);"><strong>${d.peso} kg</strong></td>
+                <td style="padding: 6px; border-bottom: 1px solid var(--border-light); color: var(--green-dark);">${gdp}</td>
+            </tr>`;
+            tPesajes.innerHTML = row + tPesajes.innerHTML; // Prepend to show descending order visually while maintaining GDP calculation order
+            
+            lastPeso = d.peso;
+            lastFecha = d.fecha;
+        });
+
+    } catch(e) { console.error("Error historial ficha", e); }
+}
+
+// Eventos de ficha
+document.getElementById('form-cambio-categoria').addEventListener('submit', async(e) => {
+    e.preventDefault();
+    const id = document.getElementById('p-id-doc').value;
+    const nueva = document.getElementById('c-nueva-categoria').value;
+    await updateDoc(doc(window.db, "animales", id), { categoria: nueva });
+    window.cargarHato();
+    window.verFichaAnimal(id);
+});
+
+document.getElementById('form-destete').addEventListener('submit', async(e) => {
+    e.preventDefault();
+    const id = document.getElementById('p-id-doc').value;
+    const catAc = document.getElementById('f-categoria').innerText;
+    
+    let nuevaCat = catAc;
+    if(catAc === 'Becerro') nuevaCat = 'Maute';
+    if(catAc === 'Becerra') nuevaCat = 'Mauta';
+
+    const dPeso = document.getElementById('d-peso').value;
+    const dFecha = document.getElementById('d-fecha').value;
+
+    const batch = writeBatch(window.db);
+    batch.update(doc(window.db, "animales", id), { categoria: nuevaCat });
+    batch.set(doc(collection(window.db, "animales", id, "historial_reproductivo")), { fecha: dFecha, tipo: 'Destete', detalle: `Destetado a ${dPeso}Kg` });
+    batch.set(doc(collection(window.db, "animales", id, "pesajes")), { fecha: dFecha, peso: Number(dPeso), nota: 'Destete' });
+    
+    await batch.commit();
+    window.cargarHato();
+    window.verFichaAnimal(id);
+});
+
+document.getElementById('form-nuevo-repro').addEventListener('submit', async(e) => {
+    e.preventDefault();
+    const id = document.getElementById('p-id-doc').value;
+    const f = document.getElementById('r-fecha').value;
+    const tipo = document.getElementById('r-tipo').value;
+    const fArete = document.getElementById('f-arete').innerText;
+    
+    let detalle = "";
+    const updateData = {};
+
+    if (tipo === 'Palpación (+ Preñada)') {
+        const tercio = document.getElementById('r-tercio').value;
+        detalle = `Tercio: ${tercio}`;
+        updateData.estado = 'Gestante';
+        updateData.tercioGestacion = tercio;
+    } else if (tipo === 'Parto') {
+        updateData.estado = 'Activo/Creciendo';
+        updateData.tercioGestacion = null;
+        updateData.categoria = 'Vaca Ordeño'; 
+        detalle = "Parto registrado.";
+
+        // Cria automática
+        const criaArete = document.getElementById('r-cria-arete').value;
+        if(criaArete) {
+            detalle += ` Cría: ${criaArete}`;
+            const fincaActual = document.getElementById('f-finca-tag').innerText.split('|')[0].replace('📍','').trim();
+            const criaRef = await addDoc(collection(window.db, "animales"), {
+                finca: fincaActual,
+                arete: criaArete,
+                categoria: document.getElementById('r-cria-sexo').value,
+                fechaNacimiento: f,
+                madre: fArete,
+                estado: 'Activo/Creciendo',
+                novedadSalud: '🟢 Sano',
+                lote: 'General'
+            });
+            const criaPeso = document.getElementById('r-cria-peso').value;
+            if(criaPeso) {
+                await addDoc(collection(window.db, "animales", criaRef.id, "pesajes"), {
+                    fecha: f, peso: Number(criaPeso), nota: 'Nacimiento'
+                });
+            }
+            alert("Se generó el registro de la cría automáticamente.");
+        }
+    } else if (tipo === 'Aborto' || tipo === 'Palpación (- Vacía)') {
+        updateData.estado = 'Vacía';
+        updateData.tercioGestacion = null;
+    }
+
+    const batch = writeBatch(window.db);
+    batch.set(doc(collection(window.db, "animales", id, "historial_reproductivo")), { fecha: f, tipo: tipo, detalle: detalle });
+    if (Object.keys(updateData).length > 0) {
+        batch.update(doc(window.db, "animales", id), updateData);
+    }
+    
+    await batch.commit();
+    document.getElementById('form-nuevo-repro').reset();
+    window.cargarHato();
+    window.verFichaAnimal(id);
+});
+
+// --- BAJAS Y ELIMINACION ---
+window.mandarABaja = async function(id, arete) {
+    if(confirm(`¿Estás seguro de reportar a ${arete} como BAJA (Muerto o Vendido)?\nEl animal desaparecerá del inventario activo pero su historial quedará guardado.`)) {
+        await updateDoc(doc(window.db, "animales", id), { estado: 'Baja (Vendido/Muerto)' });
+        document.getElementById('modal-ficha').style.display = 'none';
+        window.cargarHato();
+    }
+};
+
+window.eliminarAnimal = async function(id, arete) {
+    if(confirm(`⚠️ ALERTA ⚠️\n¿Eliminar a ${arete} PERMANENTEMENTE de la base de datos?\nEsto borrará todo su historial, pesajes y registros. Esta acción NO se puede deshacer.`)) {
+        await deleteDoc(doc(window.db, "animales", id));
+        document.getElementById('modal-ficha').style.display = 'none';
+        window.cargarHato();
+    }
+};
+
+// --- NOVEDADES DE SALUD ---
+window.abrirModalNovedad = function(id, arete) {
+    document.getElementById('modal-novedad').style.display = 'flex';
+    document.getElementById('n-id').value = id;
+    document.getElementById('n-arete-display').innerText = arete;
+    document.getElementById('n-estado-salud').value = '';
+};
+
+document.getElementById('form-novedad').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const id = document.getElementById('n-id').value;
+    const estado = document.getElementById('n-estado-salud').value;
+    
+    await updateDoc(doc(window.db, "animales", id), { novedadSalud: estado });
+    
+    const hoy = new Date().toISOString().split('T')[0];
+    await addDoc(collection(window.db, "animales", id, "historial_reproductivo"), {
+        fecha: hoy, tipo: 'Salud', detalle: `Reporte Sanitario: ${estado}`
+    });
+
+    document.getElementById('modal-novedad').style.display = 'none';
+    window.cargarHato();
+});
