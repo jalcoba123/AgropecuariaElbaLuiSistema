@@ -840,11 +840,11 @@ if (formDestete) {
 }
 
 // ==========================================
-// REGISTRO DE NUEVO ANIMAL (Blindado Offline sin bloqueo)
+// REGISTRO DE NUEVO ANIMAL (Optimizado Multi-registro Instantáneo)
 // ==========================================
 const formAnimal = document.getElementById('form-animal');
 if (formAnimal) {
-    formAnimal.addEventListener('submit', async (e) => {
+    formAnimal.onsubmit = async (e) => {
         e.preventDefault();
         
         if (!window.db) {
@@ -853,8 +853,6 @@ if (formAnimal) {
         }
 
         const btn = formAnimal.querySelector('button[type="submit"]');
-        const textoOriginal = btn.innerText;
-        btn.innerText = "Guardando..."; 
         btn.disabled = true;
 
         try {
@@ -878,36 +876,35 @@ if (formAnimal) {
                 madre: document.getElementById('a-madre').value.trim() || 'N/D',
                 estado: document.getElementById('a-estado').value,
                 salud: "🟢 Sano",
-                fechaRegistro: new Date().toISOString() // Usamos string de fecha nativo para evitar bloqueo de serverTimestamp offline
+                fechaRegistro: serverTimestamp()
             };
 
-            // Guardamos localmente en localStorage de respaldo inmediato (Garantiza cero bloqueos sin internet)
+            // Guardado local de respaldo inmediato en localStorage para evitar bloqueos
             let pendientesOffline = JSON.parse(localStorage.getItem('elbalui_pendientes_offline') || '[]');
             pendientesOffline.push(nuevoAnimal);
             localStorage.setItem('elbalui_pendientes_offline', JSON.stringify(pendientesOffline));
 
-            // Intentamos registrar en la base de datos de Firestore en segundo plano sin esperar el bloqueo si está offline
+            // Envío a Firestore en segundo plano sin congelar la interfaz
             if (navigator.onLine) {
-                addDoc(collection(window.db, "animales"), {
-                    ...nuevoAnimal,
-                    fechaRegistro: serverTimestamp()
-                }).catch(err => console.log("Guardado offline en segundo plano en cola."));
+                addDoc(collection(window.db, "animales"), nuevoAnimal).catch(err => {
+                    console.log("Guardado en segundo plano en cola.");
+                });
             }
 
+            // Reseteamos el formulario y cerramos el modal de inmediato
             formAnimal.reset(); 
             document.getElementById('modal-animal').style.display = 'none';
-            alert("✅ Animal guardado correctamente en el dispositivo.");
-
-            // Recargamos el hato localmente para reflejar el cambio de inmediato
+            
+            // Refrescamos la tabla localmente
             if (window.cargarHato) window.cargarHato();
 
         } catch (err) { 
             alert("❌ Error al guardar: " + err.message); 
         } finally { 
-            btn.innerText = textoOriginal; 
+            btn.innerText = "Guardar Animal"; 
             btn.disabled = false; 
         }
-    });
+    };
 }
 
 // ==========================================
