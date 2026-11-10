@@ -251,7 +251,7 @@ window.cambiarModuloHato = function(evento, idModulo) {
 };
 
 // ==========================================
-// SELECCIÓN Y FILTROS EN TABLA (NUEVO)
+// SELECCIÓN Y FILTROS EN TABLA
 // ==========================================
 window.toggleAllCheckboxes = function(source) {
     const checkboxes = document.querySelectorAll('.chk-animal');
@@ -269,7 +269,7 @@ window.aplicarFiltroHato = function() {
     const filas = document.querySelectorAll('#tabla-hato-body tr');
     
     filas.forEach(fila => {
-        if(!fila.hasAttribute('data-categoria')) return; // ignora filas de "cargando"
+        if(!fila.hasAttribute('data-categoria')) return;
 
         const cat = fila.getAttribute('data-categoria');
         const estado = fila.getAttribute('data-estado');
@@ -277,7 +277,6 @@ window.aplicarFiltroHato = function() {
 
         let mostrar = false;
 
-        // Filtro por Select
         if (filtroSelect === 'Todos' && estado !== 'Baja (Vendido/Muerto)') mostrar = true;
         else if (filtroSelect === 'Bajas' && estado === 'Baja (Vendido/Muerto)') mostrar = true;
         else if (filtroSelect === 'Becerros' && cat.includes('Becerr') && estado !== 'Baja (Vendido/Muerto)') mostrar = true;
@@ -285,7 +284,6 @@ window.aplicarFiltroHato = function() {
         else if (filtroSelect === 'Vacas' && cat.includes('Vaca') && estado !== 'Baja (Vendido/Muerto)') mostrar = true;
         else if (filtroSelect === 'Gestantes' && estado === 'Gestante') mostrar = true;
 
-        // Filtro por Buscador (Si pasó el select)
         if (mostrar && textoBusqueda !== "") {
             if (arete.indexOf(textoBusqueda) === -1) {
                 mostrar = false;
@@ -317,7 +315,6 @@ window.exportarExcel = function(tablaId, nombreArchivo) {
         let fila = [];
         let columnas = filas[i].querySelectorAll('td, th');
         
-        // Evitamos primera columna (Checkbox) y última (Botones de Acción)
         for (let j = 1; j < columnas.length - 1; j++) { 
             let texto = columnas[j].innerText.replace(/(\r\n|\n|\r)/gm, " - ");
             fila.push('"' + texto + '"');
@@ -350,7 +347,6 @@ window.importarCSV = function(event) {
         
         const batch = writeBatch(window.db);
         
-        // Asume formato: Arete, Categoria, Lote, Peso
         for (let i = 1; i < lineas.length; i++) { 
             let fila = lineas[i].split(',');
             if (fila.length >= 2) {
@@ -382,7 +378,7 @@ window.importarCSV = function(event) {
             try {
                 document.body.style.cursor = 'wait';
                 await batch.commit();
-                alert(`✅ Importación exitosa: ${contador} animales registrados desde el Excel/CSV.`);
+                alert(`✅ Importación exitosa: ${contador} animales registrados.`);
             } catch (err) {
                 alert("❌ Error al importar: " + err.message);
             } finally {
@@ -391,11 +387,11 @@ window.importarCSV = function(event) {
         }
     };
     reader.readAsText(file);
-    event.target.value = ''; // Reset input
+    event.target.value = '';
 };
 
 // ==========================================
-// ⚡ ACCIÓN MASIVA (VACUNAS Y DESTETE LOTE)
+// ⚡ ACCIÓN MASIVA
 // ==========================================
 window.abrirModalMasivo = function() {
     const seleccionados = document.querySelectorAll('.chk-animal:checked');
@@ -464,7 +460,7 @@ if (formMasivo) {
                     }
                 }
                 await batch.commit();
-                alert(`✅ Destete completado. Los becerros pasaron a Mautes.`);
+                alert(`✅ Destete completado.`);
             }
 
             document.getElementById('modal-masivo').style.display = 'none';
@@ -478,7 +474,7 @@ if (formMasivo) {
 // FUNCIONES BASE (ELIMINAR, BAJA, NOVEDAD)
 // ==========================================
 window.eliminarAnimal = async function(idDoc, arete) {
-    if (confirm(`⚠️ ALERTA: ¿Eliminar PERMANENTEMENTE Arete "${arete}" de la base de datos?\n\n(Recomendamos usar "Dar de Baja" si el animal murió o se vendió para no alterar estadísticas pasadas)`)) {
+    if (confirm(`⚠️ ALERTA: ¿Eliminar PERMANENTEMENTE Arete "${arete}" de la base de datos?`)) {
         try { 
             await deleteDoc(doc(window.db, "animales", idDoc)); 
             document.getElementById('modal-ficha').style.display = 'none';
@@ -488,14 +484,14 @@ window.eliminarAnimal = async function(idDoc, arete) {
 };
 
 window.mandarABaja = async function(idDoc, arete) {
-    const razon = prompt(`☠️ Registrar Baja / Venta para el Arete ${arete}\n\nEscriba el motivo (Ej. Venta a Matadero, Muerte por mordedura de serpiente, etc.):`);
+    const razon = prompt(`☠️ Registrar Baja / Venta para el Arete ${arete}\n\nEscriba el motivo:`);
     if (razon !== null && razon.trim() !== "") {
         try {
             await updateDoc(doc(window.db, "animales", idDoc), { 
                 estado: "Baja (Vendido/Muerto)",
                 salud: `☠️ Baja: ${razon}` 
             });
-            alert("✅ Animal dado de baja correctamente. Se quitó del inventario activo.");
+            alert("✅ Animal dado de baja correctamente.");
             document.getElementById('modal-ficha').style.display = 'none';
         } catch (err) {
             alert("Error al dar de baja: " + err.message);
@@ -563,7 +559,6 @@ window.cargarHato = function() {
             const saludActual = a.salud || "🟢 Sano";
             const esBaja = (a.estado === "Baja (Vendido/Muerto)");
 
-            // Contamos solo los ACTIVOS para los KPIs
             if (!esBaja) {
                 total++;
                 if (a.categoria.includes("Maute") || a.categoria.includes("Mauta")) mautes++;
@@ -600,7 +595,6 @@ window.cargarHato = function() {
                 }
             }
 
-            // ATRIBUTOS data-* PARA FACILITAR EL BUSCADOR Y EL FILTRO
             tabla.innerHTML += `
                 <tr data-arete="${escapeStr(a.arete)}" data-categoria="${escapeStr(a.categoria)}" data-estado="${escapeStr(a.estado)}">
                     <td style="padding: 10px; border-bottom: 1px solid var(--border-light); text-align: center;">
@@ -715,17 +709,6 @@ window.abrirFicha = async function(idDoc) {
             });
         }
 
-        if (ultimaFechaClave && a.estado !== 'Gestante' && a.estado !== 'Baja (Vendido/Muerto)' && a.categoria.includes("Vaca")) {
-            const diffDias = Math.floor((new Date() - new Date(ultimaFechaClave)) / (1000 * 60 * 60 * 24));
-            if (diffDias >= 730) alertaRepro.innerHTML += `<div style="background: #fee2e2; border: 1px solid #fca5a5; color: #991b1b; padding: 12px; border-radius: 8px; margin-bottom: 10px; font-weight: bold; font-size: 0.85rem;">⚠️ ALERTA INFERTILIDAD: ${diffDias} días vacía.</div>`;
-        }
-        if (a.estado === 'Gestante' && ultimaFep) {
-            const diffDiasParto = Math.ceil((new Date(ultimaFep) - new Date()) / (1000 * 60 * 60 * 24));
-            if (diffDiasParto <= 75 && diffDiasParto >= 0 && a.categoria === 'Vaca Ordeño') {
-                alertaRepro.innerHTML += `<div style="background: #fef3c7; border: 1px solid #fde68a; color: #b45309; padding: 12px; border-radius: 8px; margin-bottom: 10px; font-weight: bold; font-size: 0.85rem;">⚠️ ALERTA SECADO: Faltan ~${diffDiasParto} días para parto. Secar Vaca.</div>`;
-            }
-        }
-
         const tbodyPesajes = document.getElementById('f-tabla-pesajes');
         tbodyPesajes.innerHTML = '';
         const historialPesos = a.historialPesos || [];
@@ -830,35 +813,26 @@ if (formDestete) {
             let historialPesos = data.historialPesos || [];
             historialPesos.push({ fecha: fechaDestete, peso: pesoDestete, dispositivo: ID_DISPOSITIVO });
             await updateDoc(docRef, { categoria: nuevaCat, peso: pesoDestete, historialPesos: historialPesos });
-            if (data.madre && data.madre !== 'N/D') {
-                const madreQuery = query(collection(window.db, "animales"), where("finca", "==", data.finca), where("arete", "==", data.madre));
-                const madreSnapshot = await getDocs(madreQuery);
-                if (!madreSnapshot.empty) {
-                    const madreDoc = madreSnapshot.docs[0];
-                    let madreHistorial = madreDoc.data().historialReproductivo || [];
-                    madreHistorial.push({ tipo: '🏅 Destete Cría', fecha: fechaDestete, detalle: `Destetó a su cría con ${pesoDestete} Kg.`, dispositivo: ID_DISPOSITIVO });
-                    await updateDoc(doc(window.db, "animales", madreDoc.id), { historialReproductivo: madreHistorial });
-                }
-            }
             alert(`✅ Destete completado.`); document.getElementById('form-destete').style.display = 'none'; window.abrirFicha(idDoc);
         } catch (err) { alert("Error: " + err.message); }
     });
 }
 
 // ==========================================
-// REGISTRO DE NUEVO ANIMAL
+// REGISTRO DE NUEVO ANIMAL (Optimizado Offline)
 // ==========================================
 const formAnimal = document.getElementById('form-animal');
 if (formAnimal) {
     formAnimal.addEventListener('submit', async (e) => {
         e.preventDefault();
         
-        if (!window.db || !window.auth.currentUser) {
-            alert("⚠️ Sesión expirada o base de datos desconectada.");
+        if (!window.db) {
+            alert("⚠️ Base de datos no inicializada.");
             return;
         }
 
         const btn = formAnimal.querySelector('button[type="submit"]');
+        const textoOriginal = btn.innerText;
         btn.innerText = "Guardando..."; 
         btn.disabled = true;
 
@@ -870,6 +844,7 @@ if (formAnimal) {
             const loteInput = document.getElementById('a-lote');
             const loteValor = (loteInput && loteInput.value.trim() !== '') ? loteInput.value.trim() : 'General';
 
+            // Guardado offline instantáneo en IndexedDB local
             await addDoc(collection(window.db, "animales"), {
                 finca: document.getElementById('a-finca-select').value,
                 arete: document.getElementById('a-arete').value.trim(),
@@ -888,11 +863,11 @@ if (formAnimal) {
 
             formAnimal.reset(); 
             document.getElementById('modal-animal').style.display = 'none';
-            alert("✅ Animal guardado con éxito.");
+            alert("✅ Animal guardado localmente con éxito (se sincronizará al conectar).");
         } catch (err) { 
-            alert("❌ Error al guardar: " + err.message); 
+            alert("❌ Error al guardar offline: " + err.message); 
         } finally { 
-            btn.innerText = "Guardar Animal"; 
+            btn.innerText = textoOriginal; 
             btn.disabled = false; 
         }
     });
@@ -1015,7 +990,6 @@ function actualizarDashboard(datosHato) {
     const hoy = new Date();
 
     datosHato.forEach(a => {
-        // Ignoramos a los que están dados de baja
         if (a.estado === 'Baja (Vendido/Muerto)') return;
 
         if (a.estado === "Gestante" && a.historialReproductivo) {
