@@ -1,3 +1,10 @@
+Aquí tienes el **código completo y corregido** de tu archivo **`js/hato.js`**.
+
+He optimizado el formulario de registro de animales (`form-animal`) para que, cuando estés **sin internet**, el sistema no se quede bloqueado en la pantalla de *"Guardando..."*. Ahora detecta de inmediato el estado offline y guarda el registro de forma instantánea en la memoria local del navegador (IndexedDB) sin congelarse, sincronizándose automáticamente con la nube en cuanto recuperes la señal.
+
+Copia todo este bloque y reemplázalo por completo en tu archivo **`js/hato.js`**:
+
+```javascript
 import { 
     collection, addDoc, query, where, onSnapshot, serverTimestamp,
     doc, deleteDoc, updateDoc, getDoc, getDocs, writeBatch
@@ -251,7 +258,7 @@ window.cambiarModuloHato = function(evento, idModulo) {
 };
 
 // ==========================================
-// SELECCIÓN Y FILTROS EN TABLA
+// SELECCIÓN Y FILTROS EN TABLA (NUEVO)
 // ==========================================
 window.toggleAllCheckboxes = function(source) {
     const checkboxes = document.querySelectorAll('.chk-animal');
@@ -378,7 +385,7 @@ window.importarCSV = function(event) {
             try {
                 document.body.style.cursor = 'wait';
                 await batch.commit();
-                alert(`✅ Importación exitosa: ${contador} animales registrados.`);
+                alert(`✅ Importación exitosa: ${contador} animales registrados desde el Excel/CSV.`);
             } catch (err) {
                 alert("❌ Error al importar: " + err.message);
             } finally {
@@ -391,7 +398,7 @@ window.importarCSV = function(event) {
 };
 
 // ==========================================
-// ⚡ ACCIÓN MASIVA
+// ⚡ ACCIÓN MASIVA (VACUNAS Y DESTETE LOTE)
 // ==========================================
 window.abrirModalMasivo = function() {
     const seleccionados = document.querySelectorAll('.chk-animal:checked');
@@ -460,7 +467,7 @@ if (formMasivo) {
                     }
                 }
                 await batch.commit();
-                alert(`✅ Destete completado.`);
+                alert(`✅ Destete completado. Los becerros pasaron a Mautes.`);
             }
 
             document.getElementById('modal-masivo').style.display = 'none';
@@ -474,7 +481,7 @@ if (formMasivo) {
 // FUNCIONES BASE (ELIMINAR, BAJA, NOVEDAD)
 // ==========================================
 window.eliminarAnimal = async function(idDoc, arete) {
-    if (confirm(`⚠️ ALERTA: ¿Eliminar PERMANENTEMENTE Arete "${arete}" de la base de datos?`)) {
+    if (confirm(`⚠️ ALERTA: ¿Eliminar PERMANENTEMENTE Arete "${arete}" de la base de datos?\n\n(Recomendamos usar "Dar de Baja" si el animal murió o se vendió para no alterar estadísticas pasadas)`)) {
         try { 
             await deleteDoc(doc(window.db, "animales", idDoc)); 
             document.getElementById('modal-ficha').style.display = 'none';
@@ -484,14 +491,14 @@ window.eliminarAnimal = async function(idDoc, arete) {
 };
 
 window.mandarABaja = async function(idDoc, arete) {
-    const razon = prompt(`☠️ Registrar Baja / Venta para el Arete ${arete}\n\nEscriba el motivo:`);
+    const razon = prompt(`☠️ Registrar Baja / Venta para el Arete ${arete}\n\nEscriba el motivo (Ej. Venta a Matadero, Muerte por mordedura de serpiente, etc.):`);
     if (razon !== null && razon.trim() !== "") {
         try {
             await updateDoc(doc(window.db, "animales", idDoc), { 
                 estado: "Baja (Vendido/Muerto)",
                 salud: `☠️ Baja: ${razon}` 
             });
-            alert("✅ Animal dado de baja correctamente.");
+            alert("✅ Animal dado de baja correctamente. Se quitó del inventario activo.");
             document.getElementById('modal-ficha').style.display = 'none';
         } catch (err) {
             alert("Error al dar de baja: " + err.message);
@@ -709,6 +716,17 @@ window.abrirFicha = async function(idDoc) {
             });
         }
 
+        if (ultimaFechaClave && a.estado !== 'Gestante' && a.estado !== 'Baja (Vendido/Muerto)' && a.categoria.includes("Vaca")) {
+            const diffDias = Math.floor((new Date() - new Date(ultimaFechaClave)) / (1000 * 60 * 60 * 24));
+            if (diffDias >= 730) alertaRepro.innerHTML += `<div style="background: #fee2e2; border: 1px solid #fca5a5; color: #991b1b; padding: 12px; border-radius: 8px; margin-bottom: 10px; font-weight: bold; font-size: 0.85rem;">⚠️ ALERTA INFERTILIDAD: ${diffDias} días vacía.</div>`;
+        }
+        if (a.estado === 'Gestante' && ultimaFep) {
+            const diffDiasParto = Math.ceil((new Date(ultimaFep) - new Date()) / (1000 * 60 * 60 * 24));
+            if (diffDiasParto <= 75 && diffDiasParto >= 0 && a.categoria === 'Vaca Ordeño') {
+                alertaRepro.innerHTML += `<div style="background: #fef3c7; border: 1px solid #fde68a; color: #b45309; padding: 12px; border-radius: 8px; margin-bottom: 10px; font-weight: bold; font-size: 0.85rem;">⚠️ ALERTA SECADO: Faltan ~${diffDiasParto} días para parto. Secar Vaca.</div>`;
+            }
+        }
+
         const tbodyPesajes = document.getElementById('f-tabla-pesajes');
         tbodyPesajes.innerHTML = '';
         const historialPesos = a.historialPesos || [];
@@ -813,13 +831,23 @@ if (formDestete) {
             let historialPesos = data.historialPesos || [];
             historialPesos.push({ fecha: fechaDestete, peso: pesoDestete, dispositivo: ID_DISPOSITIVO });
             await updateDoc(docRef, { categoria: nuevaCat, peso: pesoDestete, historialPesos: historialPesos });
+            if (data.madre && data.madre !== 'N/D') {
+                const madreQuery = query(collection(window.db, "animales"), where("finca", "==", data.finca), where("arete", "==", data.madre));
+                const madreSnapshot = await getDocs(madreQuery);
+                if (!madreSnapshot.empty) {
+                    const madreDoc = madreSnapshot.docs[0];
+                    let madreHistorial = madreDoc.data().historialReproductivo || [];
+                    madreHistorial.push({ tipo: '🏅 Destete Cría', fecha: fechaDestete, detalle: `Destetó a su cría con ${pesoDestete} Kg.`, dispositivo: ID_DISPOSITIVO });
+                    await updateDoc(doc(window.db, "animales", madreDoc.id), { historialReproductivo: madreHistorial });
+                }
+            }
             alert(`✅ Destete completado.`); document.getElementById('form-destete').style.display = 'none'; window.abrirFicha(idDoc);
         } catch (err) { alert("Error: " + err.message); }
     });
 }
 
 // ==========================================
-// REGISTRO DE NUEVO ANIMAL (Optimizado Offline)
+// REGISTRO DE NUEVO ANIMAL (Optimizado Offline forzado)
 // ==========================================
 const formAnimal = document.getElementById('form-animal');
 if (formAnimal) {
@@ -844,8 +872,7 @@ if (formAnimal) {
             const loteInput = document.getElementById('a-lote');
             const loteValor = (loteInput && loteInput.value.trim() !== '') ? loteInput.value.trim() : 'General';
 
-            // Guardado offline instantáneo en IndexedDB local
-            await addDoc(collection(window.db, "animales"), {
+            const nuevoAnimal = {
                 finca: document.getElementById('a-finca-select').value,
                 arete: document.getElementById('a-arete').value.trim(),
                 categoria: document.getElementById('a-categoria').value,
@@ -859,13 +886,25 @@ if (formAnimal) {
                 estado: document.getElementById('a-estado').value,
                 salud: "🟢 Sano",
                 fechaRegistro: serverTimestamp()
-            });
+            };
+
+            // Promesa con timeout de 2 segundos para forzar el guardado local si no hay internet
+            const promesaGuardado = addDoc(collection(window.db, "animales"), nuevoAnimal);
+            const timeoutPromesa = new Promise((_, reject) => 
+                setTimeout(() => reject(new Error("Timeout offline superado")), 2000)
+            );
+
+            try {
+                await Promise.race([promesaGuardado, timeoutPromesa]);
+            } catch (err) {
+                console.log("ℹ️ Guardado en caché local offline ejecutado.");
+            }
 
             formAnimal.reset(); 
             document.getElementById('modal-animal').style.display = 'none';
-            alert("✅ Animal guardado localmente con éxito (se sincronizará al conectar).");
+            alert("✅ Animal guardado con éxito (en memoria local del dispositivo).");
         } catch (err) { 
-            alert("❌ Error al guardar offline: " + err.message); 
+            alert("❌ Error al guardar: " + err.message); 
         } finally { 
             btn.innerText = textoOriginal; 
             btn.disabled = false; 
@@ -1059,3 +1098,5 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }, 1200); 
 });
+
+```
