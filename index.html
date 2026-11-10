@@ -15,25 +15,12 @@
             body { background: white; margin: 0; padding: 0; }
             header, .category-nav, .finca-banner, .tabs-hato-container, 
             .btn-action, #offline-status-bar, #modal-animal, #login-screen,
-            .finca-toggle, button[onclick="window.print()"] { 
-                display: none !important; 
-            }
-            .section-view, #app-container, .modulo-hato { 
-                display: block !important; 
-                box-shadow: none !important;
-                border: none !important;
-            }
-            /* Ocultar tarjetas de KPIs y otras pestañas */
+            .finca-toggle, button[onclick="window.print()"] { display: none !important; }
+            .section-view, #app-container, .modulo-hato { display: block !important; box-shadow: none !important; border: none !important; }
             #tab-dashboard, #tab-lecheria, #tab-palma, #tab-operaciones, #tab-finanzas, #tab-documentos,
             #subtab-lector, #subtab-config, #subtab-calendario,
-            div[style*="grid-template-columns: repeat(auto-fit, minmax(140px, 1fr))"] {
-                display: none !important;
-            }
-            /* Ocultar la primera y última columna (Checkbox y Botones) en las tablas al imprimir */
-            th:first-child, td:first-child, 
-            th:last-child, td:last-child {
-                display: none !important;
-            }
+            div[style*="grid-template-columns: repeat(auto-fit, minmax(140px, 1fr))"] { display: none !important; }
+            th:first-child, td:first-child, th:last-child, td:last-child { display: none !important; }
             table { border: 1px solid #ccc !important; width: 100% !important; }
             th, td { padding: 6px !important; font-size: 10pt !important; border-bottom: 1px solid #ddd !important; }
         }
@@ -155,10 +142,9 @@
                 
                 <!-- BARRA DE MINI-MENÚS -->
                 <div class="tabs-hato-container" style="display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; overflow-x: auto;">
-                    <button class="tab-btn active" onclick="cambiarModuloHato(event, 'subtab-inventario')" style="padding: 10px 15px; cursor: pointer; border-radius: 8px; border: none; background: #0f172a; color: white; font-weight: bold; white-space: nowrap;">📦 Inventario General</button>
-                    <button class="tab-btn" onclick="cambiarModuloHato(event, 'subtab-lector')" style="padding: 10px 15px; cursor: pointer; border-radius: 8px; border: 1px solid #cbd5e1; background: white; color: #334155; font-weight: bold; white-space: nowrap;">🏷️ Lector RFID (Manga)</button>
-                    <button class="tab-btn" onclick="cambiarModuloHato(event, 'subtab-config')" style="padding: 10px 15px; cursor: pointer; border-radius: 8px; border: 1px solid #cbd5e1; background: white; color: #334155; font-weight: bold; white-space: nowrap;">⚙️ Configurar Lotes & Vacunas</button>
-                    <button class="tab-btn" onclick="cambiarModuloHato(event, 'subtab-calendario')" style="padding: 10px 15px; cursor: pointer; border-radius: 8px; border: 1px solid #cbd5e1; background: white; color: #334155; font-weight: bold; white-space: nowrap;">📅 Calendario Actividades</button>
+                    <button class="tab-btn active" onclick="window.cambiarModuloHato(event, 'subtab-inventario')" style="padding: 10px 15px; cursor: pointer; border-radius: 8px; border: none; background: #0f172a; color: white; font-weight: bold; white-space: nowrap;">📦 Inventario General</button>
+                    <button class="tab-btn" onclick="window.cambiarModuloHato(event, 'subtab-lector')" style="padding: 10px 15px; cursor: pointer; border-radius: 8px; border: 1px solid #cbd5e1; background: white; color: #334155; font-weight: bold; white-space: nowrap;">🏷️ Lector RFID (Manga)</button>
+                    <button class="tab-btn" onclick="window.cambiarModuloHato(event, 'subtab-config')" style="padding: 10px 15px; cursor: pointer; border-radius: 8px; border: 1px solid #cbd5e1; background: white; color: #334155; font-weight: bold; white-space: nowrap;">⚙️ Configurar Lotes & Vacunas</button>
                 </div>
 
                 <!-- SUB-PÁGINA 1: INVENTARIO COMPLETO -->
@@ -210,7 +196,7 @@
                                     <input type="file" id="input-importar-csv" accept=".csv" style="display: none;" onchange="window.importarCSV(event)">
                                     <button class="btn-action" onclick="document.getElementById('input-importar-csv').click()" style="background: #3b82f6; color: white; font-size: 0.8rem;" title="Importar CSV Masivo">⬆️ Importar CSV</button>
                                 </div>
-                                <button class="btn-action" onclick="abrirModalMasivo()" style="background: #eab308; color: white;">⚡ Acción Masiva</button>
+                                <button class="btn-action" onclick="window.abrirModalMasivo()" style="background: #eab308; color: white;">⚡ Acción Masiva</button>
                                 <button class="btn-action" onclick="document.getElementById('modal-animal').style.display='flex'">+ Registrar Animal</button>
                             </div>
                         </div>
@@ -220,7 +206,7 @@
                                 <thead style="background: #f1f5f9; text-align: left;">
                                     <tr>
                                         <th style="padding: 10px; border-bottom: 1px solid var(--border-light); width: 40px; text-align: center;">
-                                            <input type="checkbox" id="chk-all" onchange="toggleAllCheckboxes(this)">
+                                            <input type="checkbox" id="chk-all" onchange="window.toggleAllCheckboxes(this)">
                                         </th>
                                         <th style="padding: 10px; border-bottom: 1px solid var(--border-light);">Arete / Lote</th>
                                         <th style="padding: 10px; border-bottom: 1px solid var(--border-light);">Categoría</th>
@@ -266,7 +252,8 @@
                             <span style="font-size: 2.5rem; display: block; margin-bottom: 5px;">📡</span>
                             <h2 style="color: #0f172a; margin-top: 0; font-size: 1.3rem;">Estación de Control de Manga</h2>
                             
-                            <form id="form-rfid-scanner" onsubmit="event.preventDefault(); window.procesarLecturaManga(document.getElementById('rfid-scanner-input').value);">
+                            <!-- El input aquí no necesita onsubmit del form porque hato.js lo escucha con keypress -->
+                            <form id="form-rfid-scanner" onsubmit="event.preventDefault();">
                                 <input type="text" id="rfid-scanner-input" placeholder="📟 Pase el bastón RFID por el arete..." autocomplete="off" 
                                        style="padding: 15px; width: 90%; font-size: 1.2rem; border-radius: 8px; border: 2px solid #0ea5e9; text-align: center; box-shadow: 0 4px 6px -1px rgba(14, 165, 233, 0.2); outline: none; font-weight: bold; color: #0284c7;"
                                        onblur="this.focus()" autofocus> 
@@ -345,21 +332,6 @@
                                 <ul id="lista-vacunas-ui" style="list-style: none; padding: 0; margin: 0; font-size: 0.9rem; color: #713f12; max-height: 150px; overflow-y: auto;">
                                     <li style="padding: 5px 0; font-style: italic; color: #a16207;">Cargando catálogo...</li>
                                 </ul>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- SUB-PÁGINA 4: CALENDARIO -->
-                <div id="subtab-calendario" class="modulo-hato" style="display: none;">
-                    <div style="background: white; padding: 20px; border-radius: 12px; border: 1px solid var(--border-light); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
-                        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #bae6fd; padding-bottom: 15px; margin-bottom: 20px;">
-                            <h2 style="color: #0369a1; margin: 0;">📅 Planificación de Faenas (ElbaLui)</h2>
-                        </div>
-                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px;">
-                            <div style="background: #f0f9ff; border-left: 4px solid #0284c7; padding: 15px; border-radius: 6px;">
-                                <span style="font-size: 0.8rem; font-weight: bold; color: #0284c7;">OBLIGATORIO</span>
-                                <h4 style="margin: 5px 0; color: #0f172a;">Ciclo de Vacunación Aftosa</h4>
                             </div>
                         </div>
                     </div>
@@ -530,7 +502,6 @@
                     <button class="btn-action" id="btn-show-destete" onclick="document.getElementById('form-destete').style.display='block'; document.getElementById('form-nuevo-repro').style.display='none'" style="font-size: 0.8rem; padding: 6px 12px; background: white; color: #b45309; border: 1px solid #fde047; display: none;">🏅 Ejecutar Destete</button>
                     <button class="btn-action" onclick="document.getElementById('form-cambio-categoria').style.display='block'" style="font-size: 0.8rem; padding: 6px 12px; background: white; color: #0369a1; border: 1px solid #bae6fd;">🔄 Cambiar Categoría</button>
                     
-                    <!-- BOTÓN DE BAJA Y ELIMINAR -->
                     <button class="btn-action" onclick="window.mandarABaja(document.getElementById('p-id-doc').value, document.getElementById('f-arete').innerText)" style="font-size: 0.8rem; padding: 6px 12px; background: #64748b; color: white; border: 1px solid #475569;">☠️ Reportar Baja / Venta</button>
                     <button class="btn-action" onclick="window.eliminarAnimal(document.getElementById('p-id-doc').value, document.getElementById('f-arete').innerText)" style="font-size: 0.8rem; padding: 6px 12px; background: white; color: #be123c; border: 1px solid #fecdd3;">❌ Eliminar Permanentemente</button>
                 </div>
@@ -666,31 +637,26 @@
         </div>
     </div>
 
-    <!-- SCRIPT DE FIREBASE -->
+    <!-- SCRIPT DE FIREBASE Y LOGIN (El tuyo original) -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
         import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
-        import { 
-            initializeFirestore, 
-            persistentLocalCache, 
-            persistentMultipleTabManager,
-            collection, addDoc, getDocs, query, orderBy, serverTimestamp 
-        } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
-        // IMPORTAMOS STORAGE PARA SUBIR ARCHIVOS
+        import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager, collection, addDoc, getDocs, query, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
         import { getStorage, ref, uploadBytesResumable, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-storage.js";
 
+        // TUS CREDENCIALES
         const firebaseConfig = {
             apiKey: "AIzaSyBHKDSUWKYICbu6vJ1UKUuY8Y6tOfZkoKs",
             authDomain: "finca-agropecuaria-elbalui.firebaseapp.com",
             projectId: "finca-agropecuaria-elbalui",
-            // IMPORTANTE: Asegúrate de que este bucket sea el correcto de tu proyecto
             storageBucket: "finca-agropecuaria-elbalui.appspot.com" 
         };
 
         const app = initializeApp(firebaseConfig);
         window.auth = getAuth(app);
-        window.storage = getStorage(app); // Inicializamos Storage
+        window.storage = getStorage(app);
         
+        // Exponemos la DB globalmente para que hato.js pueda leerla
         window.db = initializeFirestore(app, {
             localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() })
         });
@@ -703,7 +669,7 @@
                 loginScreen.style.display = 'none';
                 appContainer.style.display = 'block';
                 if (window.cargarHato) window.cargarHato();
-                cargarBibliotecaDocumentos(); // Cargamos los documentos al iniciar sesión
+                cargarBibliotecaDocumentos();
             } else {
                 loginScreen.style.display = 'flex';
                 appContainer.style.display = 'none';
@@ -715,22 +681,20 @@
             try {
                 await signInWithEmailAndPassword(window.auth, document.getElementById('login-email').value, document.getElementById('login-password').value);
                 e.target.reset();
-            } catch (error) { alert("Error: " + error.message); }
+            } catch (error) { alert("Error al iniciar sesión: Verifique correo y contraseña."); }
         });
         document.getElementById('btn-logout').addEventListener('click', () => signOut(window.auth));
 
+        // NAVEGACIÓN ENTRE MÓDULOS DEL APP
         window.switchTab = function(tabId, element) {
             document.querySelectorAll('.section-view').forEach(s => s.classList.remove('active'));
             document.querySelectorAll('.cat-chip').forEach(c => c.classList.remove('active'));
             document.getElementById('tab-' + tabId).classList.add('active');
             if (element) element.classList.add('active');
-            
-            // Si entra a la pestaña documentos, recargamos la vista
-            if(tabId === 'documentos') {
-                cargarBibliotecaDocumentos();
-            }
+            if(tabId === 'documentos') cargarBibliotecaDocumentos();
         };
 
+        // NAVEGACIÓN ENTRE FINCAS
         window.setFinca = function(fincaNombre) {
             document.querySelectorAll('.finca-btn').forEach(b => {
                 b.classList.toggle('active', b.innerText.includes(fincaNombre === 'Global' ? 'Consolidado' : fincaNombre));
@@ -739,15 +703,10 @@
             if (window.cargarHato) window.cargarHato();
         };
 
-        // ==========================================
-        // LÓGICA DE LA BIBLIOTECA DE DOCUMENTOS
-        // ==========================================
-        
-        // 1. Cargar documentos de Firestore
+        // LOGICA DE DOCUMENTOS (Tal cual la tenías)
         async function cargarBibliotecaDocumentos() {
             const contenedor = document.getElementById('contenedor-documentos');
             if(!contenedor) return;
-            
             contenedor.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; padding: 30px; color: var(--text-muted);"><span style="font-size: 2rem;">⏳</span><br>Cargando documentos de la nube...</div>';
             
             try {
@@ -762,8 +721,6 @@
                 let htmlContent = '';
                 querySnapshot.forEach((doc) => {
                     const data = doc.data();
-                    
-                    // Icono dependiendo del tipo de archivo
                     let icono = '📄';
                     if(data.tipoArchivo && data.tipoArchivo.includes('pdf')) icono = '📋';
                     if(data.tipoArchivo && data.tipoArchivo.includes('image')) icono = '🖼️';
@@ -783,17 +740,14 @@
                     `;
                 });
                 contenedor.innerHTML = htmlContent;
-                
             } catch (error) {
                 console.error("Error cargando documentos:", error);
                 contenedor.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; padding: 30px; color: #ef4444;">❌ Error cargando la biblioteca. Verifica tu conexión y los permisos de Firestore.</div>';
             }
         }
 
-        // 2. Subir nuevo documento
         document.getElementById('form-subir-doc').addEventListener('submit', async (e) => {
             e.preventDefault();
-            
             const btnSubmit = document.getElementById('btn-submit-doc');
             const titulo = document.getElementById('doc-titulo').value;
             const desc = document.getElementById('doc-desc').value;
@@ -802,58 +756,39 @@
             const barra = document.getElementById('barra-progreso');
             const textoProgreso = document.getElementById('texto-progreso');
             
-            if (archivoInput.files.length === 0) {
-                alert("Selecciona un archivo primero.");
-                return;
-            }
-
+            if (archivoInput.files.length === 0) return alert("Selecciona un archivo primero.");
             const archivo = archivoInput.files[0];
-            btnSubmit.disabled = true;
-            btnSubmit.innerText = "Subiendo archivo...";
-            barraContenedor.style.display = 'block';
-            textoProgreso.style.display = 'block';
-
-            // Crear referencia en Storage (carpeta 'documentos_erp/')
-            const storageRef = ref(window.storage, 'documentos_erp/' + Date.now() + '_' + archivo.name);
             
-            // Iniciar subida con progreso
+            btnSubmit.disabled = true; btnSubmit.innerText = "Subiendo archivo...";
+            barraContenedor.style.display = 'block'; textoProgreso.style.display = 'block';
+
+            const storageRef = ref(window.storage, 'documentos_erp/' + Date.now() + '_' + archivo.name);
             const uploadTask = uploadBytesResumable(storageRef, archivo);
 
             uploadTask.on('state_changed', 
                 (snapshot) => {
-                    // Actualizar barra de progreso
                     const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
                     barra.style.width = progress + '%';
                     textoProgreso.innerText = `Subiendo... ${Math.round(progress)}%`;
                 }, 
                 (error) => {
-                    console.error("Error en la subida:", error);
                     alert("Error subiendo el archivo: " + error.message);
                     resetFormularioDocs();
                 }, 
                 async () => {
-                    // Subida completada exitosamente
                     try {
                         const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-                        
-                        // Guardar referencia en Firestore
                         await addDoc(collection(window.db, "biblioteca_documentos"), {
-                            titulo: titulo,
-                            descripcion: desc,
-                            urlDescarga: downloadURL,
-                            nombreArchivoOriginal: archivo.name,
-                            tipoArchivo: archivo.type,
+                            titulo: titulo, descripcion: desc, urlDescarga: downloadURL,
+                            nombreArchivoOriginal: archivo.name, tipoArchivo: archivo.type,
                             fechaSubida: serverTimestamp(),
                             usuario: window.auth.currentUser ? window.auth.currentUser.email : 'Usuario Desconocido'
                         });
-
                         alert("¡Documento subido y guardado exitosamente!");
                         document.getElementById('modal-subir-doc').style.display = 'none';
-                        cargarBibliotecaDocumentos(); // Refrescar vista
+                        cargarBibliotecaDocumentos();
                         resetFormularioDocs();
-                        
                     } catch (firestoreError) {
-                        console.error("Error guardando en BD:", firestoreError);
                         alert("El archivo se subió, pero hubo un error al guardar los datos.");
                         resetFormularioDocs();
                     }
@@ -861,15 +796,15 @@
             );
 
             function resetFormularioDocs() {
-                btnSubmit.disabled = false;
-                btnSubmit.innerText = "Subir y Guardar";
-                barraContenedor.style.display = 'none';
-                textoProgreso.style.display = 'none';
-                barra.style.width = '0%';
-                document.getElementById('form-subir-doc').reset();
+                btnSubmit.disabled = false; btnSubmit.innerText = "Subir y Guardar";
+                barraContenedor.style.display = 'none'; textoProgreso.style.display = 'none';
+                barra.style.width = '0%'; document.getElementById('form-subir-doc').reset();
             }
         });
     </script>
+    
+    <!-- LÓGICA DE GANADERÍA (HATO Y RFID) -->
+    <!-- Como tienes tu js en una carpeta, lo dejamos como lo pediste: src="js/hato.js" -->
     <script type="module" src="js/hato.js"></script>
 
     <script>
