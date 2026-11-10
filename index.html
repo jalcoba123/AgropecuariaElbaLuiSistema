@@ -477,9 +477,10 @@
             <form id="form-masivo">
                 <div class="form-field">
                     <label>Tipo de Acción</label>
-                    <select id="m-tipo" onchange="document.getElementById('m-div-vacuna').style.display = this.value === 'Sanidad' ? 'block' : 'none'; document.getElementById('m-div-destete').style.display = this.value === 'Destete' ? 'block' : 'none';">
+                    <select id="m-tipo" onchange="document.getElementById('m-div-vacuna').style.display = this.value === 'Sanidad' ? 'block' : 'none'; document.getElementById('m-div-destete').style.display = this.value === 'Destete' ? 'block' : 'none'; document.getElementById('m-div-lote').style.display = this.value === 'MoverLote' ? 'block' : 'none';">
                         <option value="Sanidad">💉 Aplicar Tratamiento / Vacuna</option>
                         <option value="Destete">🏅 Destetar Lote (Pasan a Mautes)</option>
+                        <option value="MoverLote">📍 Mover de Lote / Potrero</option>
                     </select>
                 </div>
                 
@@ -487,6 +488,13 @@
                     <label>Seleccione el Tratamiento</label>
                     <select id="m-vacuna-nombre">
                         <option value="">Seleccione una opción...</option>
+                    </select>
+                </div>
+
+                <div id="m-div-lote" class="form-field" style="display:none;">
+                    <label>Nuevo Lote / Potrero de Destino</label>
+                    <select id="m-nuevo-lote-select">
+                        <option value="">Cargando lotes...</option>
                     </select>
                 </div>
 
@@ -533,10 +541,23 @@
                     <div><span style="font-size: 1.5rem; font-weight: bold; color: var(--text-dark);" id="f-arete">---</span><br><span style="font-size: 0.8rem; color: #64748b;" id="f-finca-tag">---</span></div>
                     <div style="text-align: right;"><span style="background: #e2e8f0; padding: 4px 10px; border-radius: 20px; font-size: 0.85rem; font-weight: bold;" id="f-categoria">---</span><br><span style="font-size: 0.8rem; color: #64748b; font-weight: 600;" id="f-estado">---</span></div>
                 </div>
-                <div style="display: flex; gap: 15px; font-size: 0.85rem;">
+                
+                <div style="display: flex; gap: 15px; font-size: 0.85rem; margin-bottom: 12px; align-items: center;">
                     <div><strong>Padre:</strong> <span id="f-padre">---</span></div>
                     <div><strong>Madre:</strong> <span id="f-madre">---</span></div>
                 </div>
+
+                <!-- CAMPO DIRECTO PARA CAMBIAR DE LOTE DESDE LA FICHA -->
+                <div style="background: #f0fdf4; border: 1px solid #bbf7d0; padding: 10px; border-radius: 8px; display: flex; align-items: center; gap: 10px; margin-bottom: 12px;">
+                    <div style="flex-grow: 1;">
+                        <label style="font-size: 0.75rem; color: #166534; font-weight: bold; display: block; margin-bottom: 3px;">📍 Lote / Potrero Actual</label>
+                        <select id="f-lote-select" style="width: 100%; padding: 6px; border-radius: 6px; border: 1px solid #86efac; font-size: 0.85rem; font-weight: bold; color: #14532d; background: white;">
+                            <option value="General">General / Sin Asignar</option>
+                        </select>
+                    </div>
+                    <button type="button" onclick="window.guardarNuevoLoteAnimal()" style="background: #16a34a; color: white; border: none; padding: 8px 12px; border-radius: 6px; font-size: 0.8rem; font-weight: bold; cursor: pointer; margin-top: 15px;">Actualizar Lote</button>
+                </div>
+
                 <div id="f-historial-salud" style="margin-top: 15px; padding: 10px; border-radius: 6px; border: 1px solid var(--border-light); font-size: 0.85rem; text-align: center;">🟢 Sano</div>
                 
                 <input type="hidden" id="p-id-doc">
@@ -703,9 +724,6 @@
             localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() })
         });
 
-        // ==========================================
-        // 🍞 SISTEMA GLOBAL DE TOASTS (NOTIFICACIONES)
-        // ==========================================
         window.mostrarToast = function(mensaje, tipo = 'exito') {
             const contenedor = document.getElementById('toast-container');
             if (!contenedor) return;
