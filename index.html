@@ -15,12 +15,12 @@
             .btn-action, #offline-status-bar, #modal-animal, #login-screen,
             .finca-toggle, button[onclick="window.print()"] { display: none !important; }
             .section-view, #app-container, .modulo-hato { display: block !important; box-shadow: none !important; border: none !important; }
-            #tab-dashboard, #tab-lecheria, #tab-palma, #tab-operaciones, #tab-finanzas, #tab-documentos, #tab-planificacion,
-            #subtab-lector, #subtab-config, #subtab-calendario,
+            #tab-dashboard, #tab-lecheria, #tab-palma, #tab-operaciones, #tab-finanzas, #tab-documentos,
+            #subtab-lector, #subtab-config, #subtab-calendario, #subtab-planificacion-bovina,
             div[style*="grid-template-columns: repeat(auto-fit, minmax(140px, 1fr))"] { display: none !important; }
             th:first-child, td:first-child, th:last-child, td:last-child { display: none !important; }
             table { border: 1px solid #ccc !important; width: 100% !important; }
-            th, td { padding: 6px !important; font-size: 10pt !important; border-bottom: 1px solid #ddd !important; }
+            th, td { padding: 6px !important; font-size: 9pt !important; border-bottom: 1px solid #ddd !important; }
         }
     </style>
 </head>
@@ -76,7 +76,6 @@
         <nav class="category-nav">
             <button class="cat-chip active" onclick="switchTab('dashboard', this)">📊 Torre de Control</button>
             <button class="cat-chip" onclick="switchTab('hato', this)">🐮 Hato & Sanidad</button>
-            <button class="cat-chip" onclick="switchTab('planificacion', this)">🎯 Planificación & Simulador</button>
             <button class="cat-chip" onclick="switchTab('lecheria', this)">🥛 Lechería & Raciones</button>
             <button class="cat-chip" onclick="switchTab('palma', this)">🌴 Palma & Agronomía</button>
             <button class="cat-chip" onclick="switchTab('operaciones', this)">🚜 Operaciones & Activos</button>
@@ -137,15 +136,16 @@
                 </div>
             </div>
 
-            <!-- MÓDULO 2: HATO Y SANIDAD -->
+            <!-- MÓDULO 2: HATO Y SANIDAD (Con Submenú Planificación Bovina) -->
             <div id="tab-hato" class="section-view">
                 
-                <!-- BARRA DE SUB-MENÚS DEL HATO (Incluyendo Calendario) -->
+                <!-- BARRA DE SUB-MENÚS DEL HATO -->
                 <div class="tabs-hato-container" style="display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; overflow-x: auto;">
                     <button class="tab-btn active" onclick="window.cambiarModuloHato(event, 'subtab-inventario')" style="padding: 10px 15px; cursor: pointer; border-radius: 8px; border: none; background: #0f172a; color: white; font-weight: bold; white-space: nowrap;">📦 Inventario General</button>
                     <button class="tab-btn" onclick="window.cambiarModuloHato(event, 'subtab-lector')" style="padding: 10px 15px; cursor: pointer; border-radius: 8px; border: 1px solid #cbd5e1; background: white; color: #334155; font-weight: bold; white-space: nowrap;">🏷️ Lector RFID (Manga)</button>
                     <button class="tab-btn" onclick="window.cambiarModuloHato(event, 'subtab-config')" style="padding: 10px 15px; cursor: pointer; border-radius: 8px; border: 1px solid #cbd5e1; background: white; color: #334155; font-weight: bold; white-space: nowrap;">⚙️ Configurar Lotes & Vacunas</button>
                     <button class="tab-btn" onclick="window.cambiarModuloHato(event, 'subtab-calendario')" style="padding: 10px 15px; cursor: pointer; border-radius: 8px; border: 1px solid #cbd5e1; background: white; color: #334155; font-weight: bold; white-space: nowrap;">📅 Calendario Actividades</button>
+                    <button class="tab-btn" onclick="window.cambiarModuloHato(event, 'subtab-planificacion-bovina')" style="padding: 10px 15px; cursor: pointer; border-radius: 8px; border: 1px solid #16a34a; background: #f0fdf4; color: #166534; font-weight: bold; white-space: nowrap;">🎯 Planificación Bovina</button>
                 </div>
 
                 <!-- SUB-PÁGINA 1: INVENTARIO COMPLETO -->
@@ -358,156 +358,295 @@
                     </div>
                 </div>
 
-            </div>
-            
-            <!-- MÓDULO NUEVO: PLANIFICACIÓN & SIMULADOR (SANDBOX) -->
-            <div id="tab-planificacion" class="section-view">
-                <div style="background: white; padding: 25px; border-radius: 12px; border: 1px solid var(--border-light); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
-                    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #bbf7d0; padding-bottom: 15px; margin-bottom: 20px; flex-wrap: wrap; gap: 15px;">
-                        <div>
-                            <h2 style="color: var(--green-dark); margin: 0;">🎯 Planificación Estratégica & Simulador (Sandbox)</h2>
-                            <p style="font-size: 0.9rem; color: var(--text-muted); margin: 5px 0 0 0;">Define el propósito productivo de la finca y simula proyecciones de rebaño a 5 años sin alterar datos reales.</p>
+                <!-- SUB-PÁGINA 5: PLANIFICACIÓN BOVINA (MOVIMIENTO DE REBAÑO) -->
+                <div id="subtab-planificacion-bovina" class="modulo-hato" style="display: none;">
+                    <div style="background: white; padding: 25px; border-radius: 12px; border: 1px solid var(--border-light); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
+                        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #bbf7d0; padding-bottom: 15px; margin-bottom: 20px; flex-wrap: wrap; gap: 15px;">
+                            <div>
+                                <h2 style="color: var(--green-dark); margin: 0;">🎯 Planificación Bovina • Movimiento de Rebaño</h2>
+                                <p style="font-size: 0.9rem; color: var(--text-muted); margin: 5px 0 0 0;">Análisis técnico del hato: existencia inicial, natalidad (80%), mortalidad (adultos 5%, crías 12%), selección (60% hembras) y eliminación (10%).</p>
+                            </div>
+                            <div style="display: flex; gap: 10px;">
+                                <button onclick="window.print()" class="btn-action" style="background: #475569; color: white;">🖨️ Imprimir Movimiento</button>
+                            </div>
                         </div>
-                        <button onclick="document.getElementById('modal-proposito').style.display='flex'" style="background: var(--green-primary); color: white; border: none; padding: 10px 15px; border-radius: 6px; cursor: pointer; font-weight: bold;">⚙️ Configurar Propósito & Índices</button>
-                    </div>
 
-                    <!-- Panel de Estado del Propósito Actual -->
-                    <div style="background: #f0fdf4; border: 1px solid #bbf7d0; padding: 15px; border-radius: 8px; margin-bottom: 25px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
-                        <div>
-                            <strong style="color: #166534; font-size: 0.95rem; display: block; margin-bottom: 3px;">Enfoque Productivo Activo:</strong>
-                            <span id="lbl-proposito-activo" style="font-size: 1.1rem; font-weight: bold; color: #14532d;">🐮 Doble Propósito (Ordeño + Cría y Ceba)</span>
+                        <!-- PARÁMETROS BASE DEL CASO PRÁCTICO -->
+                        <div style="background: #f0fdf4; border: 1px solid #bbf7d0; padding: 15px; border-radius: 8px; margin-bottom: 25px; display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; font-size: 0.85rem; color: #166534;">
+                            <div><strong>Relación H : M:</strong> 25 H / 1 M</div>
+                            <div><strong>% Natalidad:</strong> 80%</div>
+                            <div><strong>% Mortalidad Adultos:</strong> 5%</div>
+                            <div><strong>% Mortalidad Crías:</strong> 12%</div>
+                            <div><strong>% Selección Hembras:</strong> 60%</div>
+                            <div><strong>% Eliminación / Desecho:</strong> 10%</div>
                         </div>
-                        <div style="display: flex; gap: 15px; font-size: 0.85rem; color: #166534;">
-                            <div>Natalidad: <strong id="lbl-ind-natalidad">80%</strong>[cite: 11]</div>
-                            <div>Mortalidad Crías: <strong id="lbl-ind-mort-crias">12%</strong>[cite: 11]</div>
-                            <div>Mortalidad Adultos: <strong id="lbl-ind-mort-adultos">5%</strong>[cite: 11]</div>
-                        </div>
-                    </div>
 
-                    <!-- PESTAÑAS INTERNAS DE PLANIFICACIÓN -->
-                    <div style="display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 1px solid #e2e8f0; padding-bottom: 10px;">
-                        <button class="btn-plan-tab active" onclick="cambiarSubTabPlan('matriz-5anos', this)" style="padding: 8px 14px; border-radius: 6px; border: none; background: #0f172a; color: white; font-weight: bold; cursor: pointer;">📊 Matriz Movimiento Rebaño (5 Años)</button>
-                        <button class="btn-plan-tab" onclick="cambiarSubTabPlan('sandbox-simulador', this)" style="padding: 8px 14px; border-radius: 6px; border: 1px solid #cbd5e1; background: white; color: #334155; font-weight: bold; cursor: pointer;">🧪 Simulador Ficticio de Ventas & Carga</button>
-                    </div>
-
-                    <!-- SUB-VISTA 1: MATRIZ A 5 AÑOS -->
-                    <div id="plan-sub-matriz" class="plan-subview">
-                        <h3 style="color: #0f172a; font-size: 1rem; margin-bottom: 10px;">Proyección Matricial del Hato (Modelo Finca Astron / ElbaLui)</h3>
-                        <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 15px;">Evolución teórica de adultos, crías, muertes, ventas y ceba calculada bajo índices técnicos oficiales[cite: 11, 12].</p>
-                        
-                        <div style="overflow-x: auto;">
-                            <table style="width: 100%; border-collapse: collapse; font-size: 0.85rem; text-align: center;">
+                        <!-- 1. MATRIZ GENERAL DE MOVIMIENTO DE REBAÑO -->
+                        <h3 style="color: #0f172a; font-size: 1.1rem; margin-bottom: 10px;">📊 Matriz de Movimiento de Rebaño (Caso Práctico 3 Años)</h3>
+                        <div style="overflow-x: auto; margin-bottom: 30px;">
+                            <table style="width: 100%; border-collapse: collapse; font-size: 0.8rem; text-align: center;">
                                 <thead style="background: #f1f5f9;">
                                     <tr>
-                                        <th style="padding: 10px; border: 1px solid #cbd5e1;">Periodo</th>
-                                        <th style="padding: 10px; border: 1px solid #cbd5e1;">Adultos (H)</th>
-                                        <th style="padding: 10px; border: 1px solid #cbd5e1;">Machos Reproducción (M)</th>
-                                        <th style="padding: 10px; border: 1px solid #cbd5e1;">Muertes (H)</th>
-                                        <th style="padding: 10px; border: 1px solid #cbd5e1;">Muertes (M)</th>
-                                        <th style="padding: 10px; border: 1px solid #cbd5e1;">Ceba (M)</th>
-                                        <th style="padding: 10px; border: 1px solid #cbd5e1;">Ventas / Descarte (H)</th>
-                                        <th style="padding: 10px; border: 1px solid #cbd5e1;">Matadero</th>
-                                        <th style="padding: 10px; border: 1px solid #cbd5e1; background: #e2e8f0;">Rebaño Total</th>
+                                        <th rowspan="2" style="padding: 10px; border: 1px solid #cbd5e1; vertical-align: middle;">Periodo</th>
+                                        <th colspan="2" style="padding: 8px; border: 1px solid #cbd5e1;">Adultos</th>
+                                        <th colspan="2" style="padding: 8px; border: 1px solid #cbd5e1;">Crías</th>
+                                        <th colspan="2" style="padding: 8px; border: 1px solid #cbd5e1;">Muertes</th>
+                                        <th colspan="2" style="padding: 8px; border: 1px solid #cbd5e1;">Ceba</th>
+                                        <th colspan="2" style="padding: 8px; border: 1px solid #cbd5e1;">Ventas</th>
+                                        <th colspan="2" style="padding: 8px; border: 1px solid #cbd5e1;">Matadero</th>
+                                        <th rowspan="2" style="padding: 10px; border: 1px solid #cbd5e1; background: #e2e8f0; vertical-align: middle;">Rebaño Total</th>
+                                    </tr>
+                                    <tr>
+                                        <th style="padding: 6px; border: 1px solid #cbd5e1;">H</th><th style="padding: 6px; border: 1px solid #cbd5e1;">M</th>
+                                        <th style="padding: 6px; border: 1px solid #cbd5e1;">H</th><th style="padding: 6px; border: 1px solid #cbd5e1;">M</th>
+                                        <th style="padding: 6px; border: 1px solid #cbd5e1;">H</th><th style="padding: 6px; border: 1px solid #cbd5e1;">M</th>
+                                        <th style="padding: 6px; border: 1px solid #cbd5e1;">H</th><th style="padding: 6px; border: 1px solid #cbd5e1;">M</th>
+                                        <th style="padding: 6px; border: 1px solid #cbd5e1;">H</th><th style="padding: 6px; border: 1px solid #cbd5e1;">M</th>
+                                        <th style="padding: 6px; border: 1px solid #cbd5e1;">H</th><th style="padding: 6px; border: 1px solid #cbd5e1;">M</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1; font-weight: bold;">Inicio 1er Año</td>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">130</td>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">5</td>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">-</td>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">-</td>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">-</td>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">-</td>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">-</td>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">-</td>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">-</td>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">-</td>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">-</td>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">-</td>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1; font-weight: bold; background: #f8fafc;">135</td>
+                                    </tr>
+                                    <tr>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1; font-weight: bold;">Natalidad / Operación</td>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">-7</td>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">0</td>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">52</td>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">52</td>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">7</td>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">6</td>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">-</td>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">44</td>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">-</td>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">-</td>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">12</td>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">1</td>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">-</td>
+                                    </tr>
+                                    <tr style="background: #f8fafc;">
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1; font-weight: bold;">Final 1er Año</td>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">139</td>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">6</td>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">46</td>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">-</td>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">-</td>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">-</td>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">-</td>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">18</td>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">-</td>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">-</td>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">-</td>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">-</td>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1; font-weight: bold; background: #e2e8f0;">189</td>
+                                    </tr>
+                                    <tr>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1; font-weight: bold;">Final 2do Año</td>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">148</td>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">6</td>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">49</td>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">-</td>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">7</td>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">7</td>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">-</td>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">20</td>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">-</td>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">-</td>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">13</td>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">1</td>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1; font-weight: bold; background: #f8fafc;">246</td>
+                                    </tr>
+                                    <tr style="background: #f8fafc;">
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1; font-weight: bold;">Final 3er Año</td>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">148</td>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">6</td>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">52</td>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">-</td>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">7</td>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">7</td>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">-</td>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">31</td>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">-</td>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">7</td>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">14</td>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">1</td>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1; font-weight: bold; background: #e2e8f0;">246</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- 2. RESUMEN DEL MOVIMIENTO DE REBAÑO -->
+                        <h3 style="color: #0f172a; font-size: 1.1rem; margin-bottom: 10px;">📋 Resumen Consolidado del Movimiento de Rebaño</h3>
+                        <div style="overflow-x: auto; margin-bottom: 30px;">
+                            <table style="width: 100%; border-collapse: collapse; font-size: 0.8rem; text-align: center;">
+                                <thead style="background: #f1f5f9;">
+                                    <tr>
+                                        <th style="padding: 8px; border: 1px solid #cbd5e1;">Periodo</th>
+                                        <th style="padding: 8px; border: 1px solid #cbd5e1;">Adultos H</th>
+                                        <th style="padding: 8px; border: 1px solid #cbd5e1;">Adultos M</th>
+                                        <th style="padding: 8px; border: 1px solid #cbd5e1;">Muertes H</th>
+                                        <th style="padding: 8px; border: 1px solid #cbd5e1;">Muertes M</th>
+                                        <th style="padding: 8px; border: 1px solid #cbd5e1;">Ceba M</th>
+                                        <th style="padding: 8px; border: 1px solid #cbd5e1;">Ventas M</th>
+                                        <th style="padding: 8px; border: 1px solid #cbd5e1;">Matadero H</th>
+                                        <th style="padding: 8px; border: 1px solid #cbd5e1;">Matadero M</th>
+                                        <th style="padding: 8px; border: 1px solid #cbd5e1; background: #e2e8f0;">Rebaño Total</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     <tr>
                                         <td style="padding: 8px; border: 1px solid #cbd5e1; font-weight: bold;">Inicio</td>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">223</td>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">9</td>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">130</td>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">5</td>
                                         <td style="padding: 8px; border: 1px solid #cbd5e1;">-</td>
                                         <td style="padding: 8px; border: 1px solid #cbd5e1;">-</td>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">81</td>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">14</td>
                                         <td style="padding: 8px; border: 1px solid #cbd5e1;">-</td>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1; font-weight: bold; background: #f8fafc;">313[cite: 12]</td>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">-</td>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">-</td>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">-</td>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1; font-weight: bold;">135</td>
                                     </tr>
                                     <tr>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1; font-weight: bold;">Final 1er Año</td>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">238</td>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">10</td>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">22</td>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1; font-weight: bold;">Final 1er año</td>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">139</td>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">6</td>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">7</td>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">6</td>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">44</td>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">0</td>
                                         <td style="padding: 8px; border: 1px solid #cbd5e1;">12</td>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">76</td>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">31</td>
                                         <td style="padding: 8px; border: 1px solid #cbd5e1;">1</td>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1; font-weight: bold; background: #f8fafc;">324[cite: 12]</td>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1; font-weight: bold;">189</td>
                                     </tr>
                                     <tr>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1; font-weight: bold;">Final 2do Año</td>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">253</td>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">10</td>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">23</td>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">12</td>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">83</td>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">34</td>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">1</td>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1; font-weight: bold; background: #f8fafc;">346[cite: 12]</td>
-                                    </tr>
-                                    <tr>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1; font-weight: bold;">Final 3er Año</td>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">269</td>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">11</td>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">25</td>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1; font-weight: bold;">Final 2do año</td>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">148</td>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">6</td>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">7</td>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">7</td>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">48</td>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">0</td>
                                         <td style="padding: 8px; border: 1px solid #cbd5e1;">13</td>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">87</td>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">36</td>
                                         <td style="padding: 8px; border: 1px solid #cbd5e1;">1</td>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1; font-weight: bold; background: #f8fafc;">367[cite: 12]</td>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1; font-weight: bold;">246</td>
                                     </tr>
                                     <tr>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1; font-weight: bold;">Final 5to Año</td>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">286</td>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">11</td>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">28</td>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">15</td>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">94</td>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">59</td>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1; font-weight: bold;">Final 3er año</td>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">148</td>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">6</td>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">7</td>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">7</td>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">51</td>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">7</td>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">14</td>
                                         <td style="padding: 8px; border: 1px solid #cbd5e1;">1</td>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1; font-weight: bold; background: #f8fafc;">391[cite: 12]</td>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1; font-weight: bold;">246</td>
                                     </tr>
                                 </tbody>
                             </table>
                         </div>
-                    </div>
 
-                    <!-- SUB-VISTA 2: SIMULADOR / SANDBOX -->
-                    <div id="plan-sub-sandbox" class="plan-subview" style="display: none;">
-                        <h3 style="color: #0f172a; font-size: 1rem; margin-bottom: 10px;">🧪 Entorno de Ensayos Ficticios (Sandbox)</h3>
-                        <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 15px;">Realiza simulaciones financieras y de descarte. Los cambios aquí son completamente ficticios y no modifican tu base de datos real.</p>
-                        
-                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px;">
-                            <div style="background: #f8fafc; border: 1px solid #cbd5e1; padding: 15px; border-radius: 8px;">
-                                <h4 style="color: #0369a1; margin-top: 0; font-size: 0.95rem;">Simulador de Venta de Lotes</h4>
-                                <div class="form-field" style="margin-bottom: 10px;">
-                                    <label style="font-size: 0.8rem;">Cantidad de Mautes / Novillos a Vender:</label>
-                                    <input type="number" id="sim-cant-ventas" value="20" style="width: 100%; padding: 6px; font-size: 0.85rem;">
-                                </div>
-                                <div class="form-field" style="margin-bottom: 10px;">
-                                    <label style="font-size: 0.8rem;">Precio Promedio Estimado por Kilo ($):</label>
-                                    <input type="number" step="0.01" id="sim-precio-kilo" value="1.50" style="width: 100%; padding: 6px; font-size: 0.85rem;">
-                                </div>
-                                <div class="form-field" style="margin-bottom: 15px;">
-                                    <label style="font-size: 0.8rem;">Peso Promedio por Animal (Kg):</label>
-                                    <input type="number" id="sim-peso-prom" value="300" style="width: 100%; padding: 6px; font-size: 0.85rem;">
-                                </div>
-                                <button onclick="ejecutarSimulacionVenta()" style="background: #0ea5e9; color: white; border: none; padding: 8px; width: 100%; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 0.85rem;">Calcular Ingreso Ficticio 🧮</button>
-                            </div>
-
-                            <div style="background: #f0fdf4; border: 1px solid #bbf7d0; padding: 15px; border-radius: 8px; display: flex; flex-direction: column; justify-content: space-between;">
-                                <div>
-                                    <h4 style="color: #166534; margin-top: 0; font-size: 0.95rem;">Resultado del Ensayo Ficticio</h4>
-                                    <p style="font-size: 0.85rem; color: #14532d; margin-bottom: 10px;">Proyección estimada de ingresos brutos en base a los parámetros introducidos en el sandbox.</p>
-                                    <div style="font-size: 1.8rem; font-weight: bold; color: #15803d; margin: 15px 0;" id="sim-resultado-monto">$ 9,000.00</div>
-                                </div>
-                                <div style="font-size: 0.75rem; color: #166534; font-style: italic; border-top: 1px dashed #86efac; padding-top: 8px;">
-                                    Nota: Este cálculo es un entorno aislado de práctica. No afecta los registros contables del Banco Mercantil ni de Binance P2P.
-                                </div>
-                            </div>
+                        <!-- 3. COMPOSICIÓN DEL REBAÑO POR TIPO DE EXPLOTACIÓN (LECHE) -->
+                        <h3 style="color: #0f172a; font-size: 1.1rem; margin-bottom: 10px;">🥛 Composición del Rebaño por Grupo Etario (Tipo Explotación: Leche)</h3>
+                        <div style="overflow-x: auto;">
+                            <table style="width: 100%; border-collapse: collapse; font-size: 0.8rem; text-align: center;">
+                                <thead style="background: #f1f5f9;">
+                                    <tr>
+                                        <th style="padding: 8px; border: 1px solid #cbd5e1; text-align: left;">Grupo Etario</th>
+                                        <th style="padding: 8px; border: 1px solid #cbd5e1;">% Base</th>
+                                        <th style="padding: 8px; border: 1px solid #cbd5e1;">Inicio</th>
+                                        <th style="padding: 8px; border: 1px solid #cbd5e1;">1er Año</th>
+                                        <th style="padding: 8px; border: 1px solid #cbd5e1;">2do Año</th>
+                                        <th style="padding: 8px; border: 1px solid #cbd5e1;">3er Año</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1; text-align: left; font-weight: bold;">Vacas Totales (VT)</td>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">50%</td>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">65</td>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">70</td>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">74</td>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">74</td>
+                                    </tr>
+                                    <tr>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1; text-align: left; padding-left: 20px;">↳ VT: Vacas de Ordeño</td>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">70% (de VT)</td>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">46</td>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">49</td>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">52</td>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">52</td>
+                                    </tr>
+                                    <tr>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1; text-align: left; padding-left: 20px;">↳ VT: Vacas Secas</td>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">30% (de VT)</td>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">19</td>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">21</td>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">22</td>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">22</td>
+                                    </tr>
+                                    <tr>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1; text-align: left; font-weight: bold;">Novillas Vientres</td>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">14%</td>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">18</td>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">20</td>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">21</td>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">21</td>
+                                    </tr>
+                                    <tr>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1; text-align: left; font-weight: bold;">Novillas (12-18 meses)</td>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">14%</td>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">18</td>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">20</td>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">21</td>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">21</td>
+                                    </tr>
+                                    <tr>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1; text-align: left; font-weight: bold;">Mautas (6-12 meses)</td>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">22%</td>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">29</td>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">31</td>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">33</td>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">33</td>
+                                    </tr>
+                                    <tr>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1; text-align: left; font-weight: bold;">Toros Reproductores</td>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">-</td>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">5</td>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">6</td>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">6</td>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">6</td>
+                                    </tr>
+                                    <tr>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1; text-align: left; font-weight: bold;">Ceba / Mautes (6-12 meses)</td>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">-</td>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">49</td>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">44</td>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">48</td>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">48</td>
+                                    </tr>
+                                </tbody>
+                            </table>
                         </div>
-                    </div>
 
+                    </div>
                 </div>
+
             </div>
             
             <!-- MÓDULO 3: LECHERÍA & RACIONES -->
@@ -565,41 +704,6 @@
     </div>
 
     <!-- MODALES -->
-    <!-- MODAL DE CONFIGURACIÓN DE PROPÓSITO DE LA FINCA -->
-    <div id="modal-proposito" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 2000; padding: 20px;">
-        <div style="background: white; padding: 24px; border-radius: 12px; width: 100%; max-width: 450px;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                <h3 style="color: var(--green-dark); margin: 0;">⚙️ Configurar Propósito e Índices</h3>
-                <button onclick="document.getElementById('modal-proposito').style.display='none'" style="background:none; border:none; font-size:1.5rem; cursor:pointer;">&times;</button>
-            </div>
-            <form id="form-proposito" onsubmit="event.preventDefault(); guardarPropuestaFinca();">
-                <div class="form-field" style="margin-bottom: 12px;">
-                    <label style="font-size: 0.85rem; font-weight: bold;">Propósito Principal de la Finca</label>
-                    <select id="sel-proposito-finca" style="width: 100%; padding: 8px; border-radius: 6px; border: 1px solid #cbd5e1;">
-                        <option value="Doble Propósito (Ordeño + Cría)">🐮 Doble Propósito (Ordeño + Cría)</option>
-                        <option value="Cría Comercial (Venta de Destetes)">🌱 Cría Comercial (Venta de Mautes/Mautas)</option>
-                        <option value="Ceba / Engorde Intensivo">🥩 Ceba / Engorde Intensivo de Levante</option>
-                    </select>
-                </div>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px;">
-                    <div class="form-field">
-                        <label style="font-size: 0.8rem;">% Natalidad</label>
-                        <input type="number" id="inp-ind-nat" value="80" style="width: 100%; padding: 6px;">
-                    </div>
-                    <div class="form-field">
-                        <label style="font-size: 0.8rem;">% Mortalidad Crías</label>
-                        <input type="number" id="inp-ind-mort-c" value="12" style="width: 100%; padding: 6px;">
-                    </div>
-                </div>
-                <div class="form-field" style="margin-bottom: 15px;">
-                    <label style="font-size: 0.8rem;">% Mortalidad Adultos</label>
-                    <input type="number" id="inp-ind-mort-a" value="5" style="width: 100%; padding: 6px;">
-                </div>
-                <button type="submit" style="background: var(--green-primary); color: white; border: none; padding: 10px; width: 100%; border-radius: 6px; font-weight: bold; cursor: pointer;">Guardar Configuración Técnica</button>
-            </form>
-        </div>
-    </div>
-
     <div id="modal-animal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 1000; padding: 20px;">
         <div style="background: white; padding: 24px; border-radius: 12px; width: 100%; max-width: 450px;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
@@ -691,167 +795,6 @@
 
                 <button type="submit" id="btn-submit-masivo" class="btn-action" style="width:100%; margin-top:10px; background: #eab308; color: white;">Ejecutar Acción a Todos</button>
             </form>
-        </div>
-    </div>
-
-    <div id="modal-novedad" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 1000; padding: 20px;">
-        <div style="background: white; padding: 24px; border-radius: 12px; width: 100%; max-width: 400px;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                <h3 style="color: #be123c; margin: 0;">🏥 Reportar Novedad</h3>
-                <button onclick="document.getElementById('modal-novedad').style.display='none'" style="background:none; border:none; font-size:1.5rem; cursor:pointer;">&times;</button>
-            </div>
-            <p style="font-size: 0.9rem; margin-bottom: 15px;">Arete: <strong id="n-arete-display"></strong></p>
-            <form id="form-novedad">
-                <input type="hidden" id="n-id">
-                <div class="form-field">
-                    <label>Estado de Salud / Síntomas</label>
-                    <input type="text" id="n-estado-salud" placeholder="Ej. Cojera, Mastitis, Gusarapa..." required>
-                </div>
-                <div style="display: flex; gap: 10px;">
-                    <button type="button" class="btn-action" onclick="document.getElementById('n-estado-salud').value='🟢 Sano'" style="background: #10b981; color: white; flex: 1;">Marcar Sano</button>
-                    <button type="submit" class="btn-action" style="background: #be123c; color: white; flex: 1;">Guardar Novedad</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <div id="modal-ficha" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 1000; padding: 20px;">
-        <div style="background: #f8fafc; padding: 24px; border-radius: 12px; width: 100%; max-width: 600px; max-height: 90vh; overflow-y: auto;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                <h2 style="color: var(--green-dark); margin: 0;">Expediente Clínico</h2>
-                <button onclick="document.getElementById('modal-ficha').style.display='none'" style="background:none; border:none; font-size:1.5rem; cursor:pointer;">&times;</button>
-            </div>
-            
-            <div style="background: white; border-radius: 8px; padding: 15px; border: 1px solid var(--border-light); margin-bottom: 15px;">
-                <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-light); padding-bottom: 10px; margin-bottom: 10px;">
-                    <div><span style="font-size: 1.5rem; font-weight: bold; color: var(--text-dark);" id="f-arete">---</span><br><span style="font-size: 0.8rem; color: #64748b;" id="f-finca-tag">---</span></div>
-                    <div style="text-align: right;"><span style="background: #e2e8f0; padding: 4px 10px; border-radius: 20px; font-size: 0.85rem; font-weight: bold;" id="f-categoria">---</span><br><span style="font-size: 0.8rem; color: #64748b; font-weight: 600;" id="f-estado">---</span></div>
-                </div>
-                
-                <div style="display: flex; gap: 15px; font-size: 0.85rem; margin-bottom: 12px; align-items: center;">
-                    <div><strong>Padre:</strong> <span id="f-padre">---</span></div>
-                    <div><strong>Madre:</strong> <span id="f-madre">---</span></div>
-                </div>
-
-                <!-- CAMPO DIRECTO PARA CAMBIAR DE LOTE DESDE LA FICHA -->
-                <div style="background: #f0fdf4; border: 1px solid #bbf7d0; padding: 10px; border-radius: 8px; display: flex; align-items: center; gap: 10px; margin-bottom: 12px;">
-                    <div style="flex-grow: 1;">
-                        <label style="font-size: 0.75rem; color: #166534; font-weight: bold; display: block; margin-bottom: 3px;">📍 Lote / Potrero Actual</label>
-                        <select id="f-lote-select" style="width: 100%; padding: 6px; border-radius: 6px; border: 1px solid #86efac; font-size: 0.85rem; font-weight: bold; color: #14532d; background: white;">
-                            <option value="General">General / Sin Asignar</option>
-                        </select>
-                    </div>
-                    <button type="button" onclick="window.guardarNuevoLoteAnimal()" style="background: #16a34a; color: white; border: none; padding: 8px 12px; border-radius: 6px; font-size: 0.8rem; font-weight: bold; cursor: pointer; margin-top: 15px;">Actualizar Lote</button>
-                </div>
-
-                <div id="f-historial-salud" style="margin-top: 15px; padding: 10px; border-radius: 6px; border: 1px solid var(--border-light); font-size: 0.85rem; text-align: center;">🟢 Sano</div>
-                
-                <input type="hidden" id="p-id-doc">
-                <div style="display: flex; gap: 8px; margin-top: 15px; flex-wrap: wrap;">
-                    <button class="btn-action" onclick="document.getElementById('form-nuevo-repro').style.display='block'; document.getElementById('form-destete').style.display='none'" style="font-size: 0.8rem; padding: 6px 12px; background: white; color: var(--green-dark); border: 1px solid var(--green-primary);">+ Evento Reproductivo</button>
-                    <button class="btn-action" id="btn-show-destete" onclick="document.getElementById('form-destete').style.display='block'; document.getElementById('form-nuevo-repro').style.display='none'" style="font-size: 0.8rem; padding: 6px 12px; background: white; color: #b45309; border: 1px solid #fde047; display: none;">🏅 Ejecutar Destete</button>
-                    <button class="btn-action" onclick="document.getElementById('form-cambio-categoria').style.display='block'" style="font-size: 0.8rem; padding: 6px 12px; background: white; color: #0369a1; border: 1px solid #bae6fd;">🔄 Cambiar Categoría</button>
-                    
-                    <button class="btn-action" onclick="window.mandarABaja(document.getElementById('p-id-doc').value, document.getElementById('f-arete').innerText)" style="font-size: 0.8rem; padding: 6px 12px; background: #64748b; color: white; border: 1px solid #475569;">☠️ Reportar Baja / Venta</button>
-                    <button class="btn-action" onclick="window.eliminarAnimal(document.getElementById('p-id-doc').value, document.getElementById('f-arete').innerText)" style="font-size: 0.8rem; padding: 6px 12px; background: white; color: #be123c; border: 1px solid #fecdd3;">❌ Eliminar Permanentemente</button>
-                </div>
-            </div>
-
-            <form id="form-cambio-categoria" style="display:none; background: #e0f2fe; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
-                <h4 style="margin:0 0 10px 0; color: #0369a1;">Cambiar Categoría Manual</h4>
-                <select id="c-nueva-categoria" style="padding: 8px; width: 100%; margin-bottom: 10px; border-radius: 6px; border: 1px solid #bae6fd;">
-                    <option value="Becerro">Becerro (Macho)</option>
-                    <option value="Becerra">Becerra (Hembra)</option>
-                    <option value="Maute">Maute (Macho)</option>
-                    <option value="Mauta">Mauta (Hembra)</option>
-                    <option value="Novilla">Novilla</option>
-                    <option value="Vaca Ordeño">Vaca en Ordeño</option>
-                    <option value="Vaca Seca / Escampa">Vaca Seca / Escampa</option>
-                    <option value="Toro Reproductor">Toro Reproductor</option>
-                </select>
-                <div style="display:flex; gap:10px;">
-                    <button type="submit" class="btn-action" style="flex:1;">Guardar Cambio</button>
-                    <button type="button" class="btn-action" style="background:white; color:#333; border:1px solid #ccc; flex:1;" onclick="document.getElementById('form-cambio-categoria').style.display='none'">Cancelar</button>
-                </div>
-            </form>
-
-            <form id="form-nuevo-repro" style="display:none; background: #f0fdf4; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
-                <h4 style="margin:0 0 10px 0; color: var(--green-dark);">Registrar Evento Reproductivo</h4>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                    <div><label style="font-size:0.8rem;">Fecha</label><input type="date" id="r-fecha" style="width:100%; padding:6px;" required></div>
-                    <div>
-                        <label style="font-size:0.8rem;">Tipo de Evento</label>
-                        <select id="r-tipo" style="width:100%; padding:6px;" onchange="
-                            document.getElementById('div-tercio').style.display = (this.value==='Palpación (+ Preñada)') ? 'block' : 'none';
-                            document.getElementById('div-parto-cria').style.display = (this.value==='Parto') ? 'block' : 'none';
-                        ">
-                            <option value="Palpación (+ Preñada)">Palpación (+ Preñada)</option>
-                            <option value="Palpación (- Vacía)">Palpación (- Vacía)</option>
-                            <option value="Servicio/Monta">Servicio / Monta</option>
-                            <option value="Parto">Parto</option>
-                            <option value="Aborto">Aborto</option>
-                        </select>
-                    </div>
-                </div>
-                <div id="div-tercio" style="margin-top:10px;">
-                    <label style="font-size:0.8rem;">Tercio de Gestación</label>
-                    <select id="r-tercio" style="width:100%; padding:6px;">
-                        <option value="1">1er Tercio (Reciente)</option>
-                        <option value="2">2do Tercio</option>
-                        <option value="3">3er Tercio (Próxima a parir)</option>
-                    </select>
-                </div>
-                <div id="div-parto-cria" style="margin-top:10px; display:none; background:#fff; padding:10px; border:1px solid #ccc; border-radius:6px;">
-                    <strong style="font-size:0.85rem; color:#333;">Opcional: Registrar Cría Automáticamente</strong>
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top:5px;">
-                        <div><label style="font-size:0.8rem;">Arete Cría</label><input type="text" id="r-cria-arete" placeholder="Ej. B-01" style="width:100%; padding:6px;"></div>
-                        <div><label style="font-size:0.8rem;">Sexo</label>
-                            <select id="r-cria-sexo" style="width:100%; padding:6px;">
-                                <option value="Becerro">Macho</option>
-                                <option value="Becerra">Hembra</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div style="margin-top:5px;"><label style="font-size:0.8rem;">Peso Nacer (Kg)</label><input type="number" id="r-cria-peso" placeholder="Opcional" style="width:100%; padding:6px;"></div>
-                </div>
-                <div style="display:flex; gap:10px; margin-top:10px;">
-                    <button type="submit" class="btn-action" style="flex:1;">Guardar Evento</button>
-                    <button type="button" class="btn-action" style="background:white; color:#333; border:1px solid #ccc; flex:1;" onclick="document.getElementById('form-nuevo-repro').style.display='none'">Cancelar</button>
-                </div>
-            </form>
-            
-            <form id="form-destete" style="display:none; background: #fef9c3; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
-                <h4 style="margin:0 0 10px 0; color: #a16207;">Ejecutar Destete</h4>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                    <div><label style="font-size:0.8rem;">Fecha</label><input type="date" id="d-fecha" style="width:100%; padding:6px;" required></div>
-                    <div><label style="font-size:0.8rem;">Peso al destetar (Kg)</label><input type="number" id="d-peso" style="width:100%; padding:6px;" required></div>
-                </div>
-                <div style="display:flex; gap:10px; margin-top:10px;">
-                    <button type="submit" class="btn-action" style="background:#eab308; color:white; flex:1;">Confirmar Destete</button>
-                    <button type="button" class="btn-action" style="background:white; color:#333; border:1px solid #ccc; flex:1;" onclick="document.getElementById('form-destete').style.display='none'">Cancelar</button>
-                </div>
-            </form>
-            <div id="f-alerta-repro"></div>
-
-            <div style="margin-top: 20px;">
-                <h4 style="margin: 0 0 10px 0; color: var(--text-dark); border-bottom: 2px solid var(--border-light); padding-bottom: 5px;">Historial Reproductivo & Eventos</h4>
-                <table style="width: 100%; border-collapse: collapse; font-size: 0.8rem; background: white;">
-                    <thead style="background: #f1f5f9; text-align: left;">
-                        <tr><th style="padding: 6px; border-bottom: 1px solid var(--border-light);">Evento</th><th style="padding: 6px; border-bottom: 1px solid var(--border-light);">Fecha</th><th style="padding: 6px; border-bottom: 1px solid var(--border-light);">Detalle / FEP</th></tr>
-                    </thead>
-                    <tbody id="f-tabla-repro"></tbody>
-                </table>
-            </div>
-
-            <div style="margin-top: 20px;">
-                <h4 style="margin: 0 0 10px 0; color: var(--text-dark); border-bottom: 2px solid var(--border-light); padding-bottom: 5px;">Evolución de Peso</h4>
-                <table style="width: 100%; border-collapse: collapse; font-size: 0.8rem; background: white;">
-                    <thead style="background: #f1f5f9; text-align: left;">
-                        <tr><th style="padding: 6px; border-bottom: 1px solid var(--border-light);">Fecha</th><th style="padding: 6px; border-bottom: 1px solid var(--border-light);">Peso</th><th style="padding: 6px; border-bottom: 1px solid var(--border-light);">GDP</th></tr>
-                    </thead>
-                    <tbody id="f-tabla-pesajes"></tbody>
-                </table>
-            </div>
         </div>
     </div>
 
@@ -1089,53 +1032,6 @@
         });
     </script>
     
-    <!-- SCRIPTS DE PLANIFICACIÓN Y SIMULADOR -->
-    <script>
-        function cambiarSubTabPlan(subId, btnElement) {
-            document.querySelectorAll('.plan-subview').forEach(el => el.style.display = 'none');
-            document.querySelectorAll('.btn-plan-tab').forEach(btn => {
-                btn.style.background = 'white';
-                btn.style.color = '#334155';
-                btn.style.border = '1px solid #cbd5e1';
-            });
-
-            if(subId === 'matriz-5anos') {
-                document.getElementById('plan-sub-matriz').style.display = 'block';
-            } else {
-                document.getElementById('plan-sub-sandbox').style.display = 'block';
-            }
-
-            btnElement.style.background = '#0f172a';
-            btnElement.style.color = 'white';
-            btnElement.style.border = 'none';
-        }
-
-        function guardarPropuestaFinca() {
-            const select = document.getElementById('sel-proposito-finca');
-            const nat = document.getElementById('inp-ind-nat').value;
-            const mortC = document.getElementById('inp-ind-mort-c').value;
-            const mortA = document.getElementById('inp-ind-mort-a').value;
-
-            document.getElementById('lbl-proposito-activo').innerText = select.value;
-            document.getElementById('lbl-ind-natalidad').innerText = nat + '%';
-            document.getElementById('lbl-ind-mort-crias').innerText = mortC + '%';
-            document.getElementById('lbl-ind-mort-adultos').innerText = mortA + '%';
-
-            document.getElementById('modal-proposito').style.display = 'none';
-            if(window.mostrarToast) window.mostrarToast("¡Propósito e índices técnicos actualizados correctamente!", "exito");
-        }
-
-        function ejecutarSimulacionVenta() {
-            const cant = parseFloat(document.getElementById('sim-cant-ventas').value) || 0;
-            const precio = parseFloat(document.getElementById('sim-precio-kilo').value) || 0;
-            const peso = parseFloat(document.getElementById('sim-peso-prom').value) || 0;
-
-            const total = cant * peso * precio;
-            document.getElementById('sim-resultado-monto').innerText = "$ " + total.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
-            if(window.mostrarToast) window.mostrarToast("Simulación ficticia calculada con éxito.", "exito");
-        }
-    </script>
-
     <script type="module" src="js/hato.js"></script>
 
     <script>
