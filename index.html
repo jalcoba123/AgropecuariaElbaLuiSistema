@@ -678,6 +678,9 @@
         </div>
     </div>
 
+    <!-- CONTENEDOR FLOTANTE DE NOTIFICACIONES TOAST -->
+    <div id="toast-container" style="position: fixed; bottom: 20px; right: 20px; z-index: 99999; display: flex; flex-direction: column; gap: 10px;"></div>
+
     <!-- SCRIPTS DE FIREBASE Y NAVEGACIÓN -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
@@ -700,6 +703,49 @@
             localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() })
         });
 
+        // ==========================================
+        // 🍞 SISTEMA GLOBAL DE TOASTS (NOTIFICACIONES)
+        // ==========================================
+        window.mostrarToast = function(mensaje, tipo = 'exito') {
+            const contenedor = document.getElementById('toast-container');
+            if (!contenedor) return;
+
+            const toast = document.createElement('div');
+            toast.style.padding = '12px 20px';
+            toast.style.borderRadius = '8px';
+            toast.style.color = '#fff';
+            toast.style.fontWeight = '600';
+            toast.style.fontSize = '0.9rem';
+            toast.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
+            toast.style.transition = 'all 0.3s ease';
+            toast.style.opacity = '0';
+            toast.style.transform = 'translateY(20px)';
+
+            if (tipo === 'exito') {
+                toast.style.background = '#10b981';
+                toast.innerText = '✅ ' + mensaje;
+            } else if (tipo === 'error') {
+                toast.style.background = '#ef4444';
+                toast.innerText = '❌ ' + mensaje;
+            } else {
+                toast.style.background = '#3b82f6';
+                toast.innerText = 'ℹ️ ' + mensaje;
+            }
+
+            contenedor.appendChild(toast);
+
+            setTimeout(() => {
+                toast.style.opacity = '1';
+                toast.style.transform = 'translateY(0)';
+            }, 10);
+
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateY(20px)';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        };
+
         const loginScreen = document.getElementById('login-screen');
         const appContainer = document.getElementById('app-container');
         
@@ -720,7 +766,7 @@
             try {
                 await signInWithEmailAndPassword(window.auth, document.getElementById('login-email').value, document.getElementById('login-password').value);
                 e.target.reset();
-            } catch (error) { alert("Error al iniciar sesión: Verifique correo y contraseña."); }
+            } catch (error) { mostrarToast("Error al iniciar sesión: Verifique correo y contraseña.", "error"); }
         });
         document.getElementById('btn-logout').addEventListener('click', () => signOut(window.auth));
 
@@ -792,7 +838,7 @@
             const barra = document.getElementById('barra-progreso');
             const textoProgreso = document.getElementById('texto-progreso');
             
-            if (archivoInput.files.length === 0) return alert("Selecciona un archivo primero.");
+            if (archivoInput.files.length === 0) return mostrarToast("Selecciona un archivo primero.", "error");
             const archivo = archivoInput.files[0];
             
             btnSubmit.disabled = true; btnSubmit.innerText = "Subiendo archivo...";
@@ -808,7 +854,7 @@
                     textoProgreso.innerText = `Subiendo... ${Math.round(progress)}%`;
                 }, 
                 (error) => {
-                    alert("Error subiendo el archivo: " + error.message);
+                    mostrarToast("Error subiendo el archivo: " + error.message, "error");
                     resetFormularioDocs();
                 }, 
                 async () => {
@@ -820,12 +866,12 @@
                             fechaSubida: serverTimestamp(),
                             usuario: window.auth.currentUser ? window.auth.currentUser.email : 'Usuario Desconocido'
                         });
-                        alert("¡Documento subido y guardado exitosamente!");
+                        mostrarToast("¡Documento subido y guardado exitosamente!", "exito");
                         document.getElementById('modal-subir-doc').style.display = 'none';
                         cargarBibliotecaDocumentos();
                         resetFormularioDocs();
                     } catch (firestoreError) {
-                        alert("El archivo se subió, pero hubo un error al guardar los datos.");
+                        mostrarToast("El archivo se subió, pero hubo un error al guardar los datos.", "error");
                         resetFormularioDocs();
                     }
                 }
