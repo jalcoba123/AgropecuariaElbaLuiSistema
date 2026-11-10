@@ -836,3 +836,23 @@ document.getElementById('form-novedad').addEventListener('submit', async (e) => 
     document.getElementById('modal-novedad').style.display = 'none';
     window.cargarHato();
 });
+
+// Detector automático de conexión a Internet (Integrado desde el HTML al JS)
+const statusBar = document.getElementById('offline-status-bar');
+
+if (statusBar) {
+    window.addEventListener('online', () => {
+        statusBar.style.background = '#10b981'; // Verde
+        statusBar.innerText = '🟢 Conectado - Sincronizado en Nube (Starlink / Datos)';
+    });
+
+    window.addEventListener('offline', () => {
+        statusBar.style.background = '#f59e0b'; // Naranja
+        statusBar.innerText = '⚡ Sin Internet (Modo Finca) - Guardando localmente.';
+    });
+
+    if (!navigator.onLine) {
+        statusBar.style.background = '#f59e0b';
+        statusBar.innerText = '⚡ Sin Internet (Modo Finca) - Guardando localmente.';
+    }
+}
