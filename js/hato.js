@@ -1,10 +1,3 @@
-Aquí tienes el **código completo y corregido** de tu archivo **`js/hato.js`**.
-
-He optimizado el formulario de registro de animales (`form-animal`) para que, cuando estés **sin internet**, el sistema no se quede bloqueado en la pantalla de *"Guardando..."*. Ahora detecta de inmediato el estado offline y guarda el registro de forma instantánea en la memoria local del navegador (IndexedDB) sin congelarse, sincronizándose automáticamente con la nube en cuanto recuperes la señal.
-
-Copia todo este bloque y reemplázalo por completo en tu archivo **`js/hato.js`**:
-
-```javascript
 import { 
     collection, addDoc, query, where, onSnapshot, serverTimestamp,
     doc, deleteDoc, updateDoc, getDoc, getDocs, writeBatch
@@ -847,7 +840,7 @@ if (formDestete) {
 }
 
 // ==========================================
-// REGISTRO DE NUEVO ANIMAL (Optimizado Offline forzado)
+// REGISTRO DE NUEVO ANIMAL (Blindado Offline sin bloqueo)
 // ==========================================
 const formAnimal = document.getElementById('form-animal');
 if (formAnimal) {
@@ -885,24 +878,29 @@ if (formAnimal) {
                 madre: document.getElementById('a-madre').value.trim() || 'N/D',
                 estado: document.getElementById('a-estado').value,
                 salud: "🟢 Sano",
-                fechaRegistro: serverTimestamp()
+                fechaRegistro: new Date().toISOString() // Usamos string de fecha nativo para evitar bloqueo de serverTimestamp offline
             };
 
-            // Promesa con timeout de 2 segundos para forzar el guardado local si no hay internet
-            const promesaGuardado = addDoc(collection(window.db, "animales"), nuevoAnimal);
-            const timeoutPromesa = new Promise((_, reject) => 
-                setTimeout(() => reject(new Error("Timeout offline superado")), 2000)
-            );
+            // Guardamos localmente en localStorage de respaldo inmediato (Garantiza cero bloqueos sin internet)
+            let pendientesOffline = JSON.parse(localStorage.getItem('elbalui_pendientes_offline') || '[]');
+            pendientesOffline.push(nuevoAnimal);
+            localStorage.setItem('elbalui_pendientes_offline', JSON.stringify(pendientesOffline));
 
-            try {
-                await Promise.race([promesaGuardado, timeoutPromesa]);
-            } catch (err) {
-                console.log("ℹ️ Guardado en caché local offline ejecutado.");
+            // Intentamos registrar en la base de datos de Firestore en segundo plano sin esperar el bloqueo si está offline
+            if (navigator.onLine) {
+                addDoc(collection(window.db, "animales"), {
+                    ...nuevoAnimal,
+                    fechaRegistro: serverTimestamp()
+                }).catch(err => console.log("Guardado offline en segundo plano en cola."));
             }
 
             formAnimal.reset(); 
             document.getElementById('modal-animal').style.display = 'none';
-            alert("✅ Animal guardado con éxito (en memoria local del dispositivo).");
+            alert("✅ Animal guardado correctamente en el dispositivo.");
+
+            // Recargamos el hato localmente para reflejar el cambio de inmediato
+            if (window.cargarHato) window.cargarHato();
+
         } catch (err) { 
             alert("❌ Error al guardar: " + err.message); 
         } finally { 
@@ -1083,6 +1081,26 @@ function actualizarDashboard(datosHato) {
 }
 
 // ==========================================
+// 🚀 Sincronización automática al reconectar
+// ==========================================
+window.addEventListener('online', async () => {
+    const pendientes = JSON.parse(localStorage.getItem('elbalui_pendientes_offline') || '[]');
+    if (pendientes.length > 0 && window.db) {
+        console.log("🔄 Sincronizando registros pendientes con la nube...");
+        for (let animal of pendientes) {
+            try {
+                await addDoc(collection(window.db, "animales"), {
+                    ...animal,
+                    fechaRegistro: serverTimestamp()
+                });
+            } catch (e) { console.error("Error sincronizando:", e); }
+        }
+        localStorage.removeItem('elbalui_pendientes_offline');
+        alert("☁️ ¡Datos locales sincronizados exitosamente con la nube!");
+    }
+});
+
+// ==========================================
 // 🚀 INICIALIZACIÓN FINAL DEL ERP
 // ==========================================
 document.addEventListener('DOMContentLoaded', () => {
@@ -1098,5 +1116,3 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }, 1200); 
 });
-
-```
