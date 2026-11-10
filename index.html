@@ -15,7 +15,7 @@
             .btn-action, #offline-status-bar, #modal-animal, #login-screen,
             .finca-toggle, button[onclick="window.print()"] { display: none !important; }
             .section-view, #app-container, .modulo-hato { display: block !important; box-shadow: none !important; border: none !important; }
-            #tab-dashboard, #tab-lecheria, #tab-palma, #tab-operaciones, #tab-finanzas, #tab-documentos,
+            #tab-dashboard, #tab-lecheria, #tab-palma, #tab-operaciones, #tab-finanzas, #tab-documentos, #tab-planificacion,
             #subtab-lector, #subtab-config, #subtab-calendario,
             div[style*="grid-template-columns: repeat(auto-fit, minmax(140px, 1fr))"] { display: none !important; }
             th:first-child, td:first-child, th:last-child, td:last-child { display: none !important; }
@@ -76,6 +76,7 @@
         <nav class="category-nav">
             <button class="cat-chip active" onclick="switchTab('dashboard', this)">📊 Torre de Control</button>
             <button class="cat-chip" onclick="switchTab('hato', this)">🐮 Hato & Sanidad</button>
+            <button class="cat-chip" onclick="switchTab('planificacion', this)">🎯 Planificación & Simulador</button>
             <button class="cat-chip" onclick="switchTab('lecheria', this)">🥛 Lechería & Raciones</button>
             <button class="cat-chip" onclick="switchTab('palma', this)">🌴 Palma & Agronomía</button>
             <button class="cat-chip" onclick="switchTab('operaciones', this)">🚜 Operaciones & Activos</button>
@@ -359,6 +360,156 @@
 
             </div>
             
+            <!-- MÓDULO NUEVO: PLANIFICACIÓN & SIMULADOR (SANDBOX) -->
+            <div id="tab-planificacion" class="section-view">
+                <div style="background: white; padding: 25px; border-radius: 12px; border: 1px solid var(--border-light); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #bbf7d0; padding-bottom: 15px; margin-bottom: 20px; flex-wrap: wrap; gap: 15px;">
+                        <div>
+                            <h2 style="color: var(--green-dark); margin: 0;">🎯 Planificación Estratégica & Simulador (Sandbox)</h2>
+                            <p style="font-size: 0.9rem; color: var(--text-muted); margin: 5px 0 0 0;">Define el propósito productivo de la finca y simula proyecciones de rebaño a 5 años sin alterar datos reales.</p>
+                        </div>
+                        <button onclick="document.getElementById('modal-proposito').style.display='flex'" style="background: var(--green-primary); color: white; border: none; padding: 10px 15px; border-radius: 6px; cursor: pointer; font-weight: bold;">⚙️ Configurar Propósito & Índices</button>
+                    </div>
+
+                    <!-- Panel de Estado del Propósito Actual -->
+                    <div style="background: #f0fdf4; border: 1px solid #bbf7d0; padding: 15px; border-radius: 8px; margin-bottom: 25px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
+                        <div>
+                            <strong style="color: #166534; font-size: 0.95rem; display: block; margin-bottom: 3px;">Enfoque Productivo Activo:</strong>
+                            <span id="lbl-proposito-activo" style="font-size: 1.1rem; font-weight: bold; color: #14532d;">🐮 Doble Propósito (Ordeño + Cría y Ceba)</span>
+                        </div>
+                        <div style="display: flex; gap: 15px; font-size: 0.85rem; color: #166534;">
+                            <div>Natalidad: <strong id="lbl-ind-natalidad">80%</strong>[cite: 11]</div>
+                            <div>Mortalidad Crías: <strong id="lbl-ind-mort-crias">12%</strong>[cite: 11]</div>
+                            <div>Mortalidad Adultos: <strong id="lbl-ind-mort-adultos">5%</strong>[cite: 11]</div>
+                        </div>
+                    </div>
+
+                    <!-- PESTAÑAS INTERNAS DE PLANIFICACIÓN -->
+                    <div style="display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 1px solid #e2e8f0; padding-bottom: 10px;">
+                        <button class="btn-plan-tab active" onclick="cambiarSubTabPlan('matriz-5anos', this)" style="padding: 8px 14px; border-radius: 6px; border: none; background: #0f172a; color: white; font-weight: bold; cursor: pointer;">📊 Matriz Movimiento Rebaño (5 Años)</button>
+                        <button class="btn-plan-tab" onclick="cambiarSubTabPlan('sandbox-simulador', this)" style="padding: 8px 14px; border-radius: 6px; border: 1px solid #cbd5e1; background: white; color: #334155; font-weight: bold; cursor: pointer;">🧪 Simulador Ficticio de Ventas & Carga</button>
+                    </div>
+
+                    <!-- SUB-VISTA 1: MATRIZ A 5 AÑOS -->
+                    <div id="plan-sub-matriz" class="plan-subview">
+                        <h3 style="color: #0f172a; font-size: 1rem; margin-bottom: 10px;">Proyección Matricial del Hato (Modelo Finca Astron / ElbaLui)</h3>
+                        <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 15px;">Evolución teórica de adultos, crías, muertes, ventas y ceba calculada bajo índices técnicos oficiales[cite: 11, 12].</p>
+                        
+                        <div style="overflow-x: auto;">
+                            <table style="width: 100%; border-collapse: collapse; font-size: 0.85rem; text-align: center;">
+                                <thead style="background: #f1f5f9;">
+                                    <tr>
+                                        <th style="padding: 10px; border: 1px solid #cbd5e1;">Periodo</th>
+                                        <th style="padding: 10px; border: 1px solid #cbd5e1;">Adultos (H)</th>
+                                        <th style="padding: 10px; border: 1px solid #cbd5e1;">Machos Reproducción (M)</th>
+                                        <th style="padding: 10px; border: 1px solid #cbd5e1;">Muertes (H)</th>
+                                        <th style="padding: 10px; border: 1px solid #cbd5e1;">Muertes (M)</th>
+                                        <th style="padding: 10px; border: 1px solid #cbd5e1;">Ceba (M)</th>
+                                        <th style="padding: 10px; border: 1px solid #cbd5e1;">Ventas / Descarte (H)</th>
+                                        <th style="padding: 10px; border: 1px solid #cbd5e1;">Matadero</th>
+                                        <th style="padding: 10px; border: 1px solid #cbd5e1; background: #e2e8f0;">Rebaño Total</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1; font-weight: bold;">Inicio</td>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">223</td>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">9</td>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">-</td>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">-</td>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">81</td>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">14</td>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">-</td>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1; font-weight: bold; background: #f8fafc;">313[cite: 12]</td>
+                                    </tr>
+                                    <tr>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1; font-weight: bold;">Final 1er Año</td>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">238</td>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">10</td>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">22</td>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">12</td>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">76</td>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">31</td>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">1</td>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1; font-weight: bold; background: #f8fafc;">324[cite: 12]</td>
+                                    </tr>
+                                    <tr>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1; font-weight: bold;">Final 2do Año</td>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">253</td>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">10</td>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">23</td>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">12</td>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">83</td>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">34</td>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">1</td>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1; font-weight: bold; background: #f8fafc;">346[cite: 12]</td>
+                                    </tr>
+                                    <tr>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1; font-weight: bold;">Final 3er Año</td>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">269</td>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">11</td>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">25</td>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">13</td>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">87</td>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">36</td>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">1</td>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1; font-weight: bold; background: #f8fafc;">367[cite: 12]</td>
+                                    </tr>
+                                    <tr>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1; font-weight: bold;">Final 5to Año</td>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">286</td>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">11</td>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">28</td>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">15</td>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">94</td>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">59</td>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">1</td>
+                                        <td style="padding: 8px; border: 1px solid #cbd5e1; font-weight: bold; background: #f8fafc;">391[cite: 12]</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- SUB-VISTA 2: SIMULADOR / SANDBOX -->
+                    <div id="plan-sub-sandbox" class="plan-subview" style="display: none;">
+                        <h3 style="color: #0f172a; font-size: 1rem; margin-bottom: 10px;">🧪 Entorno de Ensayos Ficticios (Sandbox)</h3>
+                        <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 15px;">Realiza simulaciones financieras y de descarte. Los cambios aquí son completamente ficticios y no modifican tu base de datos real.</p>
+                        
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px;">
+                            <div style="background: #f8fafc; border: 1px solid #cbd5e1; padding: 15px; border-radius: 8px;">
+                                <h4 style="color: #0369a1; margin-top: 0; font-size: 0.95rem;">Simulador de Venta de Lotes</h4>
+                                <div class="form-field" style="margin-bottom: 10px;">
+                                    <label style="font-size: 0.8rem;">Cantidad de Mautes / Novillos a Vender:</label>
+                                    <input type="number" id="sim-cant-ventas" value="20" style="width: 100%; padding: 6px; font-size: 0.85rem;">
+                                </div>
+                                <div class="form-field" style="margin-bottom: 10px;">
+                                    <label style="font-size: 0.8rem;">Precio Promedio Estimado por Kilo ($):</label>
+                                    <input type="number" step="0.01" id="sim-precio-kilo" value="1.50" style="width: 100%; padding: 6px; font-size: 0.85rem;">
+                                </div>
+                                <div class="form-field" style="margin-bottom: 15px;">
+                                    <label style="font-size: 0.8rem;">Peso Promedio por Animal (Kg):</label>
+                                    <input type="number" id="sim-peso-prom" value="300" style="width: 100%; padding: 6px; font-size: 0.85rem;">
+                                </div>
+                                <button onclick="ejecutarSimulacionVenta()" style="background: #0ea5e9; color: white; border: none; padding: 8px; width: 100%; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 0.85rem;">Calcular Ingreso Ficticio 🧮</button>
+                            </div>
+
+                            <div style="background: #f0fdf4; border: 1px solid #bbf7d0; padding: 15px; border-radius: 8px; display: flex; flex-direction: column; justify-content: space-between;">
+                                <div>
+                                    <h4 style="color: #166534; margin-top: 0; font-size: 0.95rem;">Resultado del Ensayo Ficticio</h4>
+                                    <p style="font-size: 0.85rem; color: #14532d; margin-bottom: 10px;">Proyección estimada de ingresos brutos en base a los parámetros introducidos en el sandbox.</p>
+                                    <div style="font-size: 1.8rem; font-weight: bold; color: #15803d; margin: 15px 0;" id="sim-resultado-monto">$ 9,000.00</div>
+                                </div>
+                                <div style="font-size: 0.75rem; color: #166534; font-style: italic; border-top: 1px dashed #86efac; padding-top: 8px;">
+                                    Nota: Este cálculo es un entorno aislado de práctica. No afecta los registros contables del Banco Mercantil ni de Binance P2P.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+            
             <!-- MÓDULO 3: LECHERÍA & RACIONES -->
             <div id="tab-lecheria" class="section-view">
                 <div style="background: white; padding: 20px; border-radius: 12px; border: 1px solid var(--border-light);">
@@ -414,6 +565,41 @@
     </div>
 
     <!-- MODALES -->
+    <!-- MODAL DE CONFIGURACIÓN DE PROPÓSITO DE LA FINCA -->
+    <div id="modal-proposito" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 2000; padding: 20px;">
+        <div style="background: white; padding: 24px; border-radius: 12px; width: 100%; max-width: 450px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <h3 style="color: var(--green-dark); margin: 0;">⚙️ Configurar Propósito e Índices</h3>
+                <button onclick="document.getElementById('modal-proposito').style.display='none'" style="background:none; border:none; font-size:1.5rem; cursor:pointer;">&times;</button>
+            </div>
+            <form id="form-proposito" onsubmit="event.preventDefault(); guardarPropuestaFinca();">
+                <div class="form-field" style="margin-bottom: 12px;">
+                    <label style="font-size: 0.85rem; font-weight: bold;">Propósito Principal de la Finca</label>
+                    <select id="sel-proposito-finca" style="width: 100%; padding: 8px; border-radius: 6px; border: 1px solid #cbd5e1;">
+                        <option value="Doble Propósito (Ordeño + Cría)">🐮 Doble Propósito (Ordeño + Cría)</option>
+                        <option value="Cría Comercial (Venta de Destetes)">🌱 Cría Comercial (Venta de Mautes/Mautas)</option>
+                        <option value="Ceba / Engorde Intensivo">🥩 Ceba / Engorde Intensivo de Levante</option>
+                    </select>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px;">
+                    <div class="form-field">
+                        <label style="font-size: 0.8rem;">% Natalidad</label>
+                        <input type="number" id="inp-ind-nat" value="80" style="width: 100%; padding: 6px;">
+                    </div>
+                    <div class="form-field">
+                        <label style="font-size: 0.8rem;">% Mortalidad Crías</label>
+                        <input type="number" id="inp-ind-mort-c" value="12" style="width: 100%; padding: 6px;">
+                    </div>
+                </div>
+                <div class="form-field" style="margin-bottom: 15px;">
+                    <label style="font-size: 0.8rem;">% Mortalidad Adultos</label>
+                    <input type="number" id="inp-ind-mort-a" value="5" style="width: 100%; padding: 6px;">
+                </div>
+                <button type="submit" style="background: var(--green-primary); color: white; border: none; padding: 10px; width: 100%; border-radius: 6px; font-weight: bold; cursor: pointer;">Guardar Configuración Técnica</button>
+            </form>
+        </div>
+    </div>
+
     <div id="modal-animal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 1000; padding: 20px;">
         <div style="background: white; padding: 24px; border-radius: 12px; width: 100%; max-width: 450px;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
@@ -903,6 +1089,53 @@
         });
     </script>
     
+    <!-- SCRIPTS DE PLANIFICACIÓN Y SIMULADOR -->
+    <script>
+        function cambiarSubTabPlan(subId, btnElement) {
+            document.querySelectorAll('.plan-subview').forEach(el => el.style.display = 'none');
+            document.querySelectorAll('.btn-plan-tab').forEach(btn => {
+                btn.style.background = 'white';
+                btn.style.color = '#334155';
+                btn.style.border = '1px solid #cbd5e1';
+            });
+
+            if(subId === 'matriz-5anos') {
+                document.getElementById('plan-sub-matriz').style.display = 'block';
+            } else {
+                document.getElementById('plan-sub-sandbox').style.display = 'block';
+            }
+
+            btnElement.style.background = '#0f172a';
+            btnElement.style.color = 'white';
+            btnElement.style.border = 'none';
+        }
+
+        function guardarPropuestaFinca() {
+            const select = document.getElementById('sel-proposito-finca');
+            const nat = document.getElementById('inp-ind-nat').value;
+            const mortC = document.getElementById('inp-ind-mort-c').value;
+            const mortA = document.getElementById('inp-ind-mort-a').value;
+
+            document.getElementById('lbl-proposito-activo').innerText = select.value;
+            document.getElementById('lbl-ind-natalidad').innerText = nat + '%';
+            document.getElementById('lbl-ind-mort-crias').innerText = mortC + '%';
+            document.getElementById('lbl-ind-mort-adultos').innerText = mortA + '%';
+
+            document.getElementById('modal-proposito').style.display = 'none';
+            if(window.mostrarToast) window.mostrarToast("¡Propósito e índices técnicos actualizados correctamente!", "exito");
+        }
+
+        function ejecutarSimulacionVenta() {
+            const cant = parseFloat(document.getElementById('sim-cant-ventas').value) || 0;
+            const precio = parseFloat(document.getElementById('sim-precio-kilo').value) || 0;
+            const peso = parseFloat(document.getElementById('sim-peso-prom').value) || 0;
+
+            const total = cant * peso * precio;
+            document.getElementById('sim-resultado-monto').innerText = "$ " + total.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+            if(window.mostrarToast) window.mostrarToast("Simulación ficticia calculada con éxito.", "exito");
+        }
+    </script>
+
     <script type="module" src="js/hato.js"></script>
 
     <script>
