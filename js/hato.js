@@ -1,8 +1,11 @@
 import { 
     collection, addDoc, query, where, onSnapshot, serverTimestamp,
-    doc, deleteDoc, updateDoc, getDoc, getDocs, writeBatch
+    doc, deleteDoc, updateDoc, getDoc, getDocs, writeBatch, orderBy
 } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
+// ==========================================
+// 🔧 CONFIGURACIÓN GLOBAL Y DISPOSITIVO
+// ==========================================
 let ID_DISPOSITIVO = localStorage.getItem('elbalui_dispositivo_id');
 if (!ID_DISPOSITIVO) {
     ID_DISPOSITIVO = 'DEV-' + Math.random().toString(36).substring(2, 9).toUpperCase();
@@ -31,7 +34,7 @@ function actualizarEstadoConexion() {
         statusBar.innerText = '🟢 Conectado - Sincronizado en Nube (Starlink / Datos)';
     } else {
         statusBar.style.background = '#334155';
-        statusBar.innerText = '⚠️ Modo Sin Conexión - Guardando en memoria local del dispositivo';
+        statusBar.innerText = '⚠️ Modo Sin Conexión - Guardando localmente';
     }
 }
 window.addEventListener('online', actualizarEstadoConexion);
@@ -39,7 +42,36 @@ window.addEventListener('offline', actualizarEstadoConexion);
 actualizarEstadoConexion();
 
 // ==========================================
-// 🏷️ ESTACIÓN DE CONTROL DE MANGA (SESIÓN & FAENA)
+// 🧭 CONTROL DE MINI-MENÚS HATO
+// ==========================================
+window.cambiarModuloHato = function(evento, idModulo) {
+    const modulos = document.querySelectorAll('.modulo-hato');
+    modulos.forEach(mod => mod.style.display = 'none');
+
+    const botones = document.querySelectorAll('.tab-btn');
+    botones.forEach(btn => {
+        btn.classList.remove('active');
+        btn.style.background = 'white';
+        btn.style.color = '#334155';
+        btn.style.border = '1px solid #cbd5e1';
+    });
+
+    document.getElementById(idModulo).style.display = 'block';
+
+    const btnActivo = evento.currentTarget;
+    btnActivo.classList.add('active');
+    btnActivo.style.background = '#0f172a';
+    btnActivo.style.color = 'white';
+    btnActivo.style.border = 'none';
+
+    if (idModulo === 'subtab-lector') {
+        const inputLector = document.getElementById('rfid-scanner-input');
+        if (inputLector) inputLector.focus();
+    }
+};
+
+// ==========================================
+// 🏷️ ESTACIÓN DE CONTROL DE MANGA (RFID)
 // ==========================================
 window.faenaActualLista = [];
 window.modoMangaActual = 'conteo'; 
@@ -50,6 +82,7 @@ window.cambiarModoManga = function(nuevoModo) {
     if (containerRafaga) {
         containerRafaga.style.display = (nuevoModo === 'rafaga') ? 'block' : 'none';
     }
+    document.getElementById('rfid-scanner-input').focus();
 };
 
 window.reiniciarSesionManga = function() {
@@ -58,6 +91,7 @@ window.reiniciarSesionManga = function() {
         actualizarTableroManga();
         const banner = document.getElementById('manga-alerta-banner');
         if (banner) banner.style.display = 'none';
+        document.getElementById('rfid-scanner-input').focus();
     }
 };
 
@@ -85,7 +119,8 @@ function mostrarAlertaManga(mensaje, esError = true) {
     banner.style.borderColor = esError ? '#ef4444' : '#22c55e';
     banner.style.color = esError ? '#991b1b' : '#15803d';
     banner.style.display = 'block';
-    reproducirAlertaAudio();
+    if(esError) reproducirAlertaAudio();
+    setTimeout(() => { banner.style.display = 'none'; }, 5000);
 }
 
 function actualizarTableroManga() {
@@ -123,7 +158,9 @@ function actualizarTableroManga() {
                 <td style="padding: 8px; border-bottom: 1px solid #e2e8f0;"><strong>${item.arete}</strong></td>
                 <td style="padding: 8px; border-bottom: 1px solid #e2e8f0;">${cat}</td>
                 <td style="padding: 8px; border-bottom: 1px solid #e2e8f0;">${lote}</td>
-                <td style="padding: 8px; border-bottom: 1px solid #e2e8f0; font-weight: 600; color: #0369a1;">${item.accionAplicada}</td>
+                <td style="padding: 8px; border-bottom: 1px solid #e2e8f0; font-weight: 600; color: #0369a1;">
+                    <span style="background: #f0fdf4; color: #166534; padding: 2px 6px; border-radius: 4px; font-size: 0.75rem;">${item.accionAplicada}</span>
+                </td>
                 <td style="padding: 8px; border-bottom: 1px solid #e2e8f0; text-align: center;">
                     <button onclick="abrirFicha('${item.id}')" style="background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; padding: 2px 6px; border-radius: 4px; cursor: pointer;">👁️</button>
                 </td>
@@ -202,19 +239,25 @@ document.addEventListener('DOMContentLoaded', () => {
                             window.abrirFicha(animalEncontrado.id);
                         }
                     } else {
+                        // 🔴 SOLUCIÓN: ASIGNAR NUEVO CHIP A ANIMAL EXISTENTE
                         mostrarAlertaManga(`📡 Chip No Registrado: ${codigoRFID}`);
-                        const areteAsociar = prompt(`📡 ¡Chip nuevo detectado (${codigoRFID})!\n\nEscriba el número de arete físico para vincularlo:`);
+                        const asignar = confirm(`El chip [${codigoRFID}] no está registrado.\n¿Deseas asignarlo a un animal existente en la base de datos?`);
                         
-                        if (areteAsociar && areteAsociar.trim() !== '') {
-                            const animalPorArete = window.datosHatoCache.find(a => 
-                                a.arete.trim().toLowerCase() === areteAsociar.trim().toLowerCase()
-                            );
-                            if (animalPorArete) {
-                                try {
-                                    await updateDoc(doc(window.db, "animales", animalPorArete.id), { chipRFID: codigoRFID });
-                                    alert(`✅ Chip vinculado al arete ${animalPorArete.arete}`);
-                                } catch (err) { alert("❌ Error vinculando chip: " + err.message); }
-                            } else { alert(`⚠️ Arete "${areteAsociar}" no encontrado.`); }
+                        if (asignar) {
+                            const areteAsociar = prompt(`Ingresa el NÚMERO DE ARETE VISUAL del animal para asociar el chip [${codigoRFID}]:`);
+                            if (areteAsociar && areteAsociar.trim() !== '') {
+                                const animalExistente = window.datosHatoCache.find(a => a.arete.toLowerCase() === areteAsociar.trim().toLowerCase());
+                                if (animalExistente) {
+                                    try {
+                                        await updateDoc(doc(window.db, "animales", animalExistente.id), { chipRFID: codigoRFID });
+                                        alert(`✅ Chip RFID [${codigoRFID}] asociado exitosamente al arete visual ${animalExistente.arete}.`);
+                                    } catch (err) {
+                                        alert("❌ Error vinculando chip: " + err.message);
+                                    }
+                                } else {
+                                    alert(`⚠️ El arete visual "${areteAsociar}" no fue encontrado en la base de datos.`);
+                                }
+                            }
                         }
                     }
                 }
@@ -224,34 +267,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // ==========================================
-// 🧭 CONTROL DE MINI-MENÚS HATO
-// ==========================================
-window.cambiarModuloHato = function(evento, idModulo) {
-    const modulos = document.querySelectorAll('.modulo-hato');
-    modulos.forEach(mod => mod.style.display = 'none');
-
-    const botones = document.querySelectorAll('.tab-btn');
-    botones.forEach(btn => {
-        btn.style.background = 'white';
-        btn.style.color = '#334155';
-        btn.style.border = '1px solid #cbd5e1';
-    });
-
-    document.getElementById(idModulo).style.display = 'block';
-
-    const btnActivo = evento.currentTarget;
-    btnActivo.style.background = '#0f172a';
-    btnActivo.style.color = 'white';
-    btnActivo.style.border = 'none';
-
-    if (idModulo === 'subtab-lector') {
-        const inputLector = document.getElementById('rfid-scanner-input');
-        if (inputLector) inputLector.focus();
-    }
-};
-
-// ==========================================
-// SELECCIÓN Y FILTROS EN TABLA (NUEVO)
+// 🔍 SELECCIÓN Y FILTROS EN TABLA
 // ==========================================
 window.toggleAllCheckboxes = function(source) {
     const checkboxes = document.querySelectorAll('.chk-animal');
@@ -269,7 +285,7 @@ window.aplicarFiltroHato = function() {
     const filas = document.querySelectorAll('#tabla-hato-body tr');
     
     filas.forEach(fila => {
-        if(!fila.hasAttribute('data-categoria')) return; // ignora filas de "cargando"
+        if(!fila.hasAttribute('data-categoria')) return; 
 
         const cat = fila.getAttribute('data-categoria');
         const estado = fila.getAttribute('data-estado');
@@ -277,7 +293,6 @@ window.aplicarFiltroHato = function() {
 
         let mostrar = false;
 
-        // Filtro por Select
         if (filtroSelect === 'Todos' && estado !== 'Baja (Vendido/Muerto)') mostrar = true;
         else if (filtroSelect === 'Bajas' && estado === 'Baja (Vendido/Muerto)') mostrar = true;
         else if (filtroSelect === 'Becerros' && cat.includes('Becerr') && estado !== 'Baja (Vendido/Muerto)') mostrar = true;
@@ -285,7 +300,6 @@ window.aplicarFiltroHato = function() {
         else if (filtroSelect === 'Vacas' && cat.includes('Vaca') && estado !== 'Baja (Vendido/Muerto)') mostrar = true;
         else if (filtroSelect === 'Gestantes' && estado === 'Gestante') mostrar = true;
 
-        // Filtro por Buscador (Si pasó el select)
         if (mostrar && textoBusqueda !== "") {
             if (arete.indexOf(textoBusqueda) === -1) {
                 mostrar = false;
@@ -313,18 +327,13 @@ window.exportarExcel = function(tablaId, nombreArchivo) {
     
     for (let i = 0; i < filas.length; i++) {
         if(filas[i].style.display === "none") continue; 
-
         let fila = [];
         let columnas = filas[i].querySelectorAll('td, th');
-        
-        // Evitamos primera columna (Checkbox) y última (Botones de Acción)
         for (let j = 1; j < columnas.length - 1; j++) { 
             let texto = columnas[j].innerText.replace(/(\r\n|\n|\r)/gm, " - ");
             fila.push('"' + texto + '"');
         }
-        if(fila.length > 0) {
-            csv.push(fila.join(','));
-        }
+        if(fila.length > 0) csv.push(fila.join(','));
     }
     
     let csvString = csv.join('\n');
@@ -347,10 +356,8 @@ window.importarCSV = function(event) {
         const text = e.target.result;
         const lineas = text.split('\n');
         let contador = 0;
-        
         const batch = writeBatch(window.db);
         
-        // Asume formato: Arete, Categoria, Lote, Peso
         for (let i = 1; i < lineas.length; i++) { 
             let fila = lineas[i].split(',');
             if (fila.length >= 2) {
@@ -373,7 +380,8 @@ window.importarCSV = function(event) {
                     padre: 'N/D', madre: 'N/D',
                     estado: 'Activo/Creciendo',
                     salud: "🟢 Sano",
-                    fechaRegistro: serverTimestamp()
+                    fechaRegistro: serverTimestamp(),
+                    chipRFID: null
                 });
                 contador++;
             }
@@ -382,7 +390,7 @@ window.importarCSV = function(event) {
             try {
                 document.body.style.cursor = 'wait';
                 await batch.commit();
-                alert(`✅ Importación exitosa: ${contador} animales registrados desde el Excel/CSV.`);
+                alert(`✅ Importación exitosa: ${contador} animales registrados.`);
             } catch (err) {
                 alert("❌ Error al importar: " + err.message);
             } finally {
@@ -391,7 +399,7 @@ window.importarCSV = function(event) {
         }
     };
     reader.readAsText(file);
-    event.target.value = ''; // Reset input
+    event.target.value = ''; 
 };
 
 // ==========================================
@@ -423,11 +431,10 @@ if (formMasivo) {
         try {
             if (tipoAccion === 'Sanidad') {
                 const vacunaStr = document.getElementById('m-vacuna-nombre').value.trim();
-                if (!vacunaStr) throw new Error("Seleccione el nombre de la vacuna o tratamiento.");
+                if (!vacunaStr) throw new Error("Seleccione el nombre de la vacuna.");
                 
                 for (let chk of seleccionados) {
-                    const idDoc = chk.value;
-                    const docRef = doc(window.db, "animales", idDoc);
+                    const docRef = doc(window.db, "animales", chk.value);
                     const docSnap = await getDoc(docRef);
                     if (docSnap.exists()) {
                         const data = docSnap.data();
@@ -449,8 +456,7 @@ if (formMasivo) {
                 if (!pesoPromedio) throw new Error("Ingrese el peso promedio del destete.");
 
                 for (let chk of seleccionados) {
-                    const idDoc = chk.value;
-                    const docRef = doc(window.db, "animales", idDoc);
+                    const docRef = doc(window.db, "animales", chk.value);
                     const docSnap = await getDoc(docRef);
                     
                     if (docSnap.exists()) {
@@ -475,10 +481,10 @@ if (formMasivo) {
 }
 
 // ==========================================
-// FUNCIONES BASE (ELIMINAR, BAJA, NOVEDAD)
+// 🗑️ FUNCIONES BASE (ELIMINAR, BAJA, NOVEDAD)
 // ==========================================
 window.eliminarAnimal = async function(idDoc, arete) {
-    if (confirm(`⚠️ ALERTA: ¿Eliminar PERMANENTEMENTE Arete "${arete}" de la base de datos?\n\n(Recomendamos usar "Dar de Baja" si el animal murió o se vendió para no alterar estadísticas pasadas)`)) {
+    if (confirm(`⚠️ ALERTA: ¿Eliminar PERMANENTEMENTE Arete "${arete}"?\n(Mejor usa "Dar de Baja" si el animal murió o se vendió)`)) {
         try { 
             await deleteDoc(doc(window.db, "animales", idDoc)); 
             document.getElementById('modal-ficha').style.display = 'none';
@@ -488,18 +494,16 @@ window.eliminarAnimal = async function(idDoc, arete) {
 };
 
 window.mandarABaja = async function(idDoc, arete) {
-    const razon = prompt(`☠️ Registrar Baja / Venta para el Arete ${arete}\n\nEscriba el motivo (Ej. Venta a Matadero, Muerte por mordedura de serpiente, etc.):`);
+    const razon = prompt(`☠️ Registrar Baja / Venta para el Arete ${arete}\nEscriba el motivo (Ej. Venta a Matadero, Muerte, etc.):`);
     if (razon !== null && razon.trim() !== "") {
         try {
             await updateDoc(doc(window.db, "animales", idDoc), { 
                 estado: "Baja (Vendido/Muerto)",
                 salud: `☠️ Baja: ${razon}` 
             });
-            alert("✅ Animal dado de baja correctamente. Se quitó del inventario activo.");
+            alert("✅ Animal dado de baja correctamente.");
             document.getElementById('modal-ficha').style.display = 'none';
-        } catch (err) {
-            alert("Error al dar de baja: " + err.message);
-        }
+        } catch (err) { alert("Error al dar de baja: " + err.message); }
     }
 };
 
@@ -536,7 +540,7 @@ if (formNovedad) {
 }
 
 // ==========================================
-// LECTURA EN TIEMPO REAL (INVENTARIO Y CÁLCULOS)
+// 📡 LECTURA EN TIEMPO REAL (INVENTARIO)
 // ==========================================
 window.cargarHato = function() {
     const tabla = document.getElementById('tabla-hato-body');
@@ -563,7 +567,6 @@ window.cargarHato = function() {
             const saludActual = a.salud || "🟢 Sano";
             const esBaja = (a.estado === "Baja (Vendido/Muerto)");
 
-            // Contamos solo los ACTIVOS para los KPIs
             if (!esBaja) {
                 total++;
                 if (a.categoria.includes("Maute") || a.categoria.includes("Mauta")) mautes++;
@@ -596,11 +599,10 @@ window.cargarHato = function() {
                 if (fechaNac && fechaNac !== 'Registro inicial') {
                     const meses = Math.floor((hoy - new Date(fechaNac)) / (1000 * 60 * 60 * 24 * 30));
                     textoTiempo = meses > 0 ? `${meses} meses` : `Recién nacido`;
-                    if (a.categoria.includes("Becerr") && meses >= 8) textoTiempo = `<strong style="color:#ca8a04;">${meses} meses (Pto. Destete)</strong>`;
+                    if (a.categoria.includes("Becerr") && meses >= 8) textoTiempo = `<strong style="color:#ca8a04;">${meses} meses (Destete)</strong>`;
                 }
             }
 
-            // ATRIBUTOS data-* PARA FACILITAR EL BUSCADOR Y EL FILTRO
             tabla.innerHTML += `
                 <tr data-arete="${escapeStr(a.arete)}" data-categoria="${escapeStr(a.categoria)}" data-estado="${escapeStr(a.estado)}">
                     <td style="padding: 10px; border-bottom: 1px solid var(--border-light); text-align: center;">
@@ -641,7 +643,7 @@ window.cargarHato = function() {
 };
 
 // ==========================================
-// EXPEDIENTE CLÍNICO INDIVIDUAL (👁️)
+// 👁️ EXPEDIENTE CLÍNICO INDIVIDUAL (FICHA)
 // ==========================================
 window.abrirFicha = async function(idDoc) {
     if (!window.db) return alert("⚠️ Base de datos no inicializada.");
@@ -754,7 +756,7 @@ window.abrirFicha = async function(idDoc) {
 };
 
 // ==========================================
-// FORMULARIOS DENTRO DE LA FICHA
+// 📝 FORMULARIOS DENTRO DE LA FICHA
 // ==========================================
 const formCambioCategoria = document.getElementById('form-cambio-categoria');
 if (formCambioCategoria) {
@@ -846,17 +848,14 @@ if (formDestete) {
 }
 
 // ==========================================
-// REGISTRO DE NUEVO ANIMAL
+// ➕ REGISTRO DE NUEVO ANIMAL
 // ==========================================
 const formAnimal = document.getElementById('form-animal');
 if (formAnimal) {
     formAnimal.addEventListener('submit', async (e) => {
         e.preventDefault();
         
-        if (!window.db || !window.auth.currentUser) {
-            alert("⚠️ Sesión expirada o base de datos desconectada.");
-            return;
-        }
+        if (!window.db) return alert("⚠️ Base de datos desconectada.");
 
         const btn = formAnimal.querySelector('button[type="submit"]');
         btn.innerText = "Guardando..."; 
@@ -883,7 +882,8 @@ if (formAnimal) {
                 madre: document.getElementById('a-madre').value.trim() || 'N/D',
                 estado: document.getElementById('a-estado').value,
                 salud: "🟢 Sano",
-                fechaRegistro: serverTimestamp()
+                fechaRegistro: serverTimestamp(),
+                chipRFID: null // Se inicializa vacío para asociar en la manga
             });
 
             formAnimal.reset(); 
@@ -998,7 +998,7 @@ window.eliminarVacunaActiva = async function(idVacuna, nombreVacuna) {
 };
 
 // ==========================================
-// MOTOR DE TIEMPO Y TORRE DE CONTROL
+// 🗼 MOTOR DE TIEMPO Y TORRE DE CONTROL
 // ==========================================
 function actualizarDashboard(datosHato) {
     const listSecado = document.getElementById('dash-list-secado');
@@ -1015,7 +1015,6 @@ function actualizarDashboard(datosHato) {
     const hoy = new Date();
 
     datosHato.forEach(a => {
-        // Ignoramos a los que están dados de baja
         if (a.estado === 'Baja (Vendido/Muerto)') return;
 
         if (a.estado === "Gestante" && a.historialReproductivo) {
