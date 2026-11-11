@@ -840,7 +840,7 @@ if (formDestete) {
 }
 
 // ==========================================
-// REGISTRO DE NUEVO ANIMAL (Optimizado Multi-registro Instantáneo)
+// REGISTRO DE NUEVO ANIMAL (A PRUEBA DE ERRORES)
 // ==========================================
 const formAnimal = document.getElementById('form-animal');
 if (formAnimal) {
@@ -852,57 +852,72 @@ if (formAnimal) {
             return;
         }
 
-        const btn = formAnimal.querySelector('button[type="submit"]');
-        btn.disabled = true;
+        // Función para detectar exactamente qué campo falta y evitar el error "null"
+        const obtenerValor = (id) => {
+            const elemento = document.getElementById(id);
+            if (!elemento) {
+                throw new Error(`Falta el campo visual con ID: "${id}".`);
+            }
+            return elemento.value;
+        };
+
+        let btn = formAnimal.querySelector('button[type="submit"]');
+        if (btn) btn.disabled = true;
 
         try {
-            const pesoInput = document.getElementById('a-peso').value.trim();
+            // Leemos los campos uno por uno con la función segura
+            const fincaVal = obtenerValor('a-finca-select');
+            const areteVal = obtenerValor('a-arete').trim();
+            const categoriaVal = obtenerValor('a-categoria');
+            const nacimientoVal = obtenerValor('a-nacimiento') || null;
+            const pesoInput = obtenerValor('a-peso').trim();
             const pesoValor = pesoInput !== '' ? Number(pesoInput) : null;
-            const fechaNac = document.getElementById('a-nacimiento').value || null;
+            const padreVal = obtenerValor('a-padre').trim() || 'N/D';
+            const madreVal = obtenerValor('a-madre').trim() || 'N/D';
+            const estadoVal = obtenerValor('a-estado');
             
             const loteInput = document.getElementById('a-lote');
             const loteValor = (loteInput && loteInput.value.trim() !== '') ? loteInput.value.trim() : 'General';
 
             const nuevoAnimal = {
-                finca: document.getElementById('a-finca-select').value,
-                arete: document.getElementById('a-arete').value.trim(),
-                categoria: document.getElementById('a-categoria').value,
+                finca: fincaVal,
+                arete: areteVal,
+                categoria: categoriaVal,
                 lote: loteValor, 
                 peso: pesoValor,
-                fechaNacimiento: fechaNac,
+                fechaNacimiento: nacimientoVal,
                 historialPesos: pesoValor ? [{ fecha: new Date().toISOString().split('T')[0], peso: pesoValor, dispositivo: ID_DISPOSITIVO }] : [],
                 historialReproductivo: [],
-                padre: document.getElementById('a-padre').value.trim() || 'N/D',
-                madre: document.getElementById('a-madre').value.trim() || 'N/D',
-                estado: document.getElementById('a-estado').value,
+                padre: padreVal,
+                madre: madreVal,
+                estado: estadoVal,
                 salud: "🟢 Sano",
                 fechaRegistro: serverTimestamp()
             };
 
-            // Guardado local de respaldo inmediato en localStorage para evitar bloqueos
+            // Guardado local offline
             let pendientesOffline = JSON.parse(localStorage.getItem('elbalui_pendientes_offline') || '[]');
             pendientesOffline.push(nuevoAnimal);
             localStorage.setItem('elbalui_pendientes_offline', JSON.stringify(pendientesOffline));
 
-            // Envío a Firestore en segundo plano sin congelar la interfaz
+            // Envío a Firestore
             if (navigator.onLine) {
                 addDoc(collection(window.db, "animales"), nuevoAnimal).catch(err => {
                     console.log("Guardado en segundo plano en cola.");
                 });
             }
 
-            // Reseteamos el formulario y cerramos el modal de inmediato
             formAnimal.reset(); 
             document.getElementById('modal-animal').style.display = 'none';
-            
-            // Refrescamos la tabla localmente
             if (window.cargarHato) window.cargarHato();
 
         } catch (err) { 
-            alert("❌ Error al guardar: " + err.message); 
+            alert("❌ Error:\n\n" + err.message + "\n\n(Si dice que falta un campo, tu navegador sigue cargando la versión vieja de Vercel. Tienes que borrar el caché del navegador)."); 
         } finally { 
-            btn.innerText = "Guardar Animal"; 
-            btn.disabled = false; 
+            if (btn) {
+                btn.innerText = "Guardar Animal"; 
+                btn.disabled = false; 
+            }
         }
     };
 }
