@@ -12,7 +12,7 @@
         @media print {
             body { background: white; margin: 0; padding: 0; }
             header, .category-nav, .finca-banner, .tabs-hato-container, 
-            .btn-action, #offline-status-bar, #modal-animal, #login-screen,
+            .btn-action, #offline-status-bar, #modal-animal, #modal-ficha, #login-screen,
             .finca-toggle, button[onclick="window.print()"] { display: none !important; }
             .section-view, #app-container, .modulo-hato { display: block !important; box-shadow: none !important; border: none !important; }
             #tab-dashboard, #tab-lecheria, #tab-palma, #tab-operaciones, #tab-finanzas, #tab-documentos,
@@ -528,9 +528,10 @@
         <div style="background: white; padding: 24px; border-radius: 12px; width: 100%; max-width: 450px;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
                 <h3 style="color: var(--green-dark);">Registrar Animal</h3>
-                <button onclick="document.getElementById('modal-animal').style.display='none'" style="background:none; border:none; font-size:1.5rem; cursor:pointer;">&times;</button>
+                <button onclick="document.getElementById('modal-animal').style.display='none'" style="background:none; border:none; font-size:1.5rem; cursor:pointer;">×</button>
             </div>
             <form id="form-animal">
+                <input type="hidden" id="a-doc-id" value="">
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
                     <div class="form-field"><label>Finca</label><select id="a-finca-select"><option value="Agua Clara">Agua Clara</option><option value="El Sur">El Sur</option></select></div>
                     <div class="form-field"><label>Arete / ID</label><input type="text" id="a-arete" required></div>
@@ -581,7 +582,7 @@
         <div style="background: white; padding: 24px; border-radius: 12px; width: 100%; max-width: 400px;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
                 <h3 style="color: #eab308; margin: 0;">⚡ Acción Masiva Lote</h3>
-                <button onclick="document.getElementById('modal-masivo').style.display='none'" style="background:none; border:none; font-size:1.5rem; cursor:pointer;">&times;</button>
+                <button onclick="document.getElementById('modal-masivo').style.display='none'" style="background:none; border:none; font-size:1.5rem; cursor:pointer;">×</button>
             </div>
             <p style="font-size: 0.9rem; margin-bottom: 15px;">Animales seleccionados: <strong id="m-count">0</strong></p>
             <form id="form-masivo">
@@ -622,7 +623,7 @@
         <div style="background: white; padding: 24px; border-radius: 12px; width: 100%; max-width: 450px;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
                 <h3 style="color: #0369a1; margin: 0;">⬆️ Subir Documento al ERP</h3>
-                <button onclick="document.getElementById('modal-subir-doc').style.display='none'" style="background:none; border:none; font-size:1.5rem; cursor:pointer;">&times;</button>
+                <button onclick="document.getElementById('modal-subir-doc').style.display='none'" style="background:none; border:none; font-size:1.5rem; cursor:pointer;">×</button>
             </div>
             <form id="form-subir-doc">
                 <div class="form-field">
@@ -645,6 +646,50 @@
 
                 <button type="submit" id="btn-submit-doc" class="btn-action" style="width: 100%; margin-top: 20px; background: #0ea5e9; color: white; padding: 12px; font-size: 1rem;">Subir y Guardar</button>
             </form>
+        </div>
+    </div>
+
+    <!-- MODAL FICHA DEL ANIMAL -->
+    <div id="modal-ficha" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 1000; padding: 20px;">
+        <div style="background: white; padding: 24px; border-radius: 12px; width: 100%; max-width: 500px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; margin-bottom: 15px;">
+                <h3 style="color: #0369a1; margin: 0;">📋 Expediente / Ficha del Animal</h3>
+                <button onclick="document.getElementById('modal-ficha').style.display='none'" style="background:none; border:none; font-size:1.5rem; cursor:pointer; color: #64748b;">×</button>
+            </div>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; font-size: 0.9rem;">
+                <div style="background: #f8fafc; padding: 10px; border-radius: 6px; border: 1px solid #cbd5e1;">
+                    <span style="color: #64748b; font-weight: bold; font-size: 0.75rem;">ARETE / ID</span>
+                    <div id="f-arete" style="font-size: 1.2rem; font-weight: bold; color: #0f172a;">--</div>
+                </div>
+                <div style="background: #f8fafc; padding: 10px; border-radius: 6px; border: 1px solid #cbd5e1;">
+                    <span style="color: #64748b; font-weight: bold; font-size: 0.75rem;">CATEGORÍA</span>
+                    <div id="f-categoria" style="font-size: 1.1rem; font-weight: bold; color: #16a34a;">--</div>
+                </div>
+                <div>
+                    <span style="color: #64748b; font-weight: bold; font-size: 0.75rem;">LOTE ACTUAL</span>
+                    <div id="f-lote" style="font-weight: bold;">--</div>
+                </div>
+                <div>
+                    <span style="color: #64748b; font-weight: bold; font-size: 0.75rem;">ESTADO</span>
+                    <div id="f-estado" style="font-weight: bold;">--</div>
+                </div>
+                <div>
+                    <span style="color: #64748b; font-weight: bold; font-size: 0.75rem;">PADRE / MADRE</span>
+                    <div id="f-padres" style="font-weight: bold;">--</div>
+                </div>
+                <div>
+                    <span style="color: #64748b; font-weight: bold; font-size: 0.75rem;">PESO REGISTRADO</span>
+                    <div id="f-peso" style="font-weight: bold;">--</div>
+                </div>
+            </div>
+
+            <div style="margin-top: 20px; border-top: 1px solid #e2e8f0; padding-top: 15px;">
+                <h4 style="margin: 0 0 10px 0; color: #0f172a;">💉 Últimos Tratamientos (Historial)</h4>
+                <ul id="f-historial-sanitario" style="list-style: none; padding: 0; margin: 0; max-height: 120px; overflow-y: auto; font-size: 0.85rem; color: #475569;">
+                    <li style="font-style: italic;">Cargando historial...</li>
+                </ul>
+            </div>
         </div>
     </div>
 
