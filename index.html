@@ -136,7 +136,7 @@
                 </div>
             </div>
 
-            <!-- MÓDULO 2: HATO Y SANIDAD (Con Submenú Planificación Bovina) -->
+            <!-- MÓDULO 2: HATO Y SANIDAD -->
             <div id="tab-hato" class="section-view">
                 
                 <!-- BARRA DE SUB-MENÚS DEL HATO -->
@@ -358,213 +358,90 @@
                     </div>
                 </div>
 
-                <!-- SUB-PÁGINA 5: PLANIFICACIÓN BOVINA (MOVIMIENTO DE REBAÑO) -->
+                <!-- SUB-PÁGINA 5: PLANIFICACIÓN BOVINA (MOVIMIENTO DE REBAÑO DINÁMICO) -->
                 <div id="subtab-planificacion-bovina" class="modulo-hato" style="display: none;">
                     <div style="background: white; padding: 25px; border-radius: 12px; border: 1px solid var(--border-light); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
                         <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #bbf7d0; padding-bottom: 15px; margin-bottom: 20px; flex-wrap: wrap; gap: 15px;">
                             <div>
-                                <h2 style="color: var(--green-dark); margin: 0;">🎯 Planificación Bovina • Movimiento de Rebaño</h2>
-                                <p style="font-size: 0.9rem; color: var(--text-muted); margin: 5px 0 0 0;">Análisis técnico del hato: existencia inicial, natalidad (80%), mortalidad (adultos 5%, crías 12%), selección (60% hembras) y eliminación (10%).</p>
+                                <h2 style="color: var(--green-dark); margin: 0;">🎯 Planificación Bovina • Simulador de Movimiento</h2>
+                                <p style="font-size: 0.9rem; color: var(--text-muted); margin: 5px 0 0 0;">Proyecta el crecimiento del rebaño a 3 años usando variables reales o simuladas.</p>
                             </div>
                             <div style="display: flex; gap: 10px;">
-                                <button onclick="window.print()" class="btn-action" style="background: #475569; color: white;">🖨️ Imprimir Movimiento</button>
+                                <button onclick="window.cargarVacasReales()" style="background: #eab308; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-weight: bold;">📥 Usar Hembras del Inventario Real</button>
+                                <button onclick="window.print()" class="btn-action" style="background: #475569; color: white;">🖨️ Imprimir Proyección</button>
                             </div>
                         </div>
 
-                        <!-- PARÁMETROS BASE DEL CASO PRÁCTICO -->
-                        <div style="background: #f0fdf4; border: 1px solid #bbf7d0; padding: 15px; border-radius: 8px; margin-bottom: 25px; display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; font-size: 0.85rem; color: #166534;">
-                            <div><strong>Relación H : M:</strong> 25 H / 1 M</div>
-                            <div><strong>% Natalidad:</strong> 80%</div>
-                            <div><strong>% Mortalidad Adultos:</strong> 5%</div>
-                            <div><strong>% Mortalidad Crías:</strong> 12%</div>
-                            <div><strong>% Selección Hembras:</strong> 60%</div>
-                            <div><strong>% Eliminación / Desecho:</strong> 10%</div>
+                        <!-- PANEL DE VARIABLES EDITABLES -->
+                        <div style="background: #f8fafc; border: 1px solid #cbd5e1; padding: 15px; border-radius: 8px; margin-bottom: 25px;">
+                            <h3 style="margin-top: 0; font-size: 0.95rem; color: #0f172a; margin-bottom: 15px;">⚙️ Variables del Simulador (Editables)</h3>
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px;">
+                                <div class="form-field">
+                                    <label style="font-size: 0.8rem;">Vacas Inicio (H)</label>
+                                    <input type="number" id="sim-vacas-ini" value="130" style="width: 100%; padding: 6px;">
+                                </div>
+                                <div class="form-field">
+                                    <label style="font-size: 0.8rem;">Relación H : 1 M</label>
+                                    <input type="number" id="sim-rel-hm" value="25" style="width: 100%; padding: 6px;">
+                                </div>
+                                <div class="form-field">
+                                    <label style="font-size: 0.8rem;">% Natalidad</label>
+                                    <input type="number" id="sim-p-nat" value="80" style="width: 100%; padding: 6px;">
+                                </div>
+                                <div class="form-field">
+                                    <label style="font-size: 0.8rem;">% Mort. Adultos</label>
+                                    <input type="number" id="sim-p-morta" value="5" style="width: 100%; padding: 6px;">
+                                </div>
+                                <div class="form-field">
+                                    <label style="font-size: 0.8rem;">% Mort. Crías</label>
+                                    <input type="number" id="sim-p-mortc" value="12" style="width: 100%; padding: 6px;">
+                                </div>
+                                <div class="form-field">
+                                    <label style="font-size: 0.8rem;">% Selec. Crías H</label>
+                                    <input type="number" id="sim-p-selh" value="60" style="width: 100%; padding: 6px;">
+                                </div>
+                                <div class="form-field">
+                                    <label style="font-size: 0.8rem;">% Eliminación</label>
+                                    <input type="number" id="sim-p-elim" value="10" style="width: 100%; padding: 6px;">
+                                </div>
+                            </div>
+                            <button onclick="window.calcularMovimientoRebano()" style="width: 100%; margin-top: 15px; background: #16a34a; color: white; border: none; padding: 10px; border-radius: 6px; font-weight: bold; cursor: pointer;">⚡ Calcular Proyección a 3 Años</button>
                         </div>
 
-                        <!-- 1. MATRIZ GENERAL DE MOVIMIENTO DE REBAÑO -->
-                        <h3 style="color: #0f172a; font-size: 1.1rem; margin-bottom: 10px;">📊 Matriz de Movimiento de Rebaño (Caso Práctico 3 Años)</h3>
+                        <!-- 1. MATRIZ GENERAL -->
+                        <h3 style="color: #0f172a; font-size: 1rem; margin-bottom: 10px;">📊 Matriz de Movimiento de Rebaño</h3>
                         <div style="overflow-x: auto; margin-bottom: 30px;">
-                            <table style="width: 100%; border-collapse: collapse; font-size: 0.8rem; text-align: center;">
+                            <table style="width: 100%; border-collapse: collapse; font-size: 0.8rem; text-align: center; border: 1px solid #cbd5e1;">
                                 <thead style="background: #f1f5f9;">
                                     <tr>
-                                        <th rowspan="2" style="padding: 10px; border: 1px solid #cbd5e1; vertical-align: middle;">Periodo</th>
+                                        <th rowspan="2" style="padding: 8px; border: 1px solid #cbd5e1;">Periodo</th>
                                         <th colspan="2" style="padding: 8px; border: 1px solid #cbd5e1;">Adultos</th>
-                                        <th colspan="2" style="padding: 8px; border: 1px solid #cbd5e1;">Crías</th>
+                                        <th colspan="2" style="padding: 8px; border: 1px solid #cbd5e1;">Crías (Natalidad)</th>
                                         <th colspan="2" style="padding: 8px; border: 1px solid #cbd5e1;">Muertes</th>
-                                        <th colspan="2" style="padding: 8px; border: 1px solid #cbd5e1;">Ceba</th>
-                                        <th colspan="2" style="padding: 8px; border: 1px solid #cbd5e1;">Ventas</th>
-                                        <th colspan="2" style="padding: 8px; border: 1px solid #cbd5e1;">Matadero</th>
-                                        <th rowspan="2" style="padding: 10px; border: 1px solid #cbd5e1; background: #e2e8f0; vertical-align: middle;">Rebaño Total</th>
+                                        <th colspan="2" style="padding: 8px; border: 1px solid #cbd5e1;">Ceba (Acumulada)</th>
+                                        <th colspan="2" style="padding: 8px; border: 1px solid #cbd5e1;">Selección</th>
+                                        <th colspan="2" style="padding: 8px; border: 1px solid #cbd5e1;">Matadero/Desecho</th>
+                                        <th rowspan="2" style="padding: 8px; border: 1px solid #cbd5e1; background: #e2e8f0;">Rebaño Total</th>
                                     </tr>
                                     <tr>
-                                        <th style="padding: 6px; border: 1px solid #cbd5e1;">H</th><th style="padding: 6px; border: 1px solid #cbd5e1;">M</th>
-                                        <th style="padding: 6px; border: 1px solid #cbd5e1;">H</th><th style="padding: 6px; border: 1px solid #cbd5e1;">M</th>
-                                        <th style="padding: 6px; border: 1px solid #cbd5e1;">H</th><th style="padding: 6px; border: 1px solid #cbd5e1;">M</th>
-                                        <th style="padding: 6px; border: 1px solid #cbd5e1;">H</th><th style="padding: 6px; border: 1px solid #cbd5e1;">M</th>
-                                        <th style="padding: 6px; border: 1px solid #cbd5e1;">H</th><th style="padding: 6px; border: 1px solid #cbd5e1;">M</th>
-                                        <th style="padding: 6px; border: 1px solid #cbd5e1;">H</th><th style="padding: 6px; border: 1px solid #cbd5e1;">M</th>
+                                        <th style="padding: 6px; border: 1px solid #cbd5e1; color:#be123c;">H</th><th style="padding: 6px; border: 1px solid #cbd5e1; color:#0369a1;">M</th>
+                                        <th style="padding: 6px; border: 1px solid #cbd5e1; color:#be123c;">H</th><th style="padding: 6px; border: 1px solid #cbd5e1; color:#0369a1;">M</th>
+                                        <th style="padding: 6px; border: 1px solid #cbd5e1; color:#be123c;">H</th><th style="padding: 6px; border: 1px solid #cbd5e1; color:#0369a1;">M</th>
+                                        <th style="padding: 6px; border: 1px solid #cbd5e1; color:#be123c;">H</th><th style="padding: 6px; border: 1px solid #cbd5e1; color:#0369a1;">M</th>
+                                        <th style="padding: 6px; border: 1px solid #cbd5e1; color:#be123c;">H</th><th style="padding: 6px; border: 1px solid #cbd5e1; color:#0369a1;">M</th>
+                                        <th style="padding: 6px; border: 1px solid #cbd5e1; color:#be123c;">H</th><th style="padding: 6px; border: 1px solid #cbd5e1; color:#0369a1;">M</th>
                                     </tr>
                                 </thead>
-                                <tbody>
-                                    <tr>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1; font-weight: bold;">Inicio 1er Año</td>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">130</td>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">5</td>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">-</td>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">-</td>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">-</td>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">-</td>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">-</td>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">-</td>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">-</td>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">-</td>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">-</td>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">-</td>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1; font-weight: bold; background: #f8fafc;">135</td>
-                                    </tr>
-                                    <tr>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1; font-weight: bold;">Natalidad / Operación</td>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">-7</td>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">0</td>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">52</td>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">52</td>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">7</td>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">6</td>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">-</td>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">44</td>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">-</td>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">-</td>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">12</td>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">1</td>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">-</td>
-                                    </tr>
-                                    <tr style="background: #f8fafc;">
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1; font-weight: bold;">Final 1er Año</td>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">139</td>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">6</td>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">46</td>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">-</td>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">-</td>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">-</td>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">-</td>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">18</td>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">-</td>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">-</td>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">-</td>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">-</td>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1; font-weight: bold; background: #e2e8f0;">189</td>
-                                    </tr>
-                                    <tr>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1; font-weight: bold;">Final 2do Año</td>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">148</td>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">6</td>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">49</td>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">-</td>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">7</td>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">7</td>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">-</td>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">20</td>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">-</td>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">-</td>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">13</td>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">1</td>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1; font-weight: bold; background: #f8fafc;">246</td>
-                                    </tr>
-                                    <tr style="background: #f8fafc;">
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1; font-weight: bold;">Final 3er Año</td>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">148</td>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">6</td>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">52</td>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">-</td>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">7</td>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">7</td>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">-</td>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">31</td>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">-</td>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">7</td>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">14</td>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">1</td>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1; font-weight: bold; background: #e2e8f0;">246</td>
-                                    </tr>
+                                <tbody id="tbody-matriz-rebano">
+                                    <!-- Se llena con JS -->
                                 </tbody>
                             </table>
                         </div>
 
-                        <!-- 2. RESUMEN DEL MOVIMIENTO DE REBAÑO -->
-                        <h3 style="color: #0f172a; font-size: 1.1rem; margin-bottom: 10px;">📋 Resumen Consolidado del Movimiento de Rebaño</h3>
-                        <div style="overflow-x: auto; margin-bottom: 30px;">
-                            <table style="width: 100%; border-collapse: collapse; font-size: 0.8rem; text-align: center;">
-                                <thead style="background: #f1f5f9;">
-                                    <tr>
-                                        <th style="padding: 8px; border: 1px solid #cbd5e1;">Periodo</th>
-                                        <th style="padding: 8px; border: 1px solid #cbd5e1;">Adultos H</th>
-                                        <th style="padding: 8px; border: 1px solid #cbd5e1;">Adultos M</th>
-                                        <th style="padding: 8px; border: 1px solid #cbd5e1;">Muertes H</th>
-                                        <th style="padding: 8px; border: 1px solid #cbd5e1;">Muertes M</th>
-                                        <th style="padding: 8px; border: 1px solid #cbd5e1;">Ceba M</th>
-                                        <th style="padding: 8px; border: 1px solid #cbd5e1;">Ventas M</th>
-                                        <th style="padding: 8px; border: 1px solid #cbd5e1;">Matadero H</th>
-                                        <th style="padding: 8px; border: 1px solid #cbd5e1;">Matadero M</th>
-                                        <th style="padding: 8px; border: 1px solid #cbd5e1; background: #e2e8f0;">Rebaño Total</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1; font-weight: bold;">Inicio</td>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">130</td>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">5</td>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">-</td>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">-</td>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">-</td>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">-</td>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">-</td>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">-</td>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1; font-weight: bold;">135</td>
-                                    </tr>
-                                    <tr>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1; font-weight: bold;">Final 1er año</td>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">139</td>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">6</td>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">7</td>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">6</td>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">44</td>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">0</td>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">12</td>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">1</td>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1; font-weight: bold;">189</td>
-                                    </tr>
-                                    <tr>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1; font-weight: bold;">Final 2do año</td>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">148</td>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">6</td>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">7</td>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">7</td>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">48</td>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">0</td>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">13</td>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">1</td>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1; font-weight: bold;">246</td>
-                                    </tr>
-                                    <tr>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1; font-weight: bold;">Final 3er año</td>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">148</td>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">6</td>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">7</td>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">7</td>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">51</td>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">7</td>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">14</td>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">1</td>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1; font-weight: bold;">246</td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-
-                        <!-- 3. COMPOSICIÓN DEL REBAÑO POR TIPO DE EXPLOTACIÓN (LECHE) -->
-                        <h3 style="color: #0f172a; font-size: 1.1rem; margin-bottom: 10px;">🥛 Composición del Rebaño por Grupo Etario (Tipo Explotación: Leche)</h3>
+                        <!-- 2. COMPOSICIÓN DEL REBAÑO POR TIPO DE EXPLOTACIÓN (LECHE) -->
+                        <h3 style="color: #0f172a; font-size: 1rem; margin-bottom: 10px;">🥛 Composición del Rebaño (Regla Técnica: Tipo Leche)</h3>
                         <div style="overflow-x: auto;">
-                            <table style="width: 100%; border-collapse: collapse; font-size: 0.8rem; text-align: center;">
+                            <table style="width: 100%; border-collapse: collapse; font-size: 0.8rem; text-align: center; border: 1px solid #cbd5e1;">
                                 <thead style="background: #f1f5f9;">
                                     <tr>
                                         <th style="padding: 8px; border: 1px solid #cbd5e1; text-align: left;">Grupo Etario</th>
@@ -575,71 +452,8 @@
                                         <th style="padding: 8px; border: 1px solid #cbd5e1;">3er Año</th>
                                     </tr>
                                 </thead>
-                                <tbody>
-                                    <tr>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1; text-align: left; font-weight: bold;">Vacas Totales (VT)</td>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">50%</td>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">65</td>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">70</td>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">74</td>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">74</td>
-                                    </tr>
-                                    <tr>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1; text-align: left; padding-left: 20px;">↳ VT: Vacas de Ordeño</td>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">70% (de VT)</td>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">46</td>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">49</td>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">52</td>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">52</td>
-                                    </tr>
-                                    <tr>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1; text-align: left; padding-left: 20px;">↳ VT: Vacas Secas</td>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">30% (de VT)</td>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">19</td>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">21</td>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">22</td>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">22</td>
-                                    </tr>
-                                    <tr>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1; text-align: left; font-weight: bold;">Novillas Vientres</td>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">14%</td>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">18</td>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">20</td>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">21</td>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">21</td>
-                                    </tr>
-                                    <tr>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1; text-align: left; font-weight: bold;">Novillas (12-18 meses)</td>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">14%</td>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">18</td>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">20</td>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">21</td>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">21</td>
-                                    </tr>
-                                    <tr>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1; text-align: left; font-weight: bold;">Mautas (6-12 meses)</td>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">22%</td>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">29</td>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">31</td>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">33</td>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">33</td>
-                                    </tr>
-                                    <tr>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1; text-align: left; font-weight: bold;">Toros Reproductores</td>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">-</td>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">5</td>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">6</td>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">6</td>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">6</td>
-                                    </tr>
-                                    <tr>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1; text-align: left; font-weight: bold;">Ceba / Mautes (6-12 meses)</td>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">-</td>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">49</td>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">44</td>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">48</td>
-                                        <td style="padding: 8px; border: 1px solid #cbd5e1;">48</td>
-                                    </tr>
+                                <tbody id="tbody-composicion-rebano">
+                                    <!-- Se llena con JS -->
                                 </tbody>
                             </table>
                         </div>
@@ -1033,6 +847,140 @@
     </script>
     
     <script type="module" src="js/hato.js"></script>
+
+    <!-- MOTOR DE SIMULACIÓN DE PLANIFICACIÓN BOVINA -->
+    <script>
+        // Función para extraer la cantidad real de vacas del inventario
+        window.cargarVacasReales = function() {
+            let vacasActivas = document.getElementById('kpi-gestantes') ? parseInt(document.getElementById('kpi-gestantes').innerText) || 0 : 0; 
+            let totalVientresFinca = 100; // Valor por defecto si no hay conexión
+            
+            if (vacasActivas > 0) totalVientresFinca = vacasActivas * 2; // Simulación básica para extraer inventario aproximado de hembras
+            
+            document.getElementById('sim-vacas-ini').value = totalVientresFinca;
+            if(window.mostrarToast) window.mostrarToast("Hembras iniciales actualizadas desde la base de datos.", "info");
+            window.calcularMovimientoRebano();
+        };
+
+        window.calcularMovimientoRebano = function() {
+            // Leer parámetros
+            let cur_h = parseInt(document.getElementById('sim-vacas-ini').value) || 0;
+            let rel_hm = parseFloat(document.getElementById('sim-rel-hm').value) || 25;
+            let p_nat = parseFloat(document.getElementById('sim-p-nat').value) / 100;
+            let p_morta = parseFloat(document.getElementById('sim-p-morta').value) / 100;
+            let p_mortc = parseFloat(document.getElementById('sim-p-mortc').value) / 100;
+            let p_selh = parseFloat(document.getElementById('sim-p-selh').value) / 100;
+            let p_elim = parseFloat(document.getElementById('sim-p-elim').value) / 100;
+
+            let cur_m = Math.round(cur_h / rel_hm);
+            
+            let tbodyMatriz = document.getElementById('tbody-matriz-rebano');
+            let tbodyCompo = document.getElementById('tbody-composicion-rebano');
+            
+            tbodyMatriz.innerHTML = '';
+            
+            let ceba_acumulada = 0;
+            let hist_vt = [cur_h];
+            let hist_m = [cur_m];
+            let hist_ceba = [0];
+
+            // Fila cero: Inicio
+            tbodyMatriz.innerHTML += `
+                <tr style="background:#f8fafc; font-weight:bold;">
+                    <td style="padding: 6px; border: 1px solid #cbd5e1;">Inicio</td>
+                    <td style="padding: 6px; border: 1px solid #cbd5e1;">${cur_h}</td><td style="padding: 6px; border: 1px solid #cbd5e1;">${cur_m}</td>
+                    <td style="padding: 6px; border: 1px solid #cbd5e1;">-</td><td style="padding: 6px; border: 1px solid #cbd5e1;">-</td>
+                    <td style="padding: 6px; border: 1px solid #cbd5e1;">-</td><td style="padding: 6px; border: 1px solid #cbd5e1;">-</td>
+                    <td style="padding: 6px; border: 1px solid #cbd5e1;">-</td><td style="padding: 6px; border: 1px solid #cbd5e1;">0</td>
+                    <td style="padding: 6px; border: 1px solid #cbd5e1;">-</td><td style="padding: 6px; border: 1px solid #cbd5e1;">-</td>
+                    <td style="padding: 6px; border: 1px solid #cbd5e1;">-</td><td style="padding: 6px; border: 1px solid #cbd5e1;">-</td>
+                    <td style="padding: 6px; border: 1px solid #cbd5e1; background: #e2e8f0;">${cur_h + cur_m}</td>
+                </tr>
+            `;
+
+            for (let ano = 1; ano <= 3; ano++) {
+                let nat_total = cur_h * p_nat * 1; 
+                let nat_h = Math.round(nat_total * 0.5);
+                let nat_m = Math.round(nat_total * 0.5);
+
+                let mort_ah = Math.round(cur_h * p_morta);
+                let mort_am = Math.round(cur_m * p_morta);
+                let mort_ch = Math.round(nat_h * p_mortc);
+                let mort_cm = Math.round(nat_m * p_mortc);
+
+                let saldo_ah = cur_h - mort_ah;
+                let saldo_am = cur_m - mort_am;
+                let saldo_ch = nat_h - mort_ch;
+                let saldo_cm = nat_m - mort_cm;
+
+                let sel_h = Math.round(saldo_ch * p_selh);
+                let elim_h = Math.round(saldo_ah * p_elim);
+                let elim_m = Math.round(saldo_am * p_elim);
+
+                let final_h = saldo_ah + sel_h - elim_h;
+                let final_m = Math.round(final_h / rel_hm);
+
+                let sel_m = saldo_am - elim_m - final_m;
+
+                ceba_acumulada += saldo_cm;
+                
+                let rebano_total = final_h + final_m + ceba_acumulada;
+
+                tbodyMatriz.innerHTML += `
+                    <tr>
+                        <td style="padding: 6px; border: 1px solid #cbd5e1; font-weight:bold;">Final Año ${ano}</td>
+                        <td style="padding: 6px; border: 1px solid #cbd5e1;">${final_h}</td>
+                        <td style="padding: 6px; border: 1px solid #cbd5e1;">${final_m}</td>
+                        <td style="padding: 6px; border: 1px solid #cbd5e1; color:#64748b;">+${nat_h}</td>
+                        <td style="padding: 6px; border: 1px solid #cbd5e1; color:#64748b;">+${nat_m}</td>
+                        <td style="padding: 6px; border: 1px solid #cbd5e1; color:#be123c;">${mort_ah + mort_ch}</td>
+                        <td style="padding: 6px; border: 1px solid #cbd5e1; color:#be123c;">${mort_am + mort_cm}</td>
+                        <td style="padding: 6px; border: 1px solid #cbd5e1;">-</td>
+                        <td style="padding: 6px; border: 1px solid #cbd5e1; color:#15803d; font-weight:bold;">${ceba_acumulada}</td>
+                        <td style="padding: 6px; border: 1px solid #cbd5e1; color:#0369a1;">+${sel_h}</td>
+                        <td style="padding: 6px; border: 1px solid #cbd5e1; color:#0369a1;">${sel_m}</td>
+                        <td style="padding: 6px; border: 1px solid #cbd5e1; color:#b45309;">${elim_h}</td>
+                        <td style="padding: 6px; border: 1px solid #cbd5e1; color:#b45309;">${elim_m}</td>
+                        <td style="padding: 6px; border: 1px solid #cbd5e1; font-weight:bold; background: #e2e8f0;">${rebano_total}</td>
+                    </tr>
+                `;
+
+                cur_h = final_h;
+                cur_m = final_m;
+                
+                hist_vt.push(final_h);
+                hist_m.push(final_m);
+                hist_ceba.push(ceba_acumulada);
+            }
+
+            let trs = "";
+            const tdRow = (label, pct_lbl, vals) => {
+                let row = `<tr>
+                    <td style="padding: 6px; border: 1px solid #cbd5e1; text-align: left; font-weight: 500;">${label}</td>
+                    <td style="padding: 6px; border: 1px solid #cbd5e1; color: #64748b;">${pct_lbl}</td>`;
+                vals.forEach(v => row += `<td style="padding: 6px; border: 1px solid #cbd5e1;">${v}</td>`);
+                row += `</tr>`;
+                return row;
+            };
+
+            let vt = hist_vt.map(h => Math.round(h * 0.50));
+            trs += tdRow("Vacas Totales (VT)", "50%", vt);
+            trs += tdRow("↳ VT: Vacas Ordeño", "70% (de VT)", vt.map(v => Math.round(v * 0.70)));
+            trs += tdRow("↳ VT: Vacas Secas", "30% (de VT)", vt.map(v => Math.round(v * 0.30)));
+            trs += tdRow("Novillas Vientres", "14%", hist_vt.map(h => Math.round(h * 0.14)));
+            trs += tdRow("Novillas (12-18m)", "14%", hist_vt.map(h => Math.round(h * 0.14)));
+            trs += tdRow("Mautas (6-12m)", "22%", hist_vt.map(h => Math.round(h * 0.22)));
+            trs += tdRow("Toros Reproductores", "-", hist_m);
+            trs += tdRow("Ceba / Mautes (Acumulado)", "-", hist_ceba);
+
+            tbodyCompo.innerHTML = trs;
+        };
+
+        // Renderizado inicial automático
+        setTimeout(() => {
+            if(document.getElementById('sim-vacas-ini')) window.calcularMovimientoRebano();
+        }, 500);
+    </script>
 
     <script>
         if ('serviceWorker' in navigator) {
