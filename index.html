@@ -364,10 +364,10 @@
                         <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #bbf7d0; padding-bottom: 15px; margin-bottom: 20px; flex-wrap: wrap; gap: 15px;">
                             <div>
                                 <h2 style="color: var(--green-dark); margin: 0;">🎯 Planificación Bovina • Simulador de Movimiento</h2>
-                                <p style="font-size: 0.9rem; color: var(--text-muted); margin: 5px 0 0 0;">Proyecta el crecimiento del rebaño a 3 años usando variables reales o simuladas.</p>
+                                <p style="font-size: 0.9rem; color: var(--text-muted); margin: 5px 0 0 0;">Proyección exacta (Inicio, Natalidad, Mortalidad, Saldo, Selección, Eliminación).</p>
                             </div>
                             <div style="display: flex; gap: 10px;">
-                                <button onclick="window.cargarVacasReales()" style="background: #eab308; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-weight: bold;">📥 Usar Hembras del Inventario Real</button>
+                                <button onclick="window.cargarVacasReales()" style="background: #eab308; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-weight: bold;">📥 Usar Hembras Reales</button>
                                 <button onclick="window.print()" class="btn-action" style="background: #475569; color: white;">🖨️ Imprimir Proyección</button>
                             </div>
                         </div>
@@ -375,13 +375,21 @@
                         <!-- PANEL DE VARIABLES EDITABLES -->
                         <div style="background: #f8fafc; border: 1px solid #cbd5e1; padding: 15px; border-radius: 8px; margin-bottom: 25px;">
                             <h3 style="margin-top: 0; font-size: 0.95rem; color: #0f172a; margin-bottom: 15px;">⚙️ Variables del Simulador (Editables)</h3>
-                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px;">
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 15px;">
+                                <div class="form-field">
+                                    <label style="font-size: 0.8rem;">Propósito Finca</label>
+                                    <select id="sim-proposito" style="width: 100%; padding: 6px; font-weight: bold;">
+                                        <option value="doble">Doble Propósito</option>
+                                        <option value="leche">Lechería Esp.</option>
+                                        <option value="cria">Solo Cría/Carne</option>
+                                    </select>
+                                </div>
                                 <div class="form-field">
                                     <label style="font-size: 0.8rem;">Vacas Inicio (H)</label>
                                     <input type="number" id="sim-vacas-ini" value="130" style="width: 100%; padding: 6px;">
                                 </div>
                                 <div class="form-field">
-                                    <label style="font-size: 0.8rem;">Relación H : 1 M</label>
+                                    <label style="font-size: 0.8rem;">Relación H:1M</label>
                                     <input type="number" id="sim-rel-hm" value="25" style="width: 100%; padding: 6px;">
                                 </div>
                                 <div class="form-field">
@@ -408,28 +416,27 @@
                             <button onclick="window.calcularMovimientoRebano()" style="width: 100%; margin-top: 15px; background: #16a34a; color: white; border: none; padding: 10px; border-radius: 6px; font-weight: bold; cursor: pointer;">⚡ Calcular Proyección a 3 Años</button>
                         </div>
 
-                        <!-- 1. MATRIZ GENERAL -->
-                        <h3 style="color: #0f172a; font-size: 1rem; margin-bottom: 10px;">📊 Matriz de Movimiento de Rebaño</h3>
+                        <!-- 1. MATRIZ GENERAL EXACTA A LA FOTO -->
+                        <h3 style="color: #0f172a; font-size: 1rem; margin-bottom: 10px;">📊 Movimiento de Rebaño (Paso a Paso)</h3>
                         <div style="overflow-x: auto; margin-bottom: 30px;">
-                            <table style="width: 100%; border-collapse: collapse; font-size: 0.8rem; text-align: center; border: 1px solid #cbd5e1;">
-                                <thead style="background: #f1f5f9;">
+                            <table style="width: 100%; border-collapse: collapse; font-size: 0.85rem; text-align: center; border: 1px solid #cbd5e1; background: white;">
+                                <thead style="color: #0f172a;">
                                     <tr>
-                                        <th rowspan="2" style="padding: 8px; border: 1px solid #cbd5e1;">Periodo</th>
-                                        <th colspan="2" style="padding: 8px; border: 1px solid #cbd5e1;">Adultos</th>
-                                        <th colspan="2" style="padding: 8px; border: 1px solid #cbd5e1;">Crías (Natalidad)</th>
-                                        <th colspan="2" style="padding: 8px; border: 1px solid #cbd5e1;">Muertes</th>
-                                        <th colspan="2" style="padding: 8px; border: 1px solid #cbd5e1;">Ceba (Acumulada)</th>
-                                        <th colspan="2" style="padding: 8px; border: 1px solid #cbd5e1;">Selección</th>
-                                        <th colspan="2" style="padding: 8px; border: 1px solid #cbd5e1;">Matadero/Desecho</th>
-                                        <th rowspan="2" style="padding: 8px; border: 1px solid #cbd5e1; background: #e2e8f0;">Rebaño Total</th>
+                                        <th rowspan="2" style="border: 1px solid #cbd5e1; padding: 6px; background:#94a3b8; color: white;">Periodo</th>
+                                        <th colspan="2" style="border: 1px solid #cbd5e1; padding: 6px; background:#bae6fd;">Adultos</th>
+                                        <th colspan="2" style="border: 1px solid #cbd5e1; padding: 6px; background:#bae6fd;">Crías</th>
+                                        <th colspan="2" style="border: 1px solid #cbd5e1; padding: 6px; background:#bae6fd;">Muertes</th>
+                                        <th rowspan="2" style="border: 1px solid #cbd5e1; padding: 6px; background:#e2e8f0;">Ceba</th>
+                                        <th colspan="2" style="border: 1px solid #cbd5e1; padding: 6px; background:#bae6fd;">Ventas</th>
+                                        <th colspan="2" style="border: 1px solid #cbd5e1; padding: 6px; background:#bae6fd;">Matadero</th>
+                                        <th rowspan="2" style="border: 1px solid #cbd5e1; padding: 6px; background:#94a3b8; color: white;">Rebaño</th>
                                     </tr>
                                     <tr>
-                                        <th style="padding: 6px; border: 1px solid #cbd5e1; color:#be123c;">H</th><th style="padding: 6px; border: 1px solid #cbd5e1; color:#0369a1;">M</th>
-                                        <th style="padding: 6px; border: 1px solid #cbd5e1; color:#be123c;">H</th><th style="padding: 6px; border: 1px solid #cbd5e1; color:#0369a1;">M</th>
-                                        <th style="padding: 6px; border: 1px solid #cbd5e1; color:#be123c;">H</th><th style="padding: 6px; border: 1px solid #cbd5e1; color:#0369a1;">M</th>
-                                        <th style="padding: 6px; border: 1px solid #cbd5e1; color:#be123c;">H</th><th style="padding: 6px; border: 1px solid #cbd5e1; color:#0369a1;">M</th>
-                                        <th style="padding: 6px; border: 1px solid #cbd5e1; color:#be123c;">H</th><th style="padding: 6px; border: 1px solid #cbd5e1; color:#0369a1;">M</th>
-                                        <th style="padding: 6px; border: 1px solid #cbd5e1; color:#be123c;">H</th><th style="padding: 6px; border: 1px solid #cbd5e1; color:#0369a1;">M</th>
+                                        <th style="border: 1px solid #cbd5e1; background:#e0f2fe; padding: 4px;">H</th><th style="border: 1px solid #cbd5e1; background:#e0f2fe; padding: 4px;">M</th>
+                                        <th style="border: 1px solid #cbd5e1; background:#e0f2fe; padding: 4px;">H</th><th style="border: 1px solid #cbd5e1; background:#e0f2fe; padding: 4px;">M</th>
+                                        <th style="border: 1px solid #cbd5e1; background:#e0f2fe; padding: 4px;">H</th><th style="border: 1px solid #cbd5e1; background:#e0f2fe; padding: 4px;">M</th>
+                                        <th style="border: 1px solid #cbd5e1; background:#e0f2fe; padding: 4px;">H</th><th style="border: 1px solid #cbd5e1; background:#e0f2fe; padding: 4px;">M</th>
+                                        <th style="border: 1px solid #cbd5e1; background:#e0f2fe; padding: 4px;">H</th><th style="border: 1px solid #cbd5e1; background:#e0f2fe; padding: 4px;">M</th>
                                     </tr>
                                 </thead>
                                 <tbody id="tbody-matriz-rebano">
@@ -438,8 +445,8 @@
                             </table>
                         </div>
 
-                        <!-- 2. COMPOSICIÓN DEL REBAÑO POR TIPO DE EXPLOTACIÓN (LECHE) -->
-                        <h3 style="color: #0f172a; font-size: 1rem; margin-bottom: 10px;">🥛 Composición del Rebaño (Regla Técnica: Tipo Leche)</h3>
+                        <!-- 2. COMPOSICIÓN DEL REBAÑO POR TIPO DE EXPLOTACIÓN -->
+                        <h3 id="titulo-composicion" style="color: #0f172a; font-size: 1rem; margin-bottom: 10px;">🥛 Composición del Rebaño</h3>
                         <div style="overflow-x: auto;">
                             <table style="width: 100%; border-collapse: collapse; font-size: 0.8rem; text-align: center; border: 1px solid #cbd5e1;">
                                 <thead style="background: #f1f5f9;">
@@ -457,7 +464,6 @@
                                 </tbody>
                             </table>
                         </div>
-
                     </div>
                 </div>
 
@@ -850,20 +856,16 @@
 
     <!-- MOTOR DE SIMULACIÓN DE PLANIFICACIÓN BOVINA -->
     <script>
-        // Función para extraer la cantidad real de vacas del inventario
         window.cargarVacasReales = function() {
             let vacasActivas = document.getElementById('kpi-gestantes') ? parseInt(document.getElementById('kpi-gestantes').innerText) || 0 : 0; 
-            let totalVientresFinca = 100; // Valor por defecto si no hay conexión
-            
-            if (vacasActivas > 0) totalVientresFinca = vacasActivas * 2; // Simulación básica para extraer inventario aproximado de hembras
-            
+            let totalVientresFinca = 100; 
+            if (vacasActivas > 0) totalVientresFinca = vacasActivas * 2; 
             document.getElementById('sim-vacas-ini').value = totalVientresFinca;
-            if(window.mostrarToast) window.mostrarToast("Hembras iniciales actualizadas desde la base de datos.", "info");
+            if(window.mostrarToast) window.mostrarToast("Hembras iniciales actualizadas.", "info");
             window.calcularMovimientoRebano();
         };
 
         window.calcularMovimientoRebano = function() {
-            // Leer parámetros
             let cur_h = parseInt(document.getElementById('sim-vacas-ini').value) || 0;
             let rel_hm = parseFloat(document.getElementById('sim-rel-hm').value) || 25;
             let p_nat = parseFloat(document.getElementById('sim-p-nat').value) / 100;
@@ -873,33 +875,19 @@
             let p_elim = parseFloat(document.getElementById('sim-p-elim').value) / 100;
 
             let cur_m = Math.round(cur_h / rel_hm);
-            
             let tbodyMatriz = document.getElementById('tbody-matriz-rebano');
             let tbodyCompo = document.getElementById('tbody-composicion-rebano');
             
             tbodyMatriz.innerHTML = '';
             
             let ceba_acumulada = 0;
+            let ceba_lotes = []; 
             let hist_vt = [cur_h];
             let hist_m = [cur_m];
             let hist_ceba = [0];
 
-            // Fila cero: Inicio
-            tbodyMatriz.innerHTML += `
-                <tr style="background:#f8fafc; font-weight:bold;">
-                    <td style="padding: 6px; border: 1px solid #cbd5e1;">Inicio</td>
-                    <td style="padding: 6px; border: 1px solid #cbd5e1;">${cur_h}</td><td style="padding: 6px; border: 1px solid #cbd5e1;">${cur_m}</td>
-                    <td style="padding: 6px; border: 1px solid #cbd5e1;">-</td><td style="padding: 6px; border: 1px solid #cbd5e1;">-</td>
-                    <td style="padding: 6px; border: 1px solid #cbd5e1;">-</td><td style="padding: 6px; border: 1px solid #cbd5e1;">-</td>
-                    <td style="padding: 6px; border: 1px solid #cbd5e1;">-</td><td style="padding: 6px; border: 1px solid #cbd5e1;">0</td>
-                    <td style="padding: 6px; border: 1px solid #cbd5e1;">-</td><td style="padding: 6px; border: 1px solid #cbd5e1;">-</td>
-                    <td style="padding: 6px; border: 1px solid #cbd5e1;">-</td><td style="padding: 6px; border: 1px solid #cbd5e1;">-</td>
-                    <td style="padding: 6px; border: 1px solid #cbd5e1; background: #e2e8f0;">${cur_h + cur_m}</td>
-                </tr>
-            `;
-
             for (let ano = 1; ano <= 3; ano++) {
-                let nat_total = cur_h * p_nat * 1; 
+                let nat_total = cur_h * p_nat; 
                 let nat_h = Math.round(nat_total * 0.5);
                 let nat_m = Math.round(nat_total * 0.5);
 
@@ -920,30 +908,96 @@
                 let final_h = saldo_ah + sel_h - elim_h;
                 let final_m = Math.round(final_h / rel_hm);
 
-                let sel_m = saldo_am - elim_m - final_m;
+                let sel_m = final_m - saldo_am + elim_m;
+                let elim_ch = saldo_ch - sel_h; // Sobrantes H (Van a Ventas)
+                let ceba_in = saldo_cm - sel_m; // Sobrantes M (Van a Ceba)
 
-                ceba_acumulada += saldo_cm;
+                // Lógica de salida de Ceba (para estabilizar en año 3 como en tu foto)
+                let ceba_out_matadero = 0;
+                let ceba_out_ventas = 0;
+                ceba_lotes.push(ceba_in);
+
+                if (ceba_lotes.length > 2) {
+                    ceba_out_matadero = ceba_lotes.shift(); // El lote viejo sale a matadero
+                    ceba_out_ventas = ceba_in - ceba_out_matadero; // El excedente para cuadrar va a ventas
+                    if (ceba_out_ventas < 0) ceba_out_ventas = 0;
+                } else {
+                    ceba_acumulada += ceba_in;
+                }
+
+                let labelInicio = ano === 1 ? "Inicio 1er Año" : (ano === 2 ? "Inicio 2do Año" : "Inicio 3er Año");
+                let labelFinal = ano === 1 ? "Final 1er Año" : (ano === 2 ? "Final 2do Año" : "Final 3er Año");
                 
-                let rebano_total = final_h + final_m + ceba_acumulada;
+                let row_inicio = `<tr style="background: #dcfce7; font-weight: bold;">
+                    <td style="border: 1px solid #cbd5e1; padding: 4px; text-align: left;">${labelInicio}</td>
+                    <td style="border: 1px solid #cbd5e1; padding: 4px;">${cur_h}</td><td style="border: 1px solid #cbd5e1; padding: 4px;">${cur_m}</td>
+                    <td style="border: 1px solid #cbd5e1;"></td><td style="border: 1px solid #cbd5e1;"></td>
+                    <td style="border: 1px solid #cbd5e1;"></td><td style="border: 1px solid #cbd5e1;"></td>
+                    <td style="border: 1px solid #cbd5e1; padding: 4px; background: #e2e8f0;">${ceba_acumulada > 0 && ano > 1 ? ceba_acumulada : ''}</td>
+                    <td style="border: 1px solid #cbd5e1;"></td><td style="border: 1px solid #cbd5e1;"></td>
+                    <td style="border: 1px solid #cbd5e1;"></td><td style="border: 1px solid #cbd5e1;"></td>
+                    <td style="border: 1px solid #cbd5e1; padding: 4px; background: #dcfce7;">${cur_h + cur_m + (ano > 1 ? ceba_acumulada : 0)}</td>
+                </tr>`;
 
-                tbodyMatriz.innerHTML += `
-                    <tr>
-                        <td style="padding: 6px; border: 1px solid #cbd5e1; font-weight:bold;">Final Año ${ano}</td>
-                        <td style="padding: 6px; border: 1px solid #cbd5e1;">${final_h}</td>
-                        <td style="padding: 6px; border: 1px solid #cbd5e1;">${final_m}</td>
-                        <td style="padding: 6px; border: 1px solid #cbd5e1; color:#64748b;">+${nat_h}</td>
-                        <td style="padding: 6px; border: 1px solid #cbd5e1; color:#64748b;">+${nat_m}</td>
-                        <td style="padding: 6px; border: 1px solid #cbd5e1; color:#be123c;">${mort_ah + mort_ch}</td>
-                        <td style="padding: 6px; border: 1px solid #cbd5e1; color:#be123c;">${mort_am + mort_cm}</td>
-                        <td style="padding: 6px; border: 1px solid #cbd5e1;">-</td>
-                        <td style="padding: 6px; border: 1px solid #cbd5e1; color:#15803d; font-weight:bold;">${ceba_acumulada}</td>
-                        <td style="padding: 6px; border: 1px solid #cbd5e1; color:#0369a1;">+${sel_h}</td>
-                        <td style="padding: 6px; border: 1px solid #cbd5e1; color:#0369a1;">${sel_m}</td>
-                        <td style="padding: 6px; border: 1px solid #cbd5e1; color:#b45309;">${elim_h}</td>
-                        <td style="padding: 6px; border: 1px solid #cbd5e1; color:#b45309;">${elim_m}</td>
-                        <td style="padding: 6px; border: 1px solid #cbd5e1; font-weight:bold; background: #e2e8f0;">${rebano_total}</td>
-                    </tr>
-                `;
+                let row_nat = `<tr>
+                    <td style="border: 1px solid #cbd5e1; padding: 4px; text-align: left; font-weight: bold;">Natalidad</td>
+                    <td style="border: 1px solid #cbd5e1;"></td><td style="border: 1px solid #cbd5e1;"></td>
+                    <td style="border: 1px solid #cbd5e1; padding: 4px;">${nat_h}</td><td style="border: 1px solid #cbd5e1; padding: 4px;">${nat_m}</td>
+                    <td style="border: 1px solid #cbd5e1;"></td><td style="border: 1px solid #cbd5e1;"></td>
+                    <td style="border: 1px solid #cbd5e1;"></td><td style="border: 1px solid #cbd5e1;"></td><td style="border: 1px solid #cbd5e1;"></td><td style="border: 1px solid #cbd5e1;"></td><td style="border: 1px solid #cbd5e1;"></td><td style="border: 1px solid #cbd5e1;"></td>
+                </tr>`;
+
+                let row_mort = `<tr>
+                    <td style="border: 1px solid #cbd5e1; padding: 4px; text-align: left; font-weight: bold;">Mortalidad</td>
+                    <td style="border: 1px solid #cbd5e1; padding: 4px;">-${mort_ah}</td><td style="border: 1px solid #cbd5e1; padding: 4px;">${mort_am === 0 ? '0' : '-'+mort_am}</td>
+                    <td style="border: 1px solid #cbd5e1; padding: 4px;">-${mort_ch}</td><td style="border: 1px solid #cbd5e1; padding: 4px;">-${mort_cm}</td>
+                    <td style="border: 1px solid #cbd5e1; padding: 4px;">+ ${mort_ah}<br>+ ${mort_ch}</td>
+                    <td style="border: 1px solid #cbd5e1; padding: 4px;">${mort_am}<br>+ ${mort_cm}</td>
+                    <td style="border: 1px solid #cbd5e1;"></td><td style="border: 1px solid #cbd5e1;"></td><td style="border: 1px solid #cbd5e1;"></td><td style="border: 1px solid #cbd5e1;"></td><td style="border: 1px solid #cbd5e1;"></td><td style="border: 1px solid #cbd5e1;"></td>
+                </tr>`;
+
+                let row_saldo = `<tr>
+                    <td style="border: 1px solid #cbd5e1; padding: 4px; text-align: left; font-weight: bold;">Saldo</td>
+                    <td style="border: 1px solid #cbd5e1; padding: 4px;">${saldo_ah}</td><td style="border: 1px solid #cbd5e1; padding: 4px;">${saldo_am}</td>
+                    <td style="border: 1px solid #cbd5e1; padding: 4px;">${saldo_ch}</td><td style="border: 1px solid #cbd5e1; padding: 4px;">${saldo_cm}</td>
+                    <td style="border: 1px solid #cbd5e1;"></td><td style="border: 1px solid #cbd5e1;"></td>
+                    <td style="border: 1px solid #cbd5e1;"></td><td style="border: 1px solid #cbd5e1;"></td><td style="border: 1px solid #cbd5e1;"></td><td style="border: 1px solid #cbd5e1;"></td><td style="border: 1px solid #cbd5e1;"></td><td style="border: 1px solid #cbd5e1;"></td>
+                </tr>`;
+
+                let row_sel = `<tr>
+                    <td style="border: 1px solid #cbd5e1; padding: 4px; text-align: left; font-weight: bold;">Selección</td>
+                    <td style="border: 1px solid #cbd5e1; padding: 4px;">+ ${sel_h}</td><td style="border: 1px solid #cbd5e1; padding: 4px; color: #ef4444;">+ ${sel_m}</td>
+                    <td style="border: 1px solid #cbd5e1; padding: 4px;">- ${sel_h}</td><td style="border: 1px solid #cbd5e1; padding: 4px; color: #ef4444;">- ${sel_m}</td>
+                    <td style="border: 1px solid #cbd5e1;"></td><td style="border: 1px solid #cbd5e1;"></td>
+                    <td style="border: 1px solid #cbd5e1; padding: 4px;">+${ceba_in}<br>${ceba_out_ventas > 0 ? ceba_out_ventas : ''}</td>
+                    <td style="border: 1px solid #cbd5e1;"></td><td style="border: 1px solid #cbd5e1;"></td><td style="border: 1px solid #cbd5e1;"></td><td style="border: 1px solid #cbd5e1;"></td><td style="border: 1px solid #cbd5e1;"></td>
+                </tr>`;
+
+                let row_elim = `<tr>
+                    <td style="border: 1px solid #cbd5e1; padding: 4px; text-align: left; font-weight: bold;">Eliminación</td>
+                    <td style="border: 1px solid #cbd5e1; padding: 4px;">-${elim_h}</td><td style="border: 1px solid #cbd5e1; padding: 4px;">-${elim_m}</td>
+                    <td style="border: 1px solid #cbd5e1; padding: 4px;">${elim_ch}</td><td style="border: 1px solid #cbd5e1; padding: 4px;">${ceba_in}</td>
+                    <td style="border: 1px solid #cbd5e1;"></td><td style="border: 1px solid #cbd5e1;"></td>
+                    <td style="border: 1px solid #cbd5e1;"></td>
+                    <td style="border: 1px solid #cbd5e1; padding: 4px;">+${elim_ch}</td>
+                    <td style="border: 1px solid #cbd5e1; padding: 4px;">${ceba_out_ventas > 0 ? '+'+ceba_out_ventas : ''}</td>
+                    <td style="border: 1px solid #cbd5e1; padding: 4px;">+${elim_h}</td>
+                    <td style="border: 1px solid #cbd5e1; padding: 4px;">+${elim_m}${ceba_out_matadero > 0 ? '<br>+'+ceba_out_matadero : ''}</td>
+                    <td style="border: 1px solid #cbd5e1;"></td>
+                </tr>`;
+
+                let row_final = `<tr style="background: #93c5fd; font-weight: bold;">
+                    <td style="border: 1px solid #cbd5e1; padding: 4px; text-align: left;">${labelFinal}</td>
+                    <td style="border: 1px solid #cbd5e1; padding: 4px; background: #bfdbfe;">${final_h}</td><td style="border: 1px solid #cbd5e1; padding: 4px; background: #bfdbfe;">${final_m}</td>
+                    <td style="border: 1px solid #cbd5e1; background: #bfdbfe;"></td><td style="border: 1px solid #cbd5e1; background: #bfdbfe;"></td>
+                    <td style="border: 1px solid #cbd5e1; background: #bfdbfe;"></td><td style="border: 1px solid #cbd5e1; background: #bfdbfe;"></td>
+                    <td style="border: 1px solid #cbd5e1; padding: 4px; background: #93c5fd;">${ceba_acumulada}</td>
+                    <td style="border: 1px solid #cbd5e1; background: #bfdbfe;"></td><td style="border: 1px solid #cbd5e1; background: #bfdbfe;"></td>
+                    <td style="border: 1px solid #cbd5e1; background: #bfdbfe;"></td><td style="border: 1px solid #cbd5e1; background: #bfdbfe;"></td>
+                    <td style="border: 1px solid #cbd5e1; padding: 4px; background: #93c5fd;">${final_h + final_m + ceba_acumulada}</td>
+                </tr>`;
+
+                tbodyMatriz.innerHTML += row_inicio + row_nat + row_mort + row_saldo + row_sel + row_elim + row_final;
 
                 cur_h = final_h;
                 cur_m = final_m;
@@ -952,6 +1006,24 @@
                 hist_m.push(final_m);
                 hist_ceba.push(ceba_acumulada);
             }
+
+            // Lógica para Propósito de Explotación
+            let proposito = document.getElementById('sim-proposito') ? document.getElementById('sim-proposito').value : 'doble';
+            let p_vt, p_nv, p_n, p_mauta;
+            let label_proposito = "";
+
+            if (proposito === 'leche') {
+                p_vt = 0.50; p_nv = 0.14; p_n = 0.14; p_mauta = 0.22;
+                label_proposito = "Lechería Especializada";
+            } else if (proposito === 'doble') {
+                p_vt = 0.45; p_nv = 0.15; p_n = 0.15; p_mauta = 0.25;
+                label_proposito = "Doble Propósito";
+            } else {
+                p_vt = 0.60; p_nv = 0.10; p_n = 0.12; p_mauta = 0.18;
+                label_proposito = "Cría / Carne";
+            }
+
+            document.getElementById('titulo-composicion').innerText = `🥛 Composición del Rebaño (Regla Técnica: ${label_proposito})`;
 
             let trs = "";
             const tdRow = (label, pct_lbl, vals) => {
@@ -963,13 +1035,13 @@
                 return row;
             };
 
-            let vt = hist_vt.map(h => Math.round(h * 0.50));
-            trs += tdRow("Vacas Totales (VT)", "50%", vt);
+            let vt = hist_vt.map(h => Math.round(h * p_vt));
+            trs += tdRow("Vacas Totales (VT)", (p_vt*100)+"%", vt);
             trs += tdRow("↳ VT: Vacas Ordeño", "70% (de VT)", vt.map(v => Math.round(v * 0.70)));
             trs += tdRow("↳ VT: Vacas Secas", "30% (de VT)", vt.map(v => Math.round(v * 0.30)));
-            trs += tdRow("Novillas Vientres", "14%", hist_vt.map(h => Math.round(h * 0.14)));
-            trs += tdRow("Novillas (12-18m)", "14%", hist_vt.map(h => Math.round(h * 0.14)));
-            trs += tdRow("Mautas (6-12m)", "22%", hist_vt.map(h => Math.round(h * 0.22)));
+            trs += tdRow("Novillas Vientres", (p_nv*100)+"%", hist_vt.map(h => Math.round(h * p_nv)));
+            trs += tdRow("Novillas (12-18m)", (p_n*100)+"%", hist_vt.map(h => Math.round(h * p_n)));
+            trs += tdRow("Mautas (6-12m)", (p_mauta*100)+"%", hist_vt.map(h => Math.round(h * p_mauta)));
             trs += tdRow("Toros Reproductores", "-", hist_m);
             trs += tdRow("Ceba / Mautes (Acumulado)", "-", hist_ceba);
 
@@ -980,6 +1052,10 @@
         setTimeout(() => {
             if(document.getElementById('sim-vacas-ini')) window.calcularMovimientoRebano();
         }, 500);
+
+        // Agregamos un listener para que recalcule automáticamente al cambiar el propósito
+        document.getElementById('sim-proposito').addEventListener('change', window.calcularMovimientoRebano);
+
     </script>
 
     <script>
