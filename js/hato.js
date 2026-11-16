@@ -15,9 +15,12 @@ window.obtenerFincaActual = function() {
     if (tag.innerText.includes('CONSOLIDADO')) return 'Global';
     if (tag.innerText.includes('EL SUR')) return 'El Sur';
     return 'Agua Clara';
-}
+};
 
 window.datosHatoCache = [];
+let unsubscribeHato = null;
+let lotesListenerActivo = false;
+let vacunasListenerActivo = false;
 
 // ==========================================
 // 📜 HELPER DE BITÁCORA (ONLINE + COLA OFFLINE)
@@ -189,7 +192,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             try {
                                 const hoy = new Date().toISOString().split('T')[0];
                                 const docRef = doc(window.db, "animales", animalEncontrado.id);
-                                let historialEventos = animalEncontrado.historialReproductivo || [];
+                                let historialEventos = [...(animalEncontrado.historialReproductivo || [])];
                                 historialEventos.push({
                                     tipo: '💉 Vacunación Ráfaga',
                                     fecha: hoy, detalle: vacunaSel, dispositivo: ID_DISPOSITIVO
@@ -286,7 +289,7 @@ window.cambiarModuloHato = function(evento, idModulo) {
 window.toggleAllCheckboxes = function(source) {
     const checkboxes = document.querySelectorAll('.chk-animal');
     checkboxes.forEach(chk => {
-        if(!chk.disabled && chk.closest('tr').style.display !== 'none') {
+        if (!chk.disabled && chk.closest('tr').style.display !== 'none') {
             chk.checked = source.checked;
         }
     });
@@ -299,7 +302,7 @@ window.aplicarFiltroHato = function() {
     const filas = document.querySelectorAll('#tabla-hato-body tr');
     
     filas.forEach(fila => {
-        if(!fila.hasAttribute('data-categoria')) return;
+        if (!fila.hasAttribute('data-categoria')) return;
 
         const cat = fila.getAttribute('data-categoria');
         const estado = fila.getAttribute('data-estado');
@@ -321,14 +324,14 @@ window.aplicarFiltroHato = function() {
         }
 
         fila.style.display = mostrar ? '' : 'none';
-        if(!mostrar) {
+        if (!mostrar) {
             const chk = fila.querySelector('.chk-animal');
-            if(chk) chk.checked = false;
+            if (chk) chk.checked = false;
         }
     });
     
     const chkAll = document.getElementById('chk-all');
-    if(chkAll) chkAll.checked = false;
+    if (chkAll) chkAll.checked = false;
 };
 
 // ==========================================
@@ -340,7 +343,7 @@ window.exportarExcel = function(tablaId, nombreArchivo) {
     let csv = [];
     
     for (let i = 0; i < filas.length; i++) {
-        if(filas[i].style.display === "none") continue; 
+        if (filas[i].style.display === "none") continue; 
 
         let fila = [];
         let columnas = filas[i].querySelectorAll('td, th');
@@ -349,7 +352,7 @@ window.exportarExcel = function(tablaId, nombreArchivo) {
             let texto = columnas[j].innerText.replace(/(\r\n|\n|\r)/gm, " - ");
             fila.push('"' + texto + '"');
         }
-        if(fila.length > 0) {
+        if (fila.length > 0) {
             csv.push(fila.join(','));
         }
     }
@@ -431,10 +434,18 @@ window.importarCSV = function(event) {
 // ==========================================
 window.abrirModalMasivo = function() {
     const seleccionados = document.querySelectorAll('.chk-animal:checked');
-    if (seleccionados.length === 0) return alert("⚠️ Seleccione al menos un animal de la lista.");
+    if (seleccionados.length === 0) {
+        if (window.mostrarToast) window.mostrarToast("Seleccione al menos un animal en la tabla.", "error");
+        else alert("⚠️ Seleccione al menos un animal de la lista.");
+        return;
+    }
+
+    if (window.cargarListaLotes) window.cargarListaLotes();
+    if (window.cargarListaVacunas) window.cargarListaVacunas();
     
     document.getElementById('m-count').innerText = seleccionados.length;
     document.getElementById('form-masivo').reset();
+    document.getElementById('m-tipo').value = 'Sanidad';
     document.getElementById('m-div-vacuna').style.display = 'block';
     document.getElementById('m-div-destete').style.display = 'none';
     const divLote = document.getElementById('m-div-lote');
@@ -444,95 +455,124 @@ window.abrirModalMasivo = function() {
 
 const formMasivo = document.getElementById('form-masivo');
 if (formMasivo) {
-    formMasivo.addEventListener('submit', async (e) => {
+    formMasivo.onsubmit = async (e) => {
         e.preventDefault();
+        if (!window.db) return alert("⚠️ Base de datos no inicializada.");
+
         const tipoAccion = document.getElementById('m-tipo').value;
-        const seleccionados = document.querySelectorAll('.chk-animal:checked');
+        const seleccionados = Array.from(document.querySelectorAll('.chk-animal:checked'));
+        if (seleccionados.length === 0) return alert("⚠️ No hay animales seleccionados.");
+
         const btn = document.getElementById('btn-submit-masivo');
         const fincaActual = window.obtenerFincaActual();
         
-        btn.innerText = "Procesando Lote..."; btn.disabled = true;
+        btn.innerText = "Procesando Lote...";
+        btn.disabled = true;
+
         const batch = writeBatch(window.db);
         const hoy = new Date().toISOString().split('T')[0];
 
         try {
             if (tipoAccion === 'Sanidad') {
                 const vacunaStr = document.getElementById('m-vacuna-nombre').value.trim();
-                if (!vacunaStr) throw new Error("Seleccione el nombre de la vacuna o tratamiento.");
+                if (!vacunaStr) throw new Error("Seleccione el nombre de la vacuna o tratamiento (o créelo en 'Configurar Lotes & Vacunas').");
                 
-                for (let chk of seleccionados) {
+                for (const chk of seleccionados) {
                     const idDoc = chk.value;
                     const docRef = doc(window.db, "animales", idDoc);
-                    const docSnap = await getDoc(docRef);
-                    if (docSnap.exists()) {
-                        const data = docSnap.data();
-                        let historialRepro = data.historialReproductivo || [];
-                        historialRepro.push({
-                            tipo: '💉 Vacunación Masiva', fecha: hoy, detalle: vacunaStr, dispositivo: ID_DISPOSITIVO
-                        });
-                        batch.update(docRef, { 
-                            salud: `🟢 Sano (Vacunado: ${vacunaStr})`,
-                            historialReproductivo: historialRepro
-                        });
-                    }
+                    const animalCache = window.datosHatoCache.find(a => a.id === idDoc);
+                    let historialRepro = animalCache ? [...(animalCache.historialReproductivo || [])] : [];
+
+                    historialRepro.push({
+                        tipo: '💉 Vacunación Masiva',
+                        fecha: hoy,
+                        detalle: vacunaStr,
+                        dispositivo: ID_DISPOSITIVO
+                    });
+
+                    batch.update(docRef, { 
+                        salud: `🟢 Sano (Vacunado: ${vacunaStr})`,
+                        historialReproductivo: historialRepro
+                    });
                 }
+
                 await batch.commit();
                 registrarBitacoraHato(
                     fincaActual,
                     'Inventario',
                     `Vacunación masiva (${vacunaStr}) aplicada a ${seleccionados.length} animales`
                 );
-                alert(`✅ Vacunación (${vacunaStr}) aplicada a ${seleccionados.length} animales.`);
+                if (window.mostrarToast) window.mostrarToast(`Vacunación (${vacunaStr}) aplicada a ${seleccionados.length} animales.`, "exito");
+                else alert(`✅ Vacunación (${vacunaStr}) aplicada a ${seleccionados.length} animales.`);
             } 
             else if (tipoAccion === 'Destete') {
                 const pesoPromedio = Number(document.getElementById('m-destete-peso').value);
-                if (!pesoPromedio) throw new Error("Ingrese el peso promedio del destete.");
+                if (!pesoPromedio || pesoPromedio <= 0) throw new Error("Ingrese el peso promedio del destete en Kg.");
 
-                for (let chk of seleccionados) {
+                let destetadosCount = 0;
+
+                for (const chk of seleccionados) {
                     const idDoc = chk.value;
                     const docRef = doc(window.db, "animales", idDoc);
-                    const docSnap = await getDoc(docRef);
+                    const animalCache = window.datosHatoCache.find(a => a.id === idDoc);
                     
-                    if (docSnap.exists()) {
-                        const data = docSnap.data();
-                        if (data.categoria.includes("Becerr")) {
-                            let nuevaCat = (data.categoria === 'Becerra') ? 'Mauta' : 'Maute';
-                            let historialPesos = data.historialPesos || [];
-                            historialPesos.push({ fecha: hoy, peso: pesoPromedio, dispositivo: ID_DISPOSITIVO });
-                            batch.update(docRef, { categoria: nuevaCat, peso: pesoPromedio, historialPesos: historialPesos });
-                        }
+                    if (animalCache && animalCache.categoria && animalCache.categoria.includes("Becerr")) {
+                        const nuevaCat = (animalCache.categoria === 'Becerra') ? 'Mauta' : 'Maute';
+                        let historialPesos = [...(animalCache.historialPesos || [])];
+                        historialPesos.push({ fecha: hoy, peso: pesoPromedio, dispositivo: ID_DISPOSITIVO });
+                        batch.update(docRef, {
+                            categoria: nuevaCat,
+                            peso: pesoPromedio,
+                            historialPesos: historialPesos
+                        });
+                        destetadosCount++;
                     }
                 }
+
+                if (destetadosCount === 0) {
+                    throw new Error("Ninguno de los animales seleccionados tiene categoría 'Becerro' o 'Becerra'.");
+                }
+
                 await batch.commit();
                 registrarBitacoraHato(
                     fincaActual,
                     'Inventario',
-                    `Destete masivo ejecutado en ${seleccionados.length} animales (Peso prom: ${pesoPromedio} kg)`
+                    `Destete masivo ejecutado en ${destetadosCount} becerros (Peso prom: ${pesoPromedio} kg)`
                 );
-                alert(`✅ Destete completado. Los becerros pasaron a Mautes.`);
+                if (window.mostrarToast) window.mostrarToast(`Destete completado en ${destetadosCount} animales.`, "exito");
+                else alert(`✅ Destete completado. ${destetadosCount} becerros pasaron a Mautes/Mautas.`);
             }
             else if (tipoAccion === 'MoverLote') {
                 const nuevoLote = document.getElementById('m-nuevo-lote-select').value;
                 if (!nuevoLote) throw new Error("Seleccione el lote o potrero de destino.");
 
-                for (let chk of seleccionados) {
+                for (const chk of seleccionados) {
                     const docRef = doc(window.db, "animales", chk.value);
                     batch.update(docRef, { lote: nuevoLote });
                 }
+
                 await batch.commit();
                 registrarBitacoraHato(
                     fincaActual,
                     'Inventario',
                     `Traslado masivo de ${seleccionados.length} animales al lote/potrero "${nuevoLote}"`
                 );
-                alert(`✅ ${seleccionados.length} animales movidos al lote "${nuevoLote}".`);
+                if (window.mostrarToast) window.mostrarToast(`${seleccionados.length} animales movidos a "${nuevoLote}".`, "exito");
+                else alert(`✅ ${seleccionados.length} animales movidos al lote "${nuevoLote}".`);
             }
 
             document.getElementById('modal-masivo').style.display = 'none';
-            document.getElementById('chk-all').checked = false;
-        } catch (err) { alert("Error en Acción Masiva: " + err.message); } 
-        finally { btn.innerText = "Ejecutar Acción a Todos"; btn.disabled = false; }
-    });
+            const chkAll = document.getElementById('chk-all');
+            if (chkAll) chkAll.checked = false;
+            seleccionados.forEach(chk => { chk.checked = false; });
+
+        } catch (err) {
+            alert("❌ Error en Acción Masiva:\n\n" + err.message);
+        } finally {
+            btn.innerText = "Ejecutar Acción a Todos";
+            btn.disabled = false;
+        }
+    };
 }
 
 // ==========================================
@@ -624,12 +664,20 @@ window.cargarHato = function() {
     const panelAlertas = document.getElementById('panel-alertas');
     if (!tabla || !window.db) return;
 
+    if (window.cargarListaLotes) window.cargarListaLotes();
+    if (window.cargarListaVacunas) window.cargarListaVacunas();
+
+    if (unsubscribeHato) {
+        unsubscribeHato();
+        unsubscribeHato = null;
+    }
+
     const fincaActiva = window.obtenerFincaActual();
     let q = (fincaActiva === 'Global')
         ? query(collection(window.db, "animales"))
         : query(collection(window.db, "animales"), where("finca", "==", fincaActiva));
 
-    onSnapshot(q, (snapshot) => {
+    unsubscribeHato = onSnapshot(q, (snapshot) => {
         tabla.innerHTML = '';
         window.datosHatoCache = []; 
         let total = 0, mautes = 0, gestantes = 0;
@@ -659,7 +707,7 @@ window.cargarHato = function() {
             if (a.estado === "Gestante" && a.historialReproductivo) {
                 let ultimaFep = null;
                 a.historialReproductivo.forEach(ev => {
-                    if(ev.tipo === 'Palpación (+ Preñada)' && ev.fep !== '-') ultimaFep = ev.fep;
+                    if (ev.tipo === 'Palpación (+ Preñada)' && ev.fep !== '-') ultimaFep = ev.fep;
                 });
                 if (ultimaFep) {
                     const diasParaParto = Math.ceil((new Date(ultimaFep) - hoy) / (1000 * 60 * 60 * 24));
@@ -1037,8 +1085,9 @@ window.cargarListaLotes = function() {
     const listaUI = document.getElementById('lista-lotes-ui');
     const selectLote = document.getElementById('a-lote');
     const selectMasivoLote = document.getElementById('m-nuevo-lote-select');
-    if (!listaUI || !selectLote || !window.db) return;
+    if (!listaUI || !selectLote || !window.db || lotesListenerActivo) return;
 
+    lotesListenerActivo = true;
     onSnapshot(query(collection(window.db, "config_lotes")), (snapshot) => {
         listaUI.innerHTML = `<li style="padding: 8px 5px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center;"><span>👉 General / Sin Asignar</span></li>`;
         selectLote.innerHTML = `<option value="General">👉 General / Sin Asignar</option>`;
@@ -1058,7 +1107,10 @@ window.cargarListaLotes = function() {
             selectLote.innerHTML += `<option value="${nombreLote}">${nombreLote}</option>`;
             if (selectMasivoLote) selectMasivoLote.innerHTML += `<option value="${nombreLote}">${nombreLote}</option>`;
         });
-    }, (err) => console.error("Error cargando lotes:", err));
+    }, (err) => {
+        lotesListenerActivo = false;
+        console.error("Error cargando lotes:", err);
+    });
 };
 
 window.agregarLoteNuevo = async function() {
@@ -1099,12 +1151,13 @@ window.cargarListaVacunas = function() {
     const selectMasivoVacunas = document.getElementById('m-vacuna-nombre');
     const selectRafagaVacunas = document.getElementById('manga-vacuna-rafaga');
 
-    if (!listaVacunasUI || !window.db) return;
+    if (!listaVacunasUI || !window.db || vacunasListenerActivo) return;
 
+    vacunasListenerActivo = true;
     onSnapshot(query(collection(window.db, "config_vacunas")), (snapshot) => {
         listaVacunasUI.innerHTML = '';
-        if(selectMasivoVacunas) selectMasivoVacunas.innerHTML = '<option value="">Seleccione un tratamiento...</option>';
-        if(selectRafagaVacunas) selectRafagaVacunas.innerHTML = '<option value="">Seleccione vacuna activa...</option>';
+        if (selectMasivoVacunas) selectMasivoVacunas.innerHTML = '<option value="">Seleccione un tratamiento...</option>';
+        if (selectRafagaVacunas) selectRafagaVacunas.innerHTML = '<option value="">Seleccione vacuna activa...</option>';
 
         let hayVacunas = false;
         snapshot.forEach((docSnap) => {
@@ -1119,11 +1172,16 @@ window.cargarListaVacunas = function() {
                     <button onclick="window.eliminarVacunaActiva('${vacunaId}', '${nombreVacuna.replace(/'/g, "\\'")}')" style="background: #fef2f2; color: #ef4444; border: 1px solid #fecdd3; border-radius: 4px; padding: 2px 6px; cursor: pointer; font-weight: bold;">❌</button>
                 </li>
             `;
-            if(selectMasivoVacunas) selectMasivoVacunas.innerHTML += `<option value="${nombreVacuna}">${nombreVacuna}</option>`;
-            if(selectRafagaVacunas) selectRafagaVacunas.innerHTML += `<option value="${nombreVacuna}">${nombreVacuna}</option>`;
+            if (selectMasivoVacunas) selectMasivoVacunas.innerHTML += `<option value="${nombreVacuna}">${nombreVacuna}</option>`;
+            if (selectRafagaVacunas) selectRafagaVacunas.innerHTML += `<option value="${nombreVacuna}">${nombreVacuna}</option>`;
         });
 
-        if(!hayVacunas) listaVacunasUI.innerHTML = '<li style="padding: 5px 0; font-style: italic; color: #a16207;">No hay tratamientos registrados.</li>';
+        if (!hayVacunas) {
+            listaVacunasUI.innerHTML = '<li style="padding: 5px 0; font-style: italic; color: #a16207;">No hay tratamientos registrados.</li>';
+        }
+    }, (err) => {
+        vacunasListenerActivo = false;
+        console.error("Error cargando vacunas:", err);
     });
 };
 
@@ -1165,7 +1223,7 @@ function actualizarDashboard(datosHato) {
     const listDestete = document.getElementById('dash-list-destete');
     const countDestete = document.getElementById('dash-count-destete');
     
-    if(!listSecado || !listDestete) return;
+    if (!listSecado || !listDestete) return;
 
     let htmlSecado = "";
     let htmlDestete = "";
@@ -1179,7 +1237,7 @@ function actualizarDashboard(datosHato) {
         if (a.estado === "Gestante" && a.historialReproductivo) {
             let ultimaFep = null;
             a.historialReproductivo.forEach(ev => {
-                if(ev.tipo === 'Palpación (+ Preñada)' && ev.fep !== '-') ultimaFep = ev.fep;
+                if (ev.tipo === 'Palpación (+ Preñada)' && ev.fep !== '-') ultimaFep = ev.fep;
             });
             if (ultimaFep) {
                 const diasParaParto = Math.ceil((new Date(ultimaFep) - hoy) / (1000 * 60 * 60 * 24));
