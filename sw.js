@@ -1,77 +1,84 @@
-const CACHE_NAME = 'ganadocontrol-erp-v3';
+const CACHE_NAME = 'ganadocontrol-vercel-v6';
 
-const ARCHIVOS_ESENCIALES = [
-    './',
-    './index.html',
-    './style.css',
-    './manifest.json',
-    './logo.jpg',
-    './js/hato.js',
-    'https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js',
-    'https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js',
-    'https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js',
-    'https://www.gstatic.com/firebasejs/10.8.1/firebase-storage.js'
+const ARCHIVOS = [
+  '/',
+  '/index.html',
+  '/style.css',
+  '/manifest.json',
+  '/logo.jpg',
+  '/js/hato.js?v=123',
+  'https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js',
+  'https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js',
+  'https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js',
+  'https://www.gstatic.com/firebasejs/10.8.1/firebase-storage.js'
 ];
 
-// 1. Instalación: guarda la app y Firebase en la memoria interna del dispositivo
+async function limpiarRedireccion(response) {
+  if (!response.redirected) return response;
+  const body = await response.blob();
+  return new Response(body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers: response.headers
+  });
+}
+
 self.addEventListener('install', (event) => {
-    event.waitUntil(
-        caches.open(CACHE_NAME)
-            .then((cache) => cache.addAll(ARCHIVOS_ESENCIALES))
-            .then(() => self.skipWaiting())
-    );
+  self.skipWaiting();
+  event.waitUntil(
+    caches.open(CACHE_NAME).then(async (cache) => {
+      for (const url of ARCHIVOS) {
+        try {
+          const resp = await fetch(url, { cache: 'reload' });
+          if (resp.ok) {
+            const limpia = await limpiarRedireccion(resp);
+            await cache.put(url, limpia);
+          }
+        } catch (e) {
+          console.warn('Omitido en caché:', url);
+        }
+      }
+    })
+  );
 });
 
-// 2. Activación: borra versiones viejas y avisa a la app que ya funciona offline
 self.addEventListener('activate', (event) => {
-    event.waitUntil(
-        caches.keys().then((keys) => {
-            return Promise.all(
-                keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key))
-            );
-        }).then(() => self.clients.claim())
-          .then(async () => {
-              const clientes = await self.clients.matchAll({ includeUncontrolled: true });
-              clientes.forEach((client) => {
-                  client.postMessage({ type: 'OFFLINE_LISTO' });
-              });
-          })
-    );
+  event.waitUntil(
+    caches.keys()
+      .then((keys) => Promise.all(keys.filter((k) => k !== CACHE_NAME).map((k) => caches.delete(k))))
+      .then(() => self.clients.claim())
+  );
 });
 
-// 3. Interceptar peticiones: abre al instante desde memoria local y actualiza en segundo plano
 self.addEventListener('fetch', (event) => {
-    if (event.request.method !== 'GET') return;
+  const url = event.request.url;
 
-    const url = event.request.url;
+  if (url.includes('fonts.googleapis.com') || url.includes('fonts.gstatic.com')) {
+    event.respondWith(new Response('', { headers: { 'Content-Type': 'text/css' } }));
+    return;
+  }
 
-    // Dejar que Firebase Firestore/Auth maneje su propia base de datos offline (IndexedDB)
-    if (
-        url.includes('firestore.googleapis.com') ||
-        url.includes('identitytoolkit.googleapis.com') ||
-        url.includes('securetoken.googleapis.com') ||
-        url.includes('firebasestorage.googleapis.com')
-    ) {
-        return;
-    }
+  if (url.includes('firestore.googleapis.com') || url.includes('identitytoolkit.googleapis.com')) {
+    return;
+  }
 
-    event.respondWith(
-        caches.match(event.request, { ignoreSearch: true }).then((respuestaEnCache) => {
-            const peticionRed = fetch(event.request).then((respuestaRed) => {
-                if (respuestaRed && (respuestaRed.status === 200 || respuestaRed.type === 'opaque')) {
-                    const copia = respuestaRed.clone();
-                    caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copia));
-                }
-                return respuestaRed;
-            }).catch(() => {
-                // Si no hay internet y es una navegación de página, devolver index.html desde caché
-                if (event.request.mode === 'navigate') {
-                    return caches.match('./index.html', { ignoreSearch: true });
-                }
-            });
+  event.respondWith(
+    caches.match(event.request, { ignoreSearch: true }).then((cached) => {
+      if (cached) return cached;
 
-            // Devuelve lo guardado en el teléfono/PC al instante; si no existe aún, espera la red
-            return respuestaEnCache || peticionRed;
+      return fetch(event.request)
+        .then(async (networkResp) => {
+          if (networkResp && networkResp.status === 200 && event.request.method === 'GET') {
+            const limpia = await limpiarRedireccion(networkResp.clone());
+            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, limpia));
+          }
+          return networkResp;
         })
-    );
+        .catch(async () => {
+          if (event.request.mode === 'navigate') {
+            return (await caches.match('/')) || (await caches.match('/index.html'));
+          }
+        });
+    })
+  );
 });
