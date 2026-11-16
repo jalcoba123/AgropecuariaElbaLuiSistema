@@ -11,11 +11,31 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
     <link rel="manifest" href="manifest.json">
-    
+
     <style>
+        .erp-module-body { margin-top: 1.25rem; }
+        .erp-kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; margin-bottom: 1.25rem; }
+        .erp-kpi-card { padding: 1rem; border-radius: 0.5rem; border: 1px solid #e2e8f0; background: #f8fafc; }
+        .erp-kpi-card.green { background: #ecfdf5; border-color: #a7f3d0; color: #065f46; }
+        .erp-kpi-card.blue { background: #eff6ff; border-color: #bfdbfe; color: #1e40af; }
+        .erp-kpi-card.amber { background: #fffbeb; border-color: #fde68a; color: #92400e; }
+        .erp-kpi-card.red { background: #fef2f2; border-color: #fecaca; color: #991b1b; }
+        .erp-kpi-label { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; display: block; margin-bottom: 0.25rem; }
+        .erp-kpi-val { font-size: 1.5rem; font-weight: 800; margin: 0; }
+        .erp-form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 0.75rem; margin-bottom: 1.5rem; padding: 1rem; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 0.5rem; }
+        .erp-form-grid input, .erp-form-grid select { width: 100%; padding: 0.55rem 0.75rem; border: 1px solid #cbd5e1; border-radius: 0.375rem; font-size: 0.875rem; box-sizing: border-box; background: #ffffff; }
+        .erp-btn-primary { background: #15803d; color: #fff; font-weight: 600; border: none; border-radius: 0.375rem; padding: 0.6rem 1rem; cursor: pointer; font-size: 0.875rem; }
+        .erp-btn-primary:hover { background: #166534; }
+        .erp-btn-dark { background: #1e293b; color: #fff; font-weight: 600; border: none; border-radius: 0.375rem; padding: 0.6rem 1rem; cursor: pointer; font-size: 0.875rem; }
+        .erp-btn-del { background: transparent; border: 1px solid #fca5a5; color: #dc2626; border-radius: 0.25rem; padding: 0.2rem 0.5rem; font-size: 0.75rem; cursor: pointer; }
+        .erp-table-wrap { overflow-x: auto; background: #ffffff; border: 1px solid #cbd5e1; border-radius: 0.5rem; }
+        .erp-table { width: 100%; border-collapse: collapse; font-size: 0.875rem; text-align: left; }
+        .erp-table th { background: #f1f5f9; padding: 0.75rem 1rem; font-size: 0.75rem; text-transform: uppercase; color: #475569; border-bottom: 1px solid #cbd5e1; }
+        .erp-table td { padding: 0.65rem 1rem; border-bottom: 1px solid #e2e8f0; }
+
         @media print {
             body { background: white; margin: 0; padding: 0; }
-            header, .category-nav, .finca-banner, .tabs-hato-container, 
+            header, .category-nav, .finca-banner, .tabs-hato-container,
             .btn-action, #offline-status-bar, #modal-animal, #modal-ficha, #modal-novedad, #login-screen,
             .finca-toggle, button[onclick="window.print()"] { display: none !important; }
             .section-view, #app-container, .modulo-hato { display: block !important; box-shadow: none !important; border: none !important; }
@@ -41,7 +61,7 @@
             <img src="logo.jpg" alt="Agropecuaria ElbaLui" class="login-logo-img">
             <h2 style="color: var(--green-dark); margin-bottom: 5px;">GanadoControl ERP</h2>
             <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 25px;">Agropecuaria ElbaLui • Fincas El Sur & Agua Clara</p>
-            
+
             <form id="login-form">
                 <div class="form-field" style="text-align: left;">
                     <label>Correo Electrónico</label>
@@ -143,7 +163,7 @@
 
             <!-- MÓDULO 2: HATO Y SANIDAD -->
             <div id="tab-hato" class="section-view">
-                
+
                 <!-- BARRA DE SUB-MENÚS DEL HATO -->
                 <div class="tabs-hato-container" style="display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; overflow-x: auto;">
                     <button class="tab-btn active" onclick="window.cambiarModuloHato(event, 'subtab-inventario')" style="padding: 10px 15px; cursor: pointer; border-radius: 8px; border: none; background: #0f172a; color: white; font-weight: bold; white-space: nowrap;">📦 Inventario General</button>
@@ -180,10 +200,10 @@
                     <div style="background: white; border-radius: 12px; border: 1px solid var(--border-light); padding: 16px;">
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;">
                             <h3 style="font-size: 1rem; color: var(--green-dark); margin: 0;">🐮 Inventario y Hoja de Vida</h3>
-                            
+
                             <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap; flex-grow: 1; justify-content: flex-end;">
                                 <input type="text" id="buscador-hato" placeholder="🔍 Buscar Arete..." onkeyup="window.aplicarFiltroHato()" style="padding: 6px 12px; border-radius: 6px; border: 1px solid var(--border-light); font-size: 0.85rem; width: 150px; outline: none;">
-                                
+
                                 <select id="filtro-categoria" onchange="window.aplicarFiltroHato()" style="padding: 6px; border-radius: 6px; border: 1px solid var(--border-light); font-size: 0.85rem;">
                                     <option value="Todos">Activos: Todos</option>
                                     <option value="Becerros">Solo Becerros(as)</option>
@@ -192,11 +212,11 @@
                                     <option value="Gestantes">Solo Gestantes</option>
                                     <option value="Bajas">☠️ Ver Bajas/Muertes</option>
                                 </select>
-                                
+
                                 <div style="display: flex; gap: 5px; border-left: 2px solid #e2e8f0; padding-left: 10px;">
                                     <button class="btn-action" onclick="window.exportarExcel('tabla-hato', 'Inventario_ElbaLui')" style="background: #10b981; color: white; font-size: 0.8rem;" title="Descargar a Excel">⬇️ Excel</button>
                                     <button class="btn-action" onclick="window.print()" style="background: #475569; color: white; font-size: 0.8rem;" title="Imprimir Lista">🖨️ Imprimir</button>
-                                    
+
                                     <input type="file" id="input-importar-csv" accept=".csv" style="display: none;" onchange="window.importarCSV(event)">
                                     <button class="btn-action" onclick="document.getElementById('input-importar-csv').click()" style="background: #3b82f6; color: white; font-size: 0.8rem;" title="Importar CSV Masivo">⬆️ Importar CSV</button>
                                 </div>
@@ -204,7 +224,7 @@
                                 <button class="btn-action" onclick="document.getElementById('modal-animal').style.display='flex'">+ Registrar Animal</button>
                             </div>
                         </div>
-                        
+
                         <div style="overflow-x: auto;">
                             <table id="tabla-hato" style="width: 100%; border-collapse: collapse; font-size: 0.85rem;">
                                 <thead style="background: #f1f5f9; text-align: left;">
@@ -230,7 +250,7 @@
                 <!-- SUB-PÁGINA 2: LECTOR RFID DE MANGA -->
                 <div id="subtab-lector" class="modulo-hato" style="display: none;">
                     <div style="background: #f8fafc; padding: 20px; border-radius: 12px; border: 1px solid #e2e8f0; margin-bottom: 20px;">
-                        
+
                         <div style="display: flex; flex-wrap: wrap; gap: 15px; align-items: center; justify-content: space-between; background: white; padding: 15px; border-radius: 8px; border: 1px solid #cbd5e1; margin-bottom: 20px;">
                             <div>
                                 <label style="font-weight: bold; color: #0f172a; display: block; font-size: 0.85rem; margin-bottom: 5px;">Modo de Trabajo en Manga:</label>
@@ -255,11 +275,11 @@
                         <div style="text-align: center; max-width: 600px; margin: 0 auto; position: relative;">
                             <span style="font-size: 2.5rem; display: block; margin-bottom: 5px;">📡</span>
                             <h2 style="color: #0f172a; margin-top: 0; font-size: 1.3rem;">Estación de Control de Manga</h2>
-                            
+
                             <form id="form-rfid-scanner" onsubmit="event.preventDefault();">
-                                <input type="text" id="rfid-scanner-input" placeholder="📟 Pase el bastón RFID por el arete..." autocomplete="off" 
+                                <input type="text" id="rfid-scanner-input" placeholder="📟 Pase el bastón RFID por el arete..." autocomplete="off"
                                        style="padding: 15px; width: 90%; font-size: 1.2rem; border-radius: 8px; border: 2px solid #0ea5e9; text-align: center; box-shadow: 0 4px 6px -1px rgba(14, 165, 233, 0.2); outline: none; font-weight: bold; color: #0284c7;"
-                                       autofocus> 
+                                       autofocus>
                             </form>
                             <p style="font-size: 0.75rem; color: #64748b; margin-top: 10px;">🟢 El sistema está escuchando al bastón automáticamente.</p>
                         </div>
@@ -345,7 +365,7 @@
                     <div style="background: white; padding: 20px; border-radius: 12px; border: 1px solid var(--border-light); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
                         <h3 style="color: var(--green-dark); margin-top: 0; border-bottom: 2px solid #bbf7d0; padding-bottom: 10px;">📅 Calendario Anual de Actividades Sanitarias y Operativas</h3>
                         <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 20px;">Programación oficial de vacunaciones, baños, desparasitaciones y labores en Agropecuaria ElbaLui.</p>
-                        
+
                         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 15px;">
                             <div style="background: #f8fafc; border-left: 4px solid #ef4444; padding: 15px; border-radius: 6px; border: 1px solid #e2e8f0;">
                                 <strong style="color: #1e293b; font-size: 0.95rem;">Mayo & Noviembre</strong>
@@ -469,12 +489,60 @@
                 </div>
 
             </div>
-            
+
             <!-- MÓDULO 3: LECHERÍA & RACIONES -->
             <div id="tab-lecheria" class="section-view">
                 <div style="background: white; padding: 20px; border-radius: 12px; border: 1px solid var(--border-light);">
                     <h2 style="color: #0369a1; margin-top: 0;">🥛 Lechería & Raciones (Agua Clara)</h2>
-                    <p style="color: var(--text-muted); font-size: 0.9rem;">Control de producción diaria de leche (~76 L/día) y raciones de silo con melaza, nepe de cervecería y gallinaza.</p>
+                    <p style="color: var(--text-muted); font-size: 0.9rem;">Control de producción diaria de leche y raciones de silo Cuba 22 con melaza, nepe de cervecería y pollinaza.</p>
+
+                    <div class="erp-module-body">
+                        <div class="erp-kpi-grid">
+                            <div class="erp-kpi-card green">
+                                <span class="erp-kpi-label">Producción Hoy</span>
+                                <p id="kpi-leche-hoy" class="erp-kpi-val">0.0 L</p>
+                            </div>
+                            <div class="erp-kpi-card blue">
+                                <span class="erp-kpi-label">Promedio / Vaca</span>
+                                <p id="kpi-leche-promedio" class="erp-kpi-val">0.0 L</p>
+                            </div>
+                            <div class="erp-kpi-card amber">
+                                <span class="erp-kpi-label">Ingreso Estimado Hoy</span>
+                                <p id="kpi-leche-ingreso" class="erp-kpi-val">$0.00</p>
+                            </div>
+                        </div>
+
+                        <form id="form-lecheria" class="erp-form-grid">
+                            <input type="date" id="lech-fecha" required>
+                            <input type="number" id="lech-vacas" placeholder="Vacas ordeño" min="1" required>
+                            <input type="number" id="lech-litros" placeholder="Litros totales" step="0.1" min="0" required>
+                            <input type="number" id="lech-precio" placeholder="Precio $/L" step="0.01" value="0.68" required>
+                            <select id="lech-racion">
+                                <option value="Silo Cuba 22 + Melaza">Silo Cuba 22 + Melaza</option>
+                                <option value="Pollinaza + Nepe">Pollinaza + Nepe</option>
+                                <option value="Ración Completa (Silo + Pollinaza + Nepe)">Ración Completa</option>
+                                <option value="Pastoreo Medícula">Solo Pastoreo Medícula</option>
+                            </select>
+                            <button type="submit" class="erp-btn-primary">Guardar Ordeño</button>
+                        </form>
+
+                        <div class="erp-table-wrap">
+                            <table class="erp-table">
+                                <thead>
+                                    <tr>
+                                        <th>Fecha</th>
+                                        <th>Vacas</th>
+                                        <th>Litros</th>
+                                        <th>Prom/Vaca</th>
+                                        <th>Ración Base</th>
+                                        <th>Ingreso ($)</th>
+                                        <th>Acción</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tbody-lecheria"></tbody>
+                            </table>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -482,7 +550,45 @@
             <div id="tab-palma" class="section-view">
                 <div style="background: white; padding: 20px; border-radius: 12px; border: 1px solid var(--border-light);">
                     <h2 style="color: #15803d; margin-top: 0;">🌴 Palma & Agronomía (El Sur / Agua Clara)</h2>
-                    <p style="color: var(--text-muted); font-size: 0.9rem;">Gestión de 25 hectáreas de palma africana (variedades Themba y Avalanche), fertilización y cultivos de ciclo corto (auyama y jojoto).</p>
+                    <p style="color: var(--text-muted); font-size: 0.9rem;">Gestión de 25 hectáreas de palma aceitera (variedades ASD Themba y Avalanche), fertilización y cultivos de ciclo corto (auyama y patilla).</p>
+
+                    <div class="erp-module-body">
+                        <form id="form-agronomia" class="erp-form-grid">
+                            <input type="date" id="agro-fecha" required>
+                            <select id="agro-cultivo">
+                                <option value="Palma - ASD Themba">Palma Aceitera - ASD Themba</option>
+                                <option value="Palma - Avalanche">Palma Aceitera - Avalanche</option>
+                                <option value="Auyama (3x3m)">Auyama (Lote Producción)</option>
+                                <option value="Patilla">Patilla</option>
+                                <option value="Forraje Cuba 22 / Medícula">Forraje Cuba 22 / Medícula</option>
+                            </select>
+                            <select id="agro-labor">
+                                <option value="Fertilización Mineral">Fertilización Mineral (kg/planta)</option>
+                                <option value="Materia Orgánica">Aplicación Materia Orgánica</option>
+                                <option value="Cosecha RFF / Fruto">Cosecha (kg / racimos)</option>
+                                <option value="Control Maleza / Poda">Control Maleza / Poda</option>
+                            </select>
+                            <input type="text" id="agro-lote" placeholder="Lote / Sector (ej. 25 ha)" required>
+                            <input type="number" id="agro-cantidad" placeholder="Cantidad (kg o unid.)" step="0.1" required>
+                            <button type="submit" class="erp-btn-primary">Registrar Labor</button>
+                        </form>
+
+                        <div class="erp-table-wrap">
+                            <table class="erp-table">
+                                <thead>
+                                    <tr>
+                                        <th>Fecha</th>
+                                        <th>Cultivo / Variedad</th>
+                                        <th>Lote</th>
+                                        <th>Labor</th>
+                                        <th>Cantidad</th>
+                                        <th>Acción</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tbody-agronomia"></tbody>
+                            </table>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -490,15 +596,92 @@
             <div id="tab-operaciones" class="section-view">
                 <div style="background: white; padding: 20px; border-radius: 12px; border: 1px solid var(--border-light);">
                     <h2 style="color: #b45309; margin-top: 0;">🚜 Operaciones, Maquinaria & Activos</h2>
-                    <p style="color: var(--text-muted); font-size: 0.9rem;">Mantenimiento de tractores New Holland, camiones Ford Super Duty / Fortaleza, cercas eléctricas e instalación de cámaras Starlink.</p>
+                    <p style="color: var(--text-muted); font-size: 0.9rem;">Mantenimiento y horómetro de tractores, camiones Ford Super Duty / Fortaleza, cercas eléctricas e infraestructura Starlink.</p>
+
+                    <div class="erp-module-body">
+                        <form id="form-operaciones" class="erp-form-grid">
+                            <input type="date" id="op-fecha" required>
+                            <input type="text" id="op-equipo" placeholder="Equipo / Tractor" required>
+                            <input type="number" id="op-horo-ini" placeholder="Horómetro Ini." step="0.1" required>
+                            <input type="number" id="op-horo-fin" placeholder="Horómetro Fin." step="0.1" required>
+                            <input type="number" id="op-gasoil" placeholder="Combustible (L)" step="0.1" value="0">
+                            <button type="submit" class="erp-btn-dark">Registrar Uso</button>
+                        </form>
+
+                        <div class="erp-table-wrap">
+                            <table class="erp-table">
+                                <thead>
+                                    <tr>
+                                        <th>Fecha</th>
+                                        <th>Equipo / Activo</th>
+                                        <th>Horómetro</th>
+                                        <th>Horas Trabajadas</th>
+                                        <th>Combustible (L)</th>
+                                        <th>Acción</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tbody-operaciones"></tbody>
+                            </table>
+                        </div>
+                    </div>
                 </div>
             </div>
 
             <!-- MÓDULO 6: FINANZAS & COSTOS -->
             <div id="tab-finanzas" class="section-view">
                 <div style="background: white; padding: 20px; border-radius: 12px; border: 1px solid var(--border-light);">
-                    <h2 style="color: #7c2d12; margin-top: 0;">💰 Finanzas, Costos & Banco Mercantil</h2>
-                    <p style="color: var(--text-muted); font-size: 0.9rem;">Seguimiento de tasas USDT a BCV en Binance P2P, control de costos de alimento e insumos vs. precio de venta de leche y carne.</p>
+                    <h2 style="color: #7c2d12; margin-top: 0;">💰 Finanzas & Costos Operativos</h2>
+                    <p style="color: var(--text-muted); font-size: 0.9rem;">Control de flujo de caja por centro de costo: ingresos por leche/ganado/cosechas vs. egresos de insumos, nómina y maquinaria.</p>
+
+                    <div class="erp-module-body">
+                        <div class="erp-kpi-grid">
+                            <div class="erp-kpi-card green">
+                                <span class="erp-kpi-label">Ingresos Totales</span>
+                                <p id="kpi-fin-ingresos" class="erp-kpi-val">$0.00</p>
+                            </div>
+                            <div class="erp-kpi-card red">
+                                <span class="erp-kpi-label">Egresos Totales</span>
+                                <p id="kpi-fin-egresos" class="erp-kpi-val">$0.00</p>
+                            </div>
+                            <div class="erp-kpi-card">
+                                <span class="erp-kpi-label">Balance Neto</span>
+                                <p id="kpi-fin-balance" class="erp-kpi-val">$0.00</p>
+                            </div>
+                        </div>
+
+                        <form id="form-finanzas" class="erp-form-grid">
+                            <input type="date" id="fin-fecha" required>
+                            <select id="fin-tipo">
+                                <option value="Ingreso">Ingreso (+)</option>
+                                <option value="Egreso">Egreso (-)</option>
+                            </select>
+                            <select id="fin-centro">
+                                <option value="Lechería">Lechería</option>
+                                <option value="Ganadería / Hato">Ganadería / Hato</option>
+                                <option value="Palma & Cultivos">Palma & Cultivos</option>
+                                <option value="Maquinaria & Nómina">Maquinaria & Nómina</option>
+                            </select>
+                            <input type="text" id="fin-concepto" placeholder="Concepto / Proveedor" required>
+                            <input type="number" id="fin-monto" placeholder="Monto ($)" step="0.01" min="0.01" required>
+                            <button type="submit" class="erp-btn-primary">Registrar Movimiento</button>
+                        </form>
+
+                        <div class="erp-table-wrap">
+                            <table class="erp-table">
+                                <thead>
+                                    <tr>
+                                        <th>Fecha</th>
+                                        <th>Tipo</th>
+                                        <th>Centro de Costo</th>
+                                        <th>Concepto</th>
+                                        <th>Monto ($)</th>
+                                        <th>Acción</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tbody-finanzas"></tbody>
+                            </table>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -576,14 +759,14 @@
                     <div class="form-field"><label>Finca</label><select id="a-finca-select"><option value="Agua Clara">Agua Clara</option><option value="El Sur">El Sur</option></select></div>
                     <div class="form-field"><label>Arete / ID</label><input type="text" id="a-arete" required></div>
                 </div>
-                
+
                 <div class="form-field">
                     <label>Lote / Potrero Asignado</label>
                     <select id="a-lote">
                         <option value="General">👉 General / Sin Asignar</option>
                     </select>
                 </div>
-                
+
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
                     <div class="form-field">
                         <label>Categoría</label>
@@ -634,7 +817,7 @@
                         <option value="MoverLote">📍 Mover de Lote / Potrero</option>
                     </select>
                 </div>
-                
+
                 <div id="m-div-vacuna" class="form-field">
                     <label>Seleccione el Tratamiento</label>
                     <select id="m-vacuna-nombre">
@@ -678,7 +861,7 @@
                     <label style="color: #0369a1; font-weight: bold;">Seleccionar Archivo (PDF, Word, Excel, Imagen)</label>
                     <input type="file" id="doc-archivo" required style="width: 100%; margin-top: 10px; font-size: 0.9rem;">
                 </div>
-                
+
                 <div id="barra-progreso-container" style="display: none; margin-top: 15px; background: #e2e8f0; border-radius: 4px; overflow: hidden; height: 10px;">
                     <div id="barra-progreso" style="height: 100%; background: #0ea5e9; width: 0%; transition: width 0.3s;"></div>
                 </div>
@@ -853,24 +1036,54 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
         import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
-        import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager, collection, addDoc, getDocs, query, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+        import {
+            initializeFirestore,
+            persistentLocalCache,
+            persistentMultipleTabManager,
+            collection,
+            addDoc,
+            getDocs,
+            onSnapshot,
+            query,
+            orderBy,
+            limit,
+            where,
+            deleteDoc,
+            doc,
+            serverTimestamp
+        } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
         import { getStorage, ref, uploadBytesResumable, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-storage.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyBHKDSUWKYICbu6vJ1UKUuY8Y6tOfZkoKs",
             authDomain: "finca-agropecuaria-elbalui.firebaseapp.com",
             projectId: "finca-agropecuaria-elbalui",
-            storageBucket: "finca-agropecuaria-elbalui.appspot.com" 
+            storageBucket: "finca-agropecuaria-elbalui.appspot.com"
         };
 
         const app = initializeApp(firebaseConfig);
         window.auth = getAuth(app);
         window.storage = getStorage(app);
         window.fincaActual = 'Agua Clara';
-        
+
         window.db = initializeFirestore(app, {
             localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() })
         });
+
+        window.fbERP = {
+            db: window.db,
+            collection,
+            addDoc,
+            getDocs,
+            onSnapshot,
+            query,
+            orderBy,
+            limit,
+            where,
+            deleteDoc,
+            doc,
+            serverTimestamp
+        };
 
         window.mostrarToast = function(mensaje, tipo = 'exito') {
             const contenedor = document.getElementById('toast-container');
@@ -922,11 +1135,10 @@
             cargarBibliotecaDocumentos();
         }
 
-        // Arranque inmediato sin esperar internet si ya había sesión iniciada en el dispositivo
         if (!navigator.onLine && localStorage.getItem('elbalui_sesion_email')) {
             abrirSistema();
         }
-        
+
         onAuthStateChanged(window.auth, (user) => {
             if (user) {
                 localStorage.setItem('elbalui_sesion_email', user.email);
@@ -955,7 +1167,7 @@
             document.querySelectorAll('.section-view').forEach(s => s.classList.remove('active'));
             document.querySelectorAll('.cat-chip').forEach(c => c.classList.remove('active'));
             document.getElementById('tab-' + tabId).classList.add('active');
-            
+
             if (element) {
                 element.classList.add('active');
             } else {
@@ -973,7 +1185,7 @@
                 b.classList.toggle('active', b.innerText.includes(fincaNombre === 'Global' ? 'Consolidado' : fincaNombre));
             });
             document.getElementById('finca-tag').innerText = fincaNombre === 'Global' ? 'VISTA: CONSOLIDADO' : 'FINCA ACTIVA: ' + fincaNombre.toUpperCase();
-            
+
             const titleEl = document.getElementById('finca-title');
             const descEl = document.getElementById('finca-desc');
             if (fincaNombre === 'Agua Clara') {
@@ -1050,7 +1262,7 @@
 
                 querySnapshot.forEach((docSnap) => {
                     const data = docSnap.data();
-                    
+
                     if (filtroTipo !== 'Todos' && data.tipo !== filtroTipo) return;
                     if (fincaActiva !== 'Global' && data.finca && data.finca !== fincaActiva) return;
 
@@ -1087,19 +1299,19 @@
             const contenedor = document.getElementById('contenedor-documentos');
             if(!contenedor) return;
             contenedor.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; padding: 30px; color: var(--text-muted);"><span style="font-size: 2rem;">⏳</span><br>Cargando documentos...</div>';
-            
+
             try {
                 const q = query(collection(window.db, "biblioteca_documentos"), orderBy("fechaSubida", "desc"));
                 const querySnapshot = await getDocs(q);
-                
+
                 if (querySnapshot.empty) {
                     contenedor.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; padding: 30px; color: var(--text-muted); background: #f8fafc; border-radius: 8px; border: 1px dashed #cbd5e1;">Aún no hay documentos en la biblioteca. ¡Sube el primero!</div>';
                     return;
                 }
 
                 let htmlContent = '';
-                querySnapshot.forEach((doc) => {
-                    const data = doc.data();
+                querySnapshot.forEach((docSnap) => {
+                    const data = docSnap.data();
                     let icono = '📄';
                     if(data.tipoArchivo && data.tipoArchivo.includes('pdf')) icono = '📋';
                     if(data.tipoArchivo && data.tipoArchivo.includes('image')) icono = '🖼️';
@@ -1136,26 +1348,26 @@
             const barraContenedor = document.getElementById('barra-progreso-container');
             const barra = document.getElementById('barra-progreso');
             const textoProgreso = document.getElementById('texto-progreso');
-            
+
             if (archivoInput.files.length === 0) return mostrarToast("Selecciona un archivo primero.", "error");
             const archivo = archivoInput.files[0];
-            
+
             btnSubmit.disabled = true; btnSubmit.innerText = "Subiendo archivo...";
             barraContenedor.style.display = 'block'; textoProgreso.style.display = 'block';
 
             const storageRef = ref(window.storage, 'documentos_erp/' + Date.now() + '_' + archivo.name);
             const uploadTask = uploadBytesResumable(storageRef, archivo);
 
-            uploadTask.on('state_changed', 
+            uploadTask.on('state_changed',
                 (snapshot) => {
                     const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
                     barra.style.width = progress + '%';
                     textoProgreso.innerText = `Subiendo... ${Math.round(progress)}%`;
-                }, 
+                },
                 (error) => {
                     mostrarToast("Error subiendo el archivo: " + error.message, "error");
                     resetFormularioDocs();
-                }, 
+                },
                 async () => {
                     try {
                         const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
@@ -1183,17 +1395,45 @@
             }
         });
     </script>
-    
+
     <script type="module" src="js/hato.js?v=123"></script>
+    <script src="js/online-sync.js"></script>
+    <script src="js/modulos-erp.js"></script>
 
     <!-- MOTOR DE SIMULACIÓN DE PLANIFICACIÓN BOVINA -->
     <script>
-        window.cargarVacasReales = function() {
-            let vacasActivas = document.getElementById('kpi-gestantes') ? parseInt(document.getElementById('kpi-gestantes').innerText) || 0 : 0; 
-            let totalVientresFinca = 100; 
-            if (vacasActivas > 0) totalVientresFinca = vacasActivas * 2; 
+        window.cargarVacasReales = async function() {
+            try {
+                if (window.fbERP && window.fbERP.getDocs) {
+                    const { db, collection, getDocs } = window.fbERP;
+                    const snap = await getDocs(collection(db, 'animales'));
+                    const fincaActiva = window.fincaActual || 'Agua Clara';
+                    let vientres = 0;
+
+                    snap.forEach((docSnap) => {
+                        const a = docSnap.data();
+                        if (a.estado === 'Baja (Vendido/Muerto)') return;
+                        if (fincaActiva !== 'Global' && a.finca && a.finca !== fincaActiva) return;
+                        if (['Vaca Ordeño', 'Vaca Seca / Escampa', 'Novilla'].includes(a.categoria)) {
+                            vientres++;
+                        }
+                    });
+
+                    if (vientres > 0) {
+                        document.getElementById('sim-vacas-ini').value = vientres;
+                        if (window.mostrarToast) window.mostrarToast(`Cargados ${vientres} vientres reales desde el inventario.`, 'exito');
+                        window.calcularMovimientoRebano();
+                        return;
+                    }
+                }
+            } catch (err) {
+                console.error('Error leyendo hembras reales:', err);
+            }
+
+            let vacasActivas = document.getElementById('kpi-gestantes') ? parseInt(document.getElementById('kpi-gestantes').innerText) || 0 : 0;
+            let totalVientresFinca = vacasActivas > 0 ? vacasActivas * 2 : 100;
             document.getElementById('sim-vacas-ini').value = totalVientresFinca;
-            if(window.mostrarToast) window.mostrarToast("Hembras iniciales actualizadas.", "info");
+            if (window.mostrarToast) window.mostrarToast('Hembras iniciales actualizadas.', 'info');
             window.calcularMovimientoRebano();
         };
 
@@ -1209,17 +1449,17 @@
             let cur_m = Math.round(cur_h / rel_hm);
             let tbodyMatriz = document.getElementById('tbody-matriz-rebano');
             let tbodyCompo = document.getElementById('tbody-composicion-rebano');
-            
+
             tbodyMatriz.innerHTML = '';
-            
+
             let ceba_acumulada = 0;
-            let ceba_lotes = []; 
+            let ceba_lotes = [];
             let hist_vt = [cur_h];
             let hist_m = [cur_m];
             let hist_ceba = [0];
 
             for (let ano = 1; ano <= 3; ano++) {
-                let nat_total = cur_h * p_nat; 
+                let nat_total = cur_h * p_nat;
                 let nat_h = Math.round(nat_total * 0.5);
                 let nat_m = Math.round(nat_total * 0.5);
 
@@ -1240,9 +1480,9 @@
                 let final_h = saldo_ah + sel_h - elim_h;
                 let final_m = Math.round(final_h / rel_hm);
 
-                let sel_m = final_m - saldo_am + elim_m;
-                let elim_ch = saldo_ch - sel_h;
-                let ceba_in = saldo_cm - sel_m;
+                let sel_m = Math.max(0, final_m - saldo_am + elim_m);
+                let elim_ch = Math.max(0, saldo_ch - sel_h);
+                let ceba_in = Math.max(0, saldo_cm - sel_m);
 
                 let ceba_out_matadero = 0;
                 let ceba_out_ventas = 0;
@@ -1250,24 +1490,23 @@
 
                 if (ceba_lotes.length > 2) {
                     ceba_out_matadero = ceba_lotes.shift();
-                    ceba_out_ventas = ceba_in - ceba_out_matadero;
-                    if (ceba_out_ventas < 0) ceba_out_ventas = 0;
-                } else {
-                    ceba_acumulada += ceba_in;
+                    ceba_out_ventas = Math.max(0, ceba_in - ceba_out_matadero);
                 }
+                ceba_acumulada = ceba_lotes.reduce((acc, v) => acc + v, 0);
 
                 let labelInicio = ano === 1 ? "Inicio 1er Año" : (ano === 2 ? "Inicio 2do Año" : "Inicio 3er Año");
                 let labelFinal = ano === 1 ? "Final 1er Año" : (ano === 2 ? "Final 2do Año" : "Final 3er Año");
-                
+                let ceba_inicio_ano = ano > 1 ? hist_ceba[ano - 1] : 0;
+
                 let row_inicio = `<tr style="background: #dcfce7; font-weight: bold;">
                     <td style="border: 1px solid #cbd5e1; padding: 4px; text-align: left;">${labelInicio}</td>
                     <td style="border: 1px solid #cbd5e1; padding: 4px;">${cur_h}</td><td style="border: 1px solid #cbd5e1; padding: 4px;">${cur_m}</td>
                     <td style="border: 1px solid #cbd5e1;"></td><td style="border: 1px solid #cbd5e1;"></td>
                     <td style="border: 1px solid #cbd5e1;"></td><td style="border: 1px solid #cbd5e1;"></td>
-                    <td style="border: 1px solid #cbd5e1; padding: 4px; background: #e2e8f0;">${ceba_acumulada > 0 && ano > 1 ? ceba_acumulada : ''}</td>
+                    <td style="border: 1px solid #cbd5e1; padding: 4px; background: #e2e8f0;">${ceba_inicio_ano > 0 ? ceba_inicio_ano : ''}</td>
                     <td style="border: 1px solid #cbd5e1;"></td><td style="border: 1px solid #cbd5e1;"></td>
                     <td style="border: 1px solid #cbd5e1;"></td><td style="border: 1px solid #cbd5e1;"></td>
-                    <td style="border: 1px solid #cbd5e1; padding: 4px; background: #dcfce7;">${cur_h + cur_m + (ano > 1 ? ceba_acumulada : 0)}</td>
+                    <td style="border: 1px solid #cbd5e1; padding: 4px; background: #dcfce7;">${cur_h + cur_m + ceba_inicio_ano}</td>
                 </tr>`;
 
                 let row_nat = `<tr>
@@ -1332,7 +1571,7 @@
 
                 cur_h = final_h;
                 cur_m = final_m;
-                
+
                 hist_vt.push(final_h);
                 hist_m.push(final_m);
                 hist_ceba.push(ceba_acumulada);
