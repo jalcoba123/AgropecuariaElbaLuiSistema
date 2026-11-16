@@ -15,7 +15,7 @@
             .btn-action, #offline-status-bar, #modal-animal, #modal-ficha, #login-screen,
             .finca-toggle, button[onclick="window.print()"] { display: none !important; }
             .section-view, #app-container, .modulo-hato { display: block !important; box-shadow: none !important; border: none !important; }
-            #tab-dashboard, #tab-lecheria, #tab-palma, #tab-operaciones, #tab-finanzas, #tab-documentos,
+            #tab-dashboard, #tab-lecheria, #tab-palma, #tab-operaciones, #tab-finanzas, #tab-documentos, #tab-bitacora,
             #subtab-lector, #subtab-config, #subtab-calendario, #subtab-planificacion-bovina,
             div[style*="grid-template-columns: repeat(auto-fit, minmax(140px, 1fr))"] { display: none !important; }
             th:first-child, td:first-child, th:last-child, td:last-child { display: none !important; }
@@ -81,6 +81,7 @@
             <button class="cat-chip" onclick="switchTab('operaciones', this)">🚜 Operaciones & Activos</button>
             <button class="cat-chip" onclick="switchTab('finanzas', this)">💰 Finanzas & Costos</button>
             <button class="cat-chip" onclick="switchTab('documentos', this)">📁 Documentos & Planillas</button>
+            <button class="cat-chip" onclick="switchTab('bitacora', this)" style="background: #f0fdf4; border: 1px solid #16a34a; color: #166534;">📜 Bitácora General</button>
         </nav>
 
         <div class="container">
@@ -88,7 +89,7 @@
                 <div>
                     <span class="finca-tag" id="finca-tag">FINCA ACTIVA: AGUA CLARA</span>
                     <h2 id="finca-title">Finca Agua Clara</h2>
-                    <p id="finca-desc">Manejo intensivo/extensivo, palma aceitera en establecimiento y áreas de siembra.</p>
+                    <p id="finca-desc">Lechería doble propósito, forraje de corte, suplementación y áreas de siembra.</p>
                 </div>
             </div>
 
@@ -254,7 +255,7 @@
                             <form id="form-rfid-scanner" onsubmit="event.preventDefault();">
                                 <input type="text" id="rfid-scanner-input" placeholder="📟 Pase el bastón RFID por el arete..." autocomplete="off" 
                                        style="padding: 15px; width: 90%; font-size: 1.2rem; border-radius: 8px; border: 2px solid #0ea5e9; text-align: center; box-shadow: 0 4px 6px -1px rgba(14, 165, 233, 0.2); outline: none; font-weight: bold; color: #0284c7;"
-                                       onblur="this.focus()" autofocus> 
+                                       autofocus> 
                             </form>
                             <p style="font-size: 0.75rem; color: #64748b; margin-top: 10px;">🟢 El sistema está escuchando al bastón automáticamente.</p>
                         </div>
@@ -416,7 +417,7 @@
                             <button onclick="window.calcularMovimientoRebano()" style="width: 100%; margin-top: 15px; background: #16a34a; color: white; border: none; padding: 10px; border-radius: 6px; font-weight: bold; cursor: pointer;">⚡ Calcular Proyección a 3 Años</button>
                         </div>
 
-                        <!-- 1. MATRIZ GENERAL EXACTA A LA FOTO -->
+                        <!-- 1. MATRIZ GENERAL -->
                         <h3 style="color: #0f172a; font-size: 1rem; margin-bottom: 10px;">📊 Movimiento de Rebaño (Paso a Paso)</h3>
                         <div style="overflow-x: auto; margin-bottom: 30px;">
                             <table style="width: 100%; border-collapse: collapse; font-size: 0.85rem; text-align: center; border: 1px solid #cbd5e1; background: white;">
@@ -516,6 +517,45 @@
                         <div style="grid-column: 1 / -1; text-align: center; padding: 30px; color: var(--text-muted);">
                             <span style="font-size: 2rem;">⏳</span><br>Cargando documentos de la nube...
                         </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MÓDULO 8: BITÁCORA GENERAL DE OPERACIONES -->
+            <div id="tab-bitacora" class="section-view">
+                <div style="background: white; padding: 20px; border-radius: 12px; border: 1px solid var(--border-light); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #bbf7d0; padding-bottom: 15px; margin-bottom: 20px; flex-wrap: wrap; gap: 15px;">
+                        <div>
+                            <h2 style="color: var(--green-dark); margin: 0;">📜 Bitácora & Diario de Campo ElbaLui</h2>
+                            <span style="font-size: 0.85rem; color: var(--text-muted);">Registro cronológico de eventos en Agua Clara y El Sur.</span>
+                        </div>
+                        <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                            <select id="filtro-bitacora-tipo" onchange="window.cargarBitacoraGeneral()" style="padding: 6px 12px; border-radius: 6px; border: 1px solid var(--border-light); font-size: 0.85rem;">
+                                <option value="Todos">Todas las Operaciones</option>
+                                <option value="Inventario">📦 Inventario / Ganado</option>
+                                <option value="Manga">🏷️ Lector RFID (Manga)</option>
+                                <option value="Agronomia">🌱 Agronomía / Fertilizantes</option>
+                                <option value="Maquinaria">🚜 Maquinaria / Activos</option>
+                            </select>
+                            <button onclick="window.cargarBitacoraGeneral()" style="background: #16a34a; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 0.85rem;">🔄 Actualizar</button>
+                        </div>
+                    </div>
+
+                    <div style="overflow-x: auto;">
+                        <table style="width: 100%; border-collapse: collapse; font-size: 0.85rem;">
+                            <thead style="background: #f1f5f9; text-align: left;">
+                                <tr>
+                                    <th style="padding: 10px; border-bottom: 1px solid var(--border-light);">Fecha / Hora</th>
+                                    <th style="padding: 10px; border-bottom: 1px solid var(--border-light);">Finca</th>
+                                    <th style="padding: 10px; border-bottom: 1px solid var(--border-light);">Categoría</th>
+                                    <th style="padding: 10px; border-bottom: 1px solid var(--border-light);">Descripción de la Operación</th>
+                                    <th style="padding: 10px; border-bottom: 1px solid var(--border-light);">Usuario</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tabla-bitacora-body">
+                                <tr><td colspan="5" style="padding: 20px; text-align: center; color: var(--text-muted);">Cargando bitácora de campo...</td></tr>
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>
@@ -713,6 +753,7 @@
         const app = initializeApp(firebaseConfig);
         window.auth = getAuth(app);
         window.storage = getStorage(app);
+        window.fincaActual = 'Agua Clara';
         
         window.db = initializeFirestore(app, {
             localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() })
@@ -786,16 +827,129 @@
             document.querySelectorAll('.section-view').forEach(s => s.classList.remove('active'));
             document.querySelectorAll('.cat-chip').forEach(c => c.classList.remove('active'));
             document.getElementById('tab-' + tabId).classList.add('active');
-            if (element) element.classList.add('active');
-            if(tabId === 'documentos') cargarBibliotecaDocumentos();
+            
+            if (element) {
+                element.classList.add('active');
+            } else {
+                const chip = document.querySelector(`.cat-chip[onclick*="'${tabId}'"]`);
+                if (chip) chip.classList.add('active');
+            }
+
+            if (tabId === 'documentos') cargarBibliotecaDocumentos();
+            if (tabId === 'bitacora') window.cargarBitacoraGeneral();
         };
 
         window.setFinca = function(fincaNombre) {
+            window.fincaActual = fincaNombre;
             document.querySelectorAll('.finca-btn').forEach(b => {
                 b.classList.toggle('active', b.innerText.includes(fincaNombre === 'Global' ? 'Consolidado' : fincaNombre));
             });
             document.getElementById('finca-tag').innerText = fincaNombre === 'Global' ? 'VISTA: CONSOLIDADO' : 'FINCA ACTIVA: ' + fincaNombre.toUpperCase();
+            
+            const titleEl = document.getElementById('finca-title');
+            const descEl = document.getElementById('finca-desc');
+            if (fincaNombre === 'Agua Clara') {
+                titleEl.innerText = 'Finca Agua Clara';
+                descEl.innerText = 'Lechería doble propósito, forraje de corte, suplementación y áreas de siembra.';
+            } else if (fincaNombre === 'El Sur') {
+                titleEl.innerText = 'Finca El Sur';
+                descEl.innerText = 'Ganadería extensiva de cría/levante y plantación comercial de palma aceitera.';
+            } else {
+                titleEl.innerText = 'Consolidado Agropecuaria ElbaLui';
+                descEl.innerText = 'Vista global unificada de inventarios, operaciones y registros de ambas fincas.';
+            }
+
             if (window.cargarHato) window.cargarHato();
+            if (document.getElementById('tab-bitacora').classList.contains('active')) {
+                window.cargarBitacoraGeneral();
+            }
+        };
+
+        // Control de foco sin bloquear desplegables o botones en la manga RFID
+        const rfidInput = document.getElementById('rfid-scanner-input');
+        if (rfidInput) {
+            rfidInput.addEventListener('blur', (e) => {
+                const target = e.relatedTarget;
+                const esInteractivo = target && ['SELECT', 'INPUT', 'TEXTAREA', 'BUTTON'].includes(target.tagName);
+                const lectorVisible = document.getElementById('subtab-lector').style.display !== 'none';
+                const hatoActivo = document.getElementById('tab-hato').classList.contains('active');
+                const modalAbierto = ['modal-animal', 'modal-masivo', 'modal-subir-doc', 'modal-ficha'].some(
+                    id => document.getElementById(id).style.display === 'flex'
+                );
+
+                if (hatoActivo && lectorVisible && !esInteractivo && !modalAbierto) {
+                    setTimeout(() => rfidInput.focus(), 10);
+                }
+            });
+        }
+
+        // --- FUNCIONES DE LA BITÁCORA GENERAL ---
+        window.registrarEnBitacora = async function(finca, tipo, descripcion) {
+            try {
+                await addDoc(collection(window.db, "bitacora_general"), {
+                    finca: finca || window.fincaActual || 'Agua Clara',
+                    tipo: tipo,
+                    descripcion: descripcion,
+                    fechaSubida: serverTimestamp(),
+                    usuario: window.auth.currentUser ? window.auth.currentUser.email : 'Productor / Operador'
+                });
+            } catch (error) {
+                console.error("Error registrando en bitácora:", error);
+            }
+        };
+
+        window.cargarBitacoraGeneral = async function() {
+            const tbody = document.getElementById('tabla-bitacora-body');
+            if (!tbody) return;
+
+            tbody.innerHTML = '<tr><td colspan="5" style="padding: 20px; text-align: center; color: var(--text-muted);">⏳ Sincronizando bitácora...</td></tr>';
+
+            try {
+                const q = query(collection(window.db, "bitacora_general"), orderBy("fechaSubida", "desc"));
+                const querySnapshot = await getDocs(q);
+
+                if (querySnapshot.empty) {
+                    tbody.innerHTML = '<tr><td colspan="5" style="padding: 20px; text-align: center; color: var(--text-muted); font-style: italic;">No hay registros en la bitácora todavía.</td></tr>';
+                    return;
+                }
+
+                const filtroTipo = document.getElementById('filtro-bitacora-tipo') ? document.getElementById('filtro-bitacora-tipo').value : 'Todos';
+                const fincaActiva = window.fincaActual || 'Agua Clara';
+                let htmlRows = '';
+
+                querySnapshot.forEach((docSnap) => {
+                    const data = docSnap.data();
+                    
+                    if (filtroTipo !== 'Todos' && data.tipo !== filtroTipo) return;
+                    if (fincaActiva !== 'Global' && data.finca && data.finca !== fincaActiva) return;
+
+                    let fechaFormateada = 'Fecha reciente';
+                    if (data.fechaSubida && data.fechaSubida.toDate) {
+                        fechaFormateada = data.fechaSubida.toDate().toLocaleString('es-VE');
+                    }
+
+                    let badgeColor = '#3b82f6';
+                    if (data.tipo === 'Inventario') badgeColor = '#10b981';
+                    if (data.tipo === 'Manga') badgeColor = '#0ea5e9';
+                    if (data.tipo === 'Agronomia') badgeColor = '#16a34a';
+                    if (data.tipo === 'Maquinaria') badgeColor = '#b45309';
+
+                    htmlRows += `
+                        <tr style="border-bottom: 1px solid #f1f5f9;">
+                            <td style="padding: 10px; white-space: nowrap; color: #475569;">${fechaFormateada}</td>
+                            <td style="padding: 10px; font-weight: bold; color: #0f172a;">${data.finca || 'Agua Clara'}</td>
+                            <td style="padding: 10px;"><span style="background: ${badgeColor}15; color: ${badgeColor}; padding: 3px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: bold;">${data.tipo}</span></td>
+                            <td style="padding: 10px; color: #1e293b;">${data.descripcion}</td>
+                            <td style="padding: 10px; color: #64748b; font-size: 0.8rem;">${data.usuario}</td>
+                        </tr>
+                    `;
+                });
+
+                tbody.innerHTML = htmlRows || '<tr><td colspan="5" style="padding: 20px; text-align: center; color: var(--text-muted);">No hay registros para este filtro o finca.</td></tr>';
+            } catch (error) {
+                console.error("Error al cargar la bitácora:", error);
+                tbody.innerHTML = '<tr><td colspan="5" style="padding: 20px; text-align: center; color: #ef4444;">❌ Error cargando la bitácora. Comprueba tu conexión.</td></tr>';
+            }
         };
 
         async function cargarBibliotecaDocumentos() {
@@ -957,7 +1111,7 @@
                 let elim_ch = saldo_ch - sel_h; // Sobrantes H (Van a Ventas)
                 let ceba_in = saldo_cm - sel_m; // Sobrantes M (Van a Ceba)
 
-                // Lógica de salida de Ceba (para estabilizar en año 3 como en tu foto)
+                // Lógica de salida de Ceba (para estabilizar en año 3)
                 let ceba_out_matadero = 0;
                 let ceba_out_ventas = 0;
                 ceba_lotes.push(ceba_in);
@@ -1098,9 +1252,8 @@
             if(document.getElementById('sim-vacas-ini')) window.calcularMovimientoRebano();
         }, 500);
 
-        // Agregamos un listener para que recalcule automáticamente al cambiar el propósito
+        // Listener para recalcular automáticamente al cambiar el propósito
         document.getElementById('sim-proposito').addEventListener('change', window.calcularMovimientoRebano);
-
     </script>
 
     <script>
