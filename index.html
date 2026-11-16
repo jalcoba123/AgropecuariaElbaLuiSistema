@@ -3,6 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="GanadoControl">
+    <link rel="apple-touch-icon" href="logo.jpg">
     <title>GanadoControl ERP - Agropecuaria ElbaLui</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
@@ -12,7 +16,7 @@
         @media print {
             body { background: white; margin: 0; padding: 0; }
             header, .category-nav, .finca-banner, .tabs-hato-container, 
-            .btn-action, #offline-status-bar, #modal-animal, #modal-ficha, #login-screen,
+            .btn-action, #offline-status-bar, #modal-animal, #modal-ficha, #modal-novedad, #login-screen,
             .finca-toggle, button[onclick="window.print()"] { display: none !important; }
             .section-view, #app-container, .modulo-hato { display: block !important; box-shadow: none !important; border: none !important; }
             #tab-dashboard, #tab-lecheria, #tab-palma, #tab-operaciones, #tab-finanzas, #tab-documentos, #tab-bitacora,
@@ -440,9 +444,7 @@
                                         <th style="border: 1px solid #cbd5e1; background:#e0f2fe; padding: 4px;">H</th><th style="border: 1px solid #cbd5e1; background:#e0f2fe; padding: 4px;">M</th>
                                     </tr>
                                 </thead>
-                                <tbody id="tbody-matriz-rebano">
-                                    <!-- Se llena con JS -->
-                                </tbody>
+                                <tbody id="tbody-matriz-rebano"></tbody>
                             </table>
                         </div>
 
@@ -460,9 +462,7 @@
                                         <th style="padding: 8px; border: 1px solid #cbd5e1;">3er Año</th>
                                     </tr>
                                 </thead>
-                                <tbody id="tbody-composicion-rebano">
-                                    <!-- Se llena con JS -->
-                                </tbody>
+                                <tbody id="tbody-composicion-rebano"></tbody>
                             </table>
                         </div>
                     </div>
@@ -689,46 +689,159 @@
         </div>
     </div>
 
-    <!-- MODAL FICHA DEL ANIMAL -->
+    <!-- MODAL NOVEDAD MÉDICA (🏥) -->
+    <div id="modal-novedad" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 1000; padding: 20px;">
+        <div style="background: white; padding: 24px; border-radius: 12px; width: 100%; max-width: 400px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <h3 style="color: #be123c; margin: 0;">🏥 Novedad Médica • Arete <span id="n-arete-display">--</span></h3>
+                <button onclick="document.getElementById('modal-novedad').style.display='none'" style="background:none; border:none; font-size:1.5rem; cursor:pointer;">×</button>
+            </div>
+            <form id="form-novedad">
+                <input type="hidden" id="n-id" value="">
+                <div class="form-field">
+                    <label>Diagnóstico o Tratamiento Aplicado</label>
+                    <input type="text" id="n-estado-salud" placeholder="Ej. Mastitis - Oxitetraciclina 10ml" required>
+                </div>
+                <div style="display: flex; gap: 10px; margin-top: 15px;">
+                    <button type="button" onclick="document.getElementById('n-estado-salud').value='🟢 Sano'" style="background: #dcfce7; color: #166534; border: 1px solid #86efac; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-weight: bold;">🟢 Dar de Alta (Sano)</button>
+                    <button type="submit" class="btn-action" style="flex: 1; background: #be123c;">Guardar Novedad</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL FICHA CLÍNICA COMPLETA DEL ANIMAL (👁️) -->
     <div id="modal-ficha" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 1000; padding: 20px;">
-        <div style="background: white; padding: 24px; border-radius: 12px; width: 100%; max-width: 500px;">
+        <div style="background: white; padding: 24px; border-radius: 12px; width: 100%; max-width: 600px; max-height: 90vh; overflow-y: auto;">
+            <input type="hidden" id="p-id-doc" value="">
             <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; margin-bottom: 15px;">
-                <h3 style="color: #0369a1; margin: 0;">📋 Expediente / Ficha del Animal</h3>
+                <div>
+                    <span id="f-finca-tag" style="font-size: 0.7rem; font-weight: bold; color: #0369a1; background: #e0f2fe; padding: 2px 8px; border-radius: 4px;">FINCA: AGUA CLARA</span>
+                    <h3 style="color: #0f172a; margin: 4px 0 0 0;">📋 Expediente Clínico • Arete #<span id="f-arete">--</span></h3>
+                </div>
                 <button onclick="document.getElementById('modal-ficha').style.display='none'" style="background:none; border:none; font-size:1.5rem; cursor:pointer; color: #64748b;">×</button>
             </div>
-            
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; font-size: 0.9rem;">
-                <div style="background: #f8fafc; padding: 10px; border-radius: 6px; border: 1px solid #cbd5e1;">
-                    <span style="color: #64748b; font-weight: bold; font-size: 0.75rem;">ARETE / ID</span>
-                    <div id="f-arete" style="font-size: 1.2rem; font-weight: bold; color: #0f172a;">--</div>
+
+            <div id="f-alerta-repro"></div>
+
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; font-size: 0.85rem; margin-bottom: 15px;">
+                <div style="background: #f8fafc; padding: 8px; border-radius: 6px; border: 1px solid #cbd5e1;">
+                    <span style="color: #64748b; font-weight: bold; font-size: 0.7rem;">CATEGORÍA</span>
+                    <div id="f-categoria" style="font-weight: bold; color: #16a34a;">--</div>
                 </div>
-                <div style="background: #f8fafc; padding: 10px; border-radius: 6px; border: 1px solid #cbd5e1;">
-                    <span style="color: #64748b; font-weight: bold; font-size: 0.75rem;">CATEGORÍA</span>
-                    <div id="f-categoria" style="font-size: 1.1rem; font-weight: bold; color: #16a34a;">--</div>
-                </div>
-                <div>
-                    <span style="color: #64748b; font-weight: bold; font-size: 0.75rem;">LOTE ACTUAL</span>
-                    <div id="f-lote" style="font-weight: bold;">--</div>
-                </div>
-                <div>
-                    <span style="color: #64748b; font-weight: bold; font-size: 0.75rem;">ESTADO</span>
+                <div style="background: #f8fafc; padding: 8px; border-radius: 6px; border: 1px solid #cbd5e1;">
+                    <span style="color: #64748b; font-weight: bold; font-size: 0.7rem;">ESTADO</span>
                     <div id="f-estado" style="font-weight: bold;">--</div>
                 </div>
-                <div>
-                    <span style="color: #64748b; font-weight: bold; font-size: 0.75rem;">PADRE / MADRE</span>
-                    <div id="f-padres" style="font-weight: bold;">--</div>
+                <div style="background: #f8fafc; padding: 8px; border-radius: 6px; border: 1px solid #cbd5e1;">
+                    <span style="color: #64748b; font-weight: bold; font-size: 0.7rem;">PADRE</span>
+                    <div id="f-padre" style="font-weight: bold;">--</div>
                 </div>
-                <div>
-                    <span style="color: #64748b; font-weight: bold; font-size: 0.75rem;">PESO REGISTRADO</span>
-                    <div id="f-peso" style="font-weight: bold;">--</div>
+                <div style="background: #f8fafc; padding: 8px; border-radius: 6px; border: 1px solid #cbd5e1;">
+                    <span style="color: #64748b; font-weight: bold; font-size: 0.7rem;">MADRE</span>
+                    <div id="f-madre" style="font-weight: bold;">--</div>
                 </div>
             </div>
 
-            <div style="margin-top: 20px; border-top: 1px solid #e2e8f0; padding-top: 15px;">
-                <h4 style="margin: 0 0 10px 0; color: #0f172a;">💉 Últimos Tratamientos (Historial)</h4>
-                <ul id="f-historial-sanitario" style="list-style: none; padding: 0; margin: 0; max-height: 120px; overflow-y: auto; font-size: 0.85rem; color: #475569;">
-                    <li style="font-style: italic;">Cargando historial...</li>
-                </ul>
+            <div id="f-historial-salud" style="padding: 10px; border-radius: 8px; border: 1px solid #a7f3d0; background: #ecfdf5; color: #047857; font-size: 0.85rem; margin-bottom: 15px;">
+                🟢 Sano
+            </div>
+
+            <!-- BOTONES DE ACCIÓN EN FICHA -->
+            <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 15px;">
+                <button type="button" onclick="const f=document.getElementById('form-nuevo-repro'); f.style.display=f.style.display==='none'?'block':'none';" style="background: #0ea5e9; color: white; border: none; padding: 6px 10px; border-radius: 6px; cursor: pointer; font-size: 0.8rem; font-weight: bold;">+ Evento Repro / Parto</button>
+                <button type="button" onclick="const f=document.getElementById('form-cambio-categoria'); f.style.display=f.style.display==='none'?'block':'none';" style="background: #64748b; color: white; border: none; padding: 6px 10px; border-radius: 6px; cursor: pointer; font-size: 0.8rem; font-weight: bold;">🔄 Cambiar Categoría</button>
+                <button type="button" id="btn-show-destete" onclick="const f=document.getElementById('form-destete'); f.style.display=f.style.display==='none'?'block':'none';" style="display:none; background: #eab308; color: white; border: none; padding: 6px 10px; border-radius: 6px; cursor: pointer; font-size: 0.8rem; font-weight: bold;">🏅 Destetar</button>
+            </div>
+
+            <!-- FORMULARIO EVENTO REPRODUCTIVO -->
+            <form id="form-nuevo-repro" style="display: none; background: #f0f9ff; padding: 12px; border-radius: 8px; border: 1px solid #bae6fd; margin-bottom: 15px;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                    <div class="form-field">
+                        <label>Tipo de Evento</label>
+                        <select id="r-tipo" onchange="document.getElementById('div-tercio').style.display=this.value==='Palpación (+ Preñada)'?'block':'none'; document.getElementById('div-parto-cria').style.display=this.value==='Parto'?'block':'none';">
+                            <option value="Palpación (+ Preñada)">Palpación (+ Preñada)</option>
+                            <option value="Palpación (- Vacía)">Palpación (- Vacía)</option>
+                            <option value="Parto">Parto</option>
+                            <option value="Aborto">Aborto</option>
+                        </select>
+                    </div>
+                    <div class="form-field">
+                        <label>Fecha</label>
+                        <input type="date" id="r-fecha" required>
+                    </div>
+                </div>
+                <div id="div-tercio" class="form-field">
+                    <label>Tercio de Gestación</label>
+                    <select id="r-tercio">
+                        <option value="1">1er Tercio (~210 días para parto)</option>
+                        <option value="2">2do Tercio (~120 días para parto)</option>
+                        <option value="3">3er Tercio (~30 días para parto)</option>
+                    </select>
+                </div>
+                <div id="div-parto-cria" style="display: none; background: white; padding: 10px; border-radius: 6px; margin-top: 8px;">
+                    <strong style="font-size: 0.8rem; color: #0369a1;">Registrar Cría Nacida (Opcional):</strong>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-top: 6px;">
+                        <input type="text" id="r-cria-arete" placeholder="Arete Cría">
+                        <select id="r-cria-sexo">
+                            <option value="Becerro">Becerro (M)</option>
+                            <option value="Becerra">Becerra (H)</option>
+                        </select>
+                        <input type="number" id="r-cria-peso" placeholder="Peso Kg">
+                    </div>
+                </div>
+                <button type="submit" class="btn-action" style="width: 100%; margin-top: 10px; background: #0284c7;">Guardar Evento Reproductivo</button>
+            </form>
+
+            <!-- FORMULARIO CAMBIO DE CATEGORÍA -->
+            <form id="form-cambio-categoria" style="display: none; background: #f8fafc; padding: 12px; border-radius: 8px; border: 1px solid #cbd5e1; margin-bottom: 15px;">
+                <div class="form-field">
+                    <label>Nueva Categoría</label>
+                    <select id="c-nueva-categoria">
+                        <option value="Becerro">Becerro (Macho)</option>
+                        <option value="Becerra">Becerra (Hembra)</option>
+                        <option value="Maute">Maute (Macho)</option>
+                        <option value="Mauta">Mauta (Hembra)</option>
+                        <option value="Novilla">Novilla</option>
+                        <option value="Vaca Ordeño">Vaca en Ordeño</option>
+                        <option value="Vaca Seca / Escampa">Vaca Seca / Escampa</option>
+                        <option value="Toro Reproductor">Toro Reproductor</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn-action" style="width: 100%; margin-top: 8px;">Actualizar Categoría</button>
+            </form>
+
+            <!-- FORMULARIO DESTETE INDIVIDUAL -->
+            <form id="form-destete" style="display: none; background: #fefce8; padding: 12px; border-radius: 8px; border: 1px solid #fde047; margin-bottom: 15px;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                    <div class="form-field"><label>Fecha Destete</label><input type="date" id="d-fecha" required></div>
+                    <div class="form-field"><label>Peso Destete (Kg)</label><input type="number" id="d-peso" required></div>
+                </div>
+                <button type="submit" class="btn-action" style="width: 100%; margin-top: 8px; background: #ca8a04;">Confirmar Destete</button>
+            </form>
+
+            <!-- HISTORIAL REPRODUCTIVO Y SANITARIO -->
+            <h4 style="margin: 15px 0 8px 0; color: #0f172a; font-size: 0.9rem;">🧬 Historial Reproductivo y Eventos</h4>
+            <table style="width: 100%; border-collapse: collapse; font-size: 0.8rem; margin-bottom: 15px;">
+                <thead style="background: #f1f5f9; text-align: left;">
+                    <tr><th style="padding: 6px;">Evento</th><th style="padding: 6px;">Fecha</th><th style="padding: 6px;">Detalle</th></tr>
+                </thead>
+                <tbody id="f-tabla-repro"></tbody>
+            </table>
+
+            <!-- HISTORIAL DE PESAJES Y GDP -->
+            <h4 style="margin: 15px 0 8px 0; color: #0f172a; font-size: 0.9rem;">⚖️ Curva de Peso y Ganancia Diaria (GDP)</h4>
+            <table style="width: 100%; border-collapse: collapse; font-size: 0.8rem; margin-bottom: 15px;">
+                <thead style="background: #f1f5f9; text-align: left;">
+                    <tr><th style="padding: 6px;">Fecha</th><th style="padding: 6px;">Peso</th><th style="padding: 6px;">GDP</th></tr>
+                </thead>
+                <tbody id="f-tabla-pesajes"></tbody>
+            </table>
+
+            <!-- ACCIONES DE SALIDA / BAJA -->
+            <div style="display: flex; gap: 10px; border-top: 1px solid #e2e8f0; padding-top: 12px;">
+                <button type="button" onclick="window.mandarABaja(document.getElementById('p-id-doc').value, document.getElementById('f-arete').innerText)" style="flex: 1; background: #fef2f2; color: #be123c; border: 1px solid #fecdd3; padding: 8px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 0.8rem;">☠️ Dar de Baja / Venta</button>
+                <button type="button" onclick="window.eliminarAnimal(document.getElementById('p-id-doc').value, document.getElementById('f-arete').innerText)" style="background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-size: 0.8rem;">🗑️ Borrar Registro</button>
             </div>
         </div>
     </div>
@@ -796,18 +909,30 @@
                 toast.style.opacity = '0';
                 toast.style.transform = 'translateY(20px)';
                 setTimeout(() => toast.remove(), 300);
-            }, 3000);
+            }, 3500);
         };
 
         const loginScreen = document.getElementById('login-screen');
         const appContainer = document.getElementById('app-container');
+
+        function abrirSistema() {
+            loginScreen.style.display = 'none';
+            appContainer.style.display = 'block';
+            if (window.cargarHato) window.cargarHato();
+            cargarBibliotecaDocumentos();
+        }
+
+        // Arranque inmediato sin esperar internet si ya había sesión iniciada en el dispositivo
+        if (!navigator.onLine && localStorage.getItem('elbalui_sesion_email')) {
+            abrirSistema();
+        }
         
         onAuthStateChanged(window.auth, (user) => {
             if (user) {
-                loginScreen.style.display = 'none';
-                appContainer.style.display = 'block';
-                if (window.cargarHato) window.cargarHato();
-                cargarBibliotecaDocumentos();
+                localStorage.setItem('elbalui_sesion_email', user.email);
+                abrirSistema();
+            } else if (!navigator.onLine && localStorage.getItem('elbalui_sesion_email')) {
+                abrirSistema();
             } else {
                 loginScreen.style.display = 'flex';
                 appContainer.style.display = 'none';
@@ -821,7 +946,10 @@
                 e.target.reset();
             } catch (error) { mostrarToast("Error al iniciar sesión: Verifique correo y contraseña.", "error"); }
         });
-        document.getElementById('btn-logout').addEventListener('click', () => signOut(window.auth));
+        document.getElementById('btn-logout').addEventListener('click', () => {
+            localStorage.removeItem('elbalui_sesion_email');
+            signOut(window.auth);
+        });
 
         window.switchTab = function(tabId, element) {
             document.querySelectorAll('.section-view').forEach(s => s.classList.remove('active'));
@@ -865,7 +993,6 @@
             }
         };
 
-        // Control de foco sin bloquear desplegables o botones en la manga RFID
         const rfidInput = document.getElementById('rfid-scanner-input');
         if (rfidInput) {
             rfidInput.addEventListener('blur', (e) => {
@@ -873,7 +1000,7 @@
                 const esInteractivo = target && ['SELECT', 'INPUT', 'TEXTAREA', 'BUTTON'].includes(target.tagName);
                 const lectorVisible = document.getElementById('subtab-lector').style.display !== 'none';
                 const hatoActivo = document.getElementById('tab-hato').classList.contains('active');
-                const modalAbierto = ['modal-animal', 'modal-masivo', 'modal-subir-doc', 'modal-ficha'].some(
+                const modalAbierto = ['modal-animal', 'modal-masivo', 'modal-subir-doc', 'modal-ficha', 'modal-novedad'].some(
                     id => document.getElementById(id).style.display === 'flex'
                 );
 
@@ -886,12 +1013,16 @@
         // --- FUNCIONES DE LA BITÁCORA GENERAL ---
         window.registrarEnBitacora = async function(finca, tipo, descripcion) {
             try {
+                const usuarioActual = window.auth.currentUser
+                    ? window.auth.currentUser.email
+                    : (localStorage.getItem('elbalui_sesion_email') || 'Productor / Operador');
+
                 await addDoc(collection(window.db, "bitacora_general"), {
                     finca: finca || window.fincaActual || 'Agua Clara',
                     tipo: tipo,
                     descripcion: descripcion,
                     fechaSubida: serverTimestamp(),
-                    usuario: window.auth.currentUser ? window.auth.currentUser.email : 'Productor / Operador'
+                    usuario: usuarioActual
                 });
             } catch (error) {
                 console.error("Error registrando en bitácora:", error);
@@ -923,7 +1054,7 @@
                     if (filtroTipo !== 'Todos' && data.tipo !== filtroTipo) return;
                     if (fincaActiva !== 'Global' && data.finca && data.finca !== fincaActiva) return;
 
-                    let fechaFormateada = 'Fecha reciente';
+                    let fechaFormateada = 'Pendiente de sincronizar';
                     if (data.fechaSubida && data.fechaSubida.toDate) {
                         fechaFormateada = data.fechaSubida.toDate().toLocaleString('es-VE');
                     }
@@ -948,14 +1079,14 @@
                 tbody.innerHTML = htmlRows || '<tr><td colspan="5" style="padding: 20px; text-align: center; color: var(--text-muted);">No hay registros para este filtro o finca.</td></tr>';
             } catch (error) {
                 console.error("Error al cargar la bitácora:", error);
-                tbody.innerHTML = '<tr><td colspan="5" style="padding: 20px; text-align: center; color: #ef4444;">❌ Error cargando la bitácora. Comprueba tu conexión.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="5" style="padding: 20px; text-align: center; color: #ef4444;">❌ Error cargando la bitácora.</td></tr>';
             }
         };
 
         async function cargarBibliotecaDocumentos() {
             const contenedor = document.getElementById('contenedor-documentos');
             if(!contenedor) return;
-            contenedor.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; padding: 30px; color: var(--text-muted);"><span style="font-size: 2rem;">⏳</span><br>Cargando documentos de la nube...</div>';
+            contenedor.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; padding: 30px; color: var(--text-muted);"><span style="font-size: 2rem;">⏳</span><br>Cargando documentos...</div>';
             
             try {
                 const q = query(collection(window.db, "biblioteca_documentos"), orderBy("fechaSubida", "desc"));
@@ -990,12 +1121,14 @@
                 contenedor.innerHTML = htmlContent;
             } catch (error) {
                 console.error("Error cargando documentos:", error);
-                contenedor.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; padding: 30px; color: #ef4444;">❌ Error cargando la biblioteca. Verifica tu conexión y los permisos de Firestore.</div>';
+                contenedor.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; padding: 30px; color: #ef4444;">❌ Error cargando la biblioteca.</div>';
             }
         }
 
         document.getElementById('form-subir-doc').addEventListener('submit', async (e) => {
             e.preventDefault();
+            if (!navigator.onLine) return mostrarToast("Conéctate a internet para subir archivos nuevos.", "error");
+
             const btnSubmit = document.getElementById('btn-submit-doc');
             const titulo = document.getElementById('doc-titulo').value;
             const desc = document.getElementById('doc-desc').value;
@@ -1108,17 +1241,16 @@
                 let final_m = Math.round(final_h / rel_hm);
 
                 let sel_m = final_m - saldo_am + elim_m;
-                let elim_ch = saldo_ch - sel_h; // Sobrantes H (Van a Ventas)
-                let ceba_in = saldo_cm - sel_m; // Sobrantes M (Van a Ceba)
+                let elim_ch = saldo_ch - sel_h;
+                let ceba_in = saldo_cm - sel_m;
 
-                // Lógica de salida de Ceba (para estabilizar en año 3)
                 let ceba_out_matadero = 0;
                 let ceba_out_ventas = 0;
                 ceba_lotes.push(ceba_in);
 
                 if (ceba_lotes.length > 2) {
-                    ceba_out_matadero = ceba_lotes.shift(); // El lote viejo sale a matadero
-                    ceba_out_ventas = ceba_in - ceba_out_matadero; // El excedente para cuadrar va a ventas
+                    ceba_out_matadero = ceba_lotes.shift();
+                    ceba_out_ventas = ceba_in - ceba_out_matadero;
                     if (ceba_out_ventas < 0) ceba_out_ventas = 0;
                 } else {
                     ceba_acumulada += ceba_in;
@@ -1206,7 +1338,6 @@
                 hist_ceba.push(ceba_acumulada);
             }
 
-            // Lógica para Propósito de Explotación
             let proposito = document.getElementById('sim-proposito') ? document.getElementById('sim-proposito').value : 'doble';
             let p_vt, p_nv, p_n, p_mauta;
             let label_proposito = "";
@@ -1247,21 +1378,39 @@
             tbodyCompo.innerHTML = trs;
         };
 
-        // Renderizado inicial automático
         setTimeout(() => {
             if(document.getElementById('sim-vacas-ini')) window.calcularMovimientoRebano();
         }, 500);
 
-        // Listener para recalcular automáticamente al cambiar el propósito
         document.getElementById('sim-proposito').addEventListener('change', window.calcularMovimientoRebano);
     </script>
 
+    <!-- REGISTRO DE SERVICE WORKER Y NOTIFICACIÓN INTERNA DE MODO OFFLINE -->
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('./sw.js')
-                    .then(reg => console.log('✅ App lista para abrir sin internet (Service Worker Activo)'))
-                    .catch(err => console.error('❌ Error instalando soporte Offline:', err));
+                    .then((reg) => {
+                        reg.addEventListener('updatefound', () => {
+                            const nuevoSW = reg.installing;
+                            if (nuevoSW) {
+                                nuevoSW.addEventListener('statechange', () => {
+                                    if (nuevoSW.state === 'activated' && window.mostrarToast) {
+                                        window.mostrarToast('Sistema guardado en memoria: listo para trabajar sin internet.', 'exito');
+                                    }
+                                });
+                            }
+                        });
+                    })
+                    .catch((err) => console.error('Error instalando soporte Offline:', err));
+            });
+
+            navigator.serviceWorker.addEventListener('message', (event) => {
+                if (event.data && event.data.type === 'OFFLINE_LISTO') {
+                    if (window.mostrarToast) {
+                        window.mostrarToast('Modo sin conexión activo en este dispositivo.', 'exito');
+                    }
+                }
             });
         }
     </script>
