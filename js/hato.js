@@ -9,6 +9,16 @@ if (!ID_DISPOSITIVO) {
     localStorage.setItem('elbalui_dispositivo_id', ID_DISPOSITIVO);
 }
 
+// Helper universal para mostrar siempre el cartel bonito del sistema
+function notificar(mensaje, tipo = 'exito') {
+    const limpio = String(mensaje).replace(/^[✅❌⚠️ℹ️]\s*/u, '');
+    if (typeof window.mostrarToast === 'function') {
+        window.mostrarToast(limpio, tipo);
+    } else {
+        console.log(`[${tipo.toUpperCase()}] ${limpio}`);
+    }
+}
+
 window.obtenerFincaActual = function() {
     const tag = document.getElementById('finca-tag');
     if (!tag) return 'Agua Clara';
@@ -78,6 +88,7 @@ window.reiniciarSesionManga = function() {
         actualizarTableroManga();
         const banner = document.getElementById('manga-alerta-banner');
         if (banner) banner.style.display = 'none';
+        notificar("Faena de manga reiniciada.", "info");
     }
 };
 
@@ -248,9 +259,9 @@ document.addEventListener('DOMContentLoaded', () => {
                                         'Manga',
                                         `Chip RFID (${codigoRFID}) vinculado al Arete #${animalPorArete.arete}`
                                     );
-                                    alert(`✅ Chip vinculado al arete ${animalPorArete.arete}`);
-                                } catch (err) { alert("❌ Error vinculando chip: " + err.message); }
-                            } else { alert(`⚠️ Arete "${areteAsociar}" no encontrado.`); }
+                                    notificar(`Chip vinculado al arete ${animalPorArete.arete}`, "exito");
+                                } catch (err) { notificar("Error vinculando chip: " + err.message, "error"); }
+                            } else { notificar(`Arete "${areteAsociar}" no encontrado.`, "error"); }
                         }
                     }
                 }
@@ -369,6 +380,7 @@ window.exportarExcel = function(tablaId, nombreArchivo) {
     document.body.appendChild(enlace);
     enlace.click();
     document.body.removeChild(enlace);
+    notificar("Archivo Excel/CSV descargado.", "exito");
 };
 
 window.importarCSV = function(event) {
@@ -420,9 +432,9 @@ window.importarCSV = function(event) {
                     'Inventario',
                     `Importación masiva CSV: ${contador} animales incorporados al inventario`
                 );
-                alert(`✅ Importación exitosa: ${contador} animales registrados desde el Excel/CSV.`);
+                notificar(`Importación exitosa: ${contador} animales registrados.`, "exito");
             } catch (err) {
-                alert("❌ Error al importar: " + err.message);
+                notificar("Error al importar: " + err.message, "error");
             } finally {
                 document.body.style.cursor = 'default';
             }
@@ -468,8 +480,7 @@ function renderizarSelectoresVacunas() {
 window.abrirModalMasivo = async function() {
     const seleccionados = document.querySelectorAll('.chk-animal:checked');
     if (seleccionados.length === 0) {
-        if (window.mostrarToast) window.mostrarToast("Seleccione al menos un animal en la tabla.", "error");
-        else alert("⚠️ Seleccione al menos un animal de la lista.");
+        notificar("Seleccione al menos un animal en la tabla.", "error");
         return;
     }
 
@@ -481,7 +492,6 @@ window.abrirModalMasivo = async function() {
     const divLote = document.getElementById('m-div-lote');
     if (divLote) divLote.style.display = 'none';
 
-    // Si aún no hay caché cargada, consulta directa a Firestore antes de poblar
     if (window.db && window.catalogoVacunasCache.length === 0) {
         try {
             const snapVac = await getDocs(collection(window.db, "config_vacunas"));
@@ -505,11 +515,11 @@ const formMasivo = document.getElementById('form-masivo');
 if (formMasivo) {
     formMasivo.onsubmit = async (e) => {
         e.preventDefault();
-        if (!window.db) return alert("⚠️ Base de datos no inicializada.");
+        if (!window.db) return notificar("Base de datos no inicializada.", "error");
 
         const tipoAccion = document.getElementById('m-tipo').value;
         const seleccionados = Array.from(document.querySelectorAll('.chk-animal:checked'));
-        if (seleccionados.length === 0) return alert("⚠️ No hay animales seleccionados.");
+        if (seleccionados.length === 0) return notificar("No hay animales seleccionados.", "error");
 
         const btn = document.getElementById('btn-submit-masivo');
         const fincaActual = window.obtenerFincaActual();
@@ -523,7 +533,7 @@ if (formMasivo) {
         try {
             if (tipoAccion === 'Sanidad') {
                 const vacunaStr = document.getElementById('m-vacuna-nombre').value.trim();
-                if (!vacunaStr) throw new Error("Seleccione el nombre de la vacuna o tratamiento (o créelo en 'Configurar Lotes & Vacunas').");
+                if (!vacunaStr) throw new Error("Seleccione el nombre de la vacuna o tratamiento.");
                 
                 for (const chk of seleccionados) {
                     const idDoc = chk.value;
@@ -550,8 +560,7 @@ if (formMasivo) {
                     'Inventario',
                     `Vacunación masiva (${vacunaStr}) aplicada a ${seleccionados.length} animales`
                 );
-                if (window.mostrarToast) window.mostrarToast(`Vacunación (${vacunaStr}) aplicada a ${seleccionados.length} animales.`, "exito");
-                else alert(`✅ Vacunación (${vacunaStr}) aplicada a ${seleccionados.length} animales.`);
+                notificar(`Vacunación (${vacunaStr}) aplicada a ${seleccionados.length} animales.`, "exito");
             } 
             else if (tipoAccion === 'Destete') {
                 const pesoPromedio = Number(document.getElementById('m-destete-peso').value);
@@ -578,7 +587,7 @@ if (formMasivo) {
                 }
 
                 if (destetadosCount === 0) {
-                    throw new Error("Ninguno de los animales seleccionados tiene categoría 'Becerro' o 'Becerra'.");
+                    throw new Error("Ninguno de los seleccionados es Becerro o Becerra.");
                 }
 
                 await batch.commit();
@@ -587,8 +596,7 @@ if (formMasivo) {
                     'Inventario',
                     `Destete masivo ejecutado en ${destetadosCount} becerros (Peso prom: ${pesoPromedio} kg)`
                 );
-                if (window.mostrarToast) window.mostrarToast(`Destete completado en ${destetadosCount} animales.`, "exito");
-                else alert(`✅ Destete completado. ${destetadosCount} becerros pasaron a Mautes/Mautas.`);
+                notificar(`Destete completado en ${destetadosCount} animales.`, "exito");
             }
             else if (tipoAccion === 'MoverLote') {
                 const nuevoLote = document.getElementById('m-nuevo-lote-select').value;
@@ -605,8 +613,7 @@ if (formMasivo) {
                     'Inventario',
                     `Traslado masivo de ${seleccionados.length} animales al lote/potrero "${nuevoLote}"`
                 );
-                if (window.mostrarToast) window.mostrarToast(`${seleccionados.length} animales movidos a "${nuevoLote}".`, "exito");
-                else alert(`✅ ${seleccionados.length} animales movidos al lote "${nuevoLote}".`);
+                notificar(`${seleccionados.length} animales movidos a "${nuevoLote}".`, "exito");
             }
 
             document.getElementById('modal-masivo').style.display = 'none';
@@ -615,7 +622,7 @@ if (formMasivo) {
             seleccionados.forEach(chk => { chk.checked = false; });
 
         } catch (err) {
-            alert("❌ Error en Acción Masiva:\n\n" + err.message);
+            notificar(err.message, "error");
         } finally {
             btn.innerText = "Ejecutar Acción a Todos";
             btn.disabled = false;
@@ -627,7 +634,7 @@ if (formMasivo) {
 // FUNCIONES BASE (ELIMINAR, BAJA, NOVEDAD)
 // ==========================================
 window.eliminarAnimal = async function(idDoc, arete) {
-    if (confirm(`⚠️ ALERTA: ¿Eliminar PERMANENTEMENTE Arete "${arete}" de la base de datos?\n\n(Recomendamos usar "Dar de Baja" si el animal murió o se vendió para no alterar estadísticas pasadas)`)) {
+    if (confirm(`⚠️ ALERTA: ¿Eliminar PERMANENTEMENTE Arete "${arete}" de la base de datos?`)) {
         try { 
             const animalCache = window.datosHatoCache.find(a => a.id === idDoc);
             const fincaAnimal = animalCache ? animalCache.finca : window.obtenerFincaActual();
@@ -638,13 +645,14 @@ window.eliminarAnimal = async function(idDoc, arete) {
                 `Eliminación permanente de registro: Arete #${arete}`
             );
             document.getElementById('modal-ficha').style.display = 'none';
+            notificar(`Registro del arete #${arete} eliminado.`, "exito");
         } 
-        catch (err) { alert("Error al eliminar: " + err.message); }
+        catch (err) { notificar("Error al eliminar: " + err.message, "error"); }
     }
 };
 
 window.mandarABaja = async function(idDoc, arete) {
-    const razon = prompt(`☠️ Registrar Baja / Venta para el Arete ${arete}\n\nEscriba el motivo (Ej. Venta a Matadero, Muerte por mordedura de serpiente, etc.):`);
+    const razon = prompt(`☠️ Registrar Baja / Venta para el Arete ${arete}\n\nEscriba el motivo (Ej. Venta a Matadero, Muerte, etc.):`);
     if (razon !== null && razon.trim() !== "") {
         try {
             const animalCache = window.datosHatoCache.find(a => a.id === idDoc);
@@ -658,10 +666,10 @@ window.mandarABaja = async function(idDoc, arete) {
                 'Inventario',
                 `Baja/Salida registrada para Arete #${arete}. Motivo: ${razon.trim()}`
             );
-            alert("✅ Animal dado de baja correctamente. Se quitó del inventario activo.");
+            notificar(`Arete #${arete} dado de baja correctamente.`, "exito");
             document.getElementById('modal-ficha').style.display = 'none';
         } catch (err) {
-            alert("Error al dar de baja: " + err.message);
+            notificar("Error al dar de baja: " + err.message, "error");
         }
     }
 };
@@ -699,7 +707,8 @@ if (formNovedad) {
                 );
             }
             document.getElementById('modal-novedad').style.display = 'none';
-        } catch (err) { alert("Error: " + err.message); } 
+            notificar("Novedad médica guardada.", "exito");
+        } catch (err) { notificar("Error: " + err.message, "error"); } 
         finally { btn.innerText = "Guardar Novedad"; btn.disabled = false; }
     });
 }
@@ -819,11 +828,11 @@ window.cargarHato = function() {
 // EXPEDIENTE CLÍNICO INDIVIDUAL (👁️)
 // ==========================================
 window.abrirFicha = async function(idDoc) {
-    if (!window.db) return alert("⚠️ Base de datos no inicializada.");
+    if (!window.db) return notificar("Base de datos no inicializada.", "error");
     try {
         const docRef = doc(window.db, "animales", idDoc);
         const docSnap = await getDoc(docRef);
-        if (!docSnap.exists()) return alert("⚠️ Expediente no encontrado.");
+        if (!docSnap.exists()) return notificar("Expediente no encontrado.", "error");
         const a = docSnap.data();
         
         document.getElementById('p-id-doc').value = idDoc;
@@ -925,7 +934,7 @@ window.abrirFicha = async function(idDoc) {
         }
 
         document.getElementById('modal-ficha').style.display = 'flex';
-    } catch (err) { alert("❌ Error: " + err.message); }
+    } catch (err) { notificar("Error: " + err.message, "error"); }
 };
 
 // ==========================================
@@ -945,8 +954,9 @@ if (formCambioCategoria) {
                 'Inventario',
                 `Cambio de categoría: Arete #${animalCache ? animalCache.arete : idDoc} pasó a ${nuevaCat}`
             );
-            alert("✅ Categoría actualizada."); window.abrirFicha(idDoc);
-        } catch (err) { alert("Error: " + err.message); }
+            notificar("Categoría actualizada.", "exito");
+            window.abrirFicha(idDoc);
+        } catch (err) { notificar("Error: " + err.message, "error"); }
     });
 }
 
@@ -1002,8 +1012,10 @@ if (formNuevoRepro) {
                 'Inventario',
                 `Evento reproductivo [${tipoEvento}] en Arete #${data.arete}${logExtra}`
             );
-            document.getElementById('form-nuevo-repro').style.display = 'none'; alert(`✅ Evento guardado.`); window.abrirFicha(idDoc);
-        } catch (err) { alert("Error: " + err.message); }
+            document.getElementById('form-nuevo-repro').style.display = 'none';
+            notificar("Evento guardado.", "exito");
+            window.abrirFicha(idDoc);
+        } catch (err) { notificar("Error: " + err.message, "error"); }
     });
 }
 
@@ -1037,13 +1049,15 @@ if (formDestete) {
                 'Inventario',
                 `Destete individual: Arete #${data.arete} pasó a ${nuevaCat} con ${pesoDestete} kg`
             );
-            alert(`✅ Destete completado.`); document.getElementById('form-destete').style.display = 'none'; window.abrirFicha(idDoc);
-        } catch (err) { alert("Error: " + err.message); }
+            notificar("Destete completado.", "exito");
+            document.getElementById('form-destete').style.display = 'none';
+            window.abrirFicha(idDoc);
+        } catch (err) { notificar("Error: " + err.message, "error"); }
     });
 }
 
 // ==========================================
-// REGISTRO DE NUEVO ANIMAL (A PRUEBA DE ERRORES)
+// REGISTRO DE NUEVO ANIMAL
 // ==========================================
 const formAnimal = document.getElementById('form-animal');
 if (formAnimal) {
@@ -1051,7 +1065,7 @@ if (formAnimal) {
         e.preventDefault();
         
         if (!window.db) {
-            alert("⚠️ Base de datos no inicializada.");
+            notificar("Base de datos no inicializada.", "error");
             return;
         }
 
@@ -1110,13 +1124,13 @@ if (formAnimal) {
                 `Nuevo animal registrado: Arete #${areteVal} (${categoriaVal}) - Lote: ${loteValor}${pesoValor ? ' - Peso: ' + pesoValor + ' kg' : ''}`
             );
 
-            if (window.mostrarToast) window.mostrarToast(`Animal #${areteVal} guardado correctamente.`, "exito");
+            notificar(`Animal #${areteVal} guardado correctamente.`, "exito");
             formAnimal.reset(); 
             document.getElementById('modal-animal').style.display = 'none';
             if (window.cargarHato) window.cargarHato();
 
         } catch (err) { 
-            alert("❌ Error:\n\n" + err.message); 
+            notificar(err.message, "error"); 
         } finally { 
             if (btn) {
                 btn.innerText = "Guardar Animal"; 
@@ -1165,7 +1179,7 @@ window.cargarListaLotes = function() {
 window.agregarLoteNuevo = async function() {
     const inputLote = document.getElementById('input-nuevo-lote');
     const nombreLote = inputLote.value.trim();
-    if (!nombreLote) return alert("⚠️ Escriba un nombre para el lote.");
+    if (!nombreLote) return notificar("Escriba un nombre para el lote.", "error");
     
     try {
         await addDoc(collection(window.db, "config_lotes"), { nombre: nombreLote, fechaCreacion: serverTimestamp() });
@@ -1175,7 +1189,8 @@ window.agregarLoteNuevo = async function() {
             `Nuevo lote/potrero configurado: "${nombreLote}"`
         );
         inputLote.value = ''; 
-    } catch (err) { alert("❌ Error al crear lote: " + err.message); }
+        notificar(`Lote "${nombreLote}" creado.`, "exito");
+    } catch (err) { notificar("Error al crear lote: " + err.message, "error"); }
 };
 
 window.eliminarLoteActivo = async function(idLote, nombreLote) {
@@ -1187,8 +1202,9 @@ window.eliminarLoteActivo = async function(idLote, nombreLote) {
                 'Inventario',
                 `Lote/potrero eliminado: "${nombreLote}"`
             );
+            notificar(`Lote "${nombreLote}" eliminado.`, "exito");
         } 
-        catch (err) { alert("❌ Error al borrar el lote: " + err.message); }
+        catch (err) { notificar("Error al borrar el lote: " + err.message, "error"); }
     }
 };
 
@@ -1237,7 +1253,7 @@ window.cargarListaVacunas = function() {
 window.agregarVacunaNueva = async function() {
     const inputVacuna = document.getElementById('input-nueva-vacuna');
     const nombreVacuna = inputVacuna.value.trim();
-    if (!nombreVacuna) return alert("⚠️ Escriba el nombre de la vacuna/tratamiento.");
+    if (!nombreVacuna) return notificar("Escriba el nombre de la vacuna o tratamiento.", "error");
     try {
         await addDoc(collection(window.db, "config_vacunas"), { nombre: nombreVacuna });
         registrarBitacoraHato(
@@ -1246,7 +1262,8 @@ window.agregarVacunaNueva = async function() {
             `Nuevo tratamiento sanitario añadido al catálogo: "${nombreVacuna}"`
         );
         inputVacuna.value = ''; 
-    } catch (err) { alert("❌ Error: " + err.message); }
+        notificar(`Tratamiento "${nombreVacuna}" añadido.`, "exito");
+    } catch (err) { notificar("Error: " + err.message, "error"); }
 };
 
 window.eliminarVacunaActiva = async function(idVacuna, nombreVacuna) {
@@ -1258,8 +1275,9 @@ window.eliminarVacunaActiva = async function(idVacuna, nombreVacuna) {
                 'Inventario',
                 `Tratamiento sanitario eliminado del catálogo: "${nombreVacuna}"`
             );
+            notificar(`Tratamiento "${nombreVacuna}" eliminado.`, "exito");
         } 
-        catch (err) { alert("❌ Error: " + err.message); }
+        catch (err) { notificar("Error: " + err.message, "error"); }
     }
 };
 
@@ -1340,7 +1358,6 @@ function actualizarDashboard(datosHato) {
 window.addEventListener('online', async () => {
     const pendientes = JSON.parse(localStorage.getItem('elbalui_pendientes_offline') || '[]');
     if (pendientes.length > 0 && window.db) {
-        console.log("🔄 Sincronizando registros pendientes con la nube...");
         for (let animal of pendientes) {
             try {
                 await addDoc(collection(window.db, "animales"), {
@@ -1350,7 +1367,7 @@ window.addEventListener('online', async () => {
             } catch (e) { console.error("Error sincronizando:", e); }
         }
         localStorage.removeItem('elbalui_pendientes_offline');
-        if (window.mostrarToast) window.mostrarToast("¡Datos locales sincronizados con la nube!", "exito");
+        notificar("¡Datos locales sincronizados con la nube!", "exito");
     }
 
     const bitacoraPendiente = JSON.parse(localStorage.getItem('elbalui_bitacora_offline') || '[]');
