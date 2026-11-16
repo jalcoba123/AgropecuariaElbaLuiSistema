@@ -18,9 +18,12 @@ window.obtenerFincaActual = function() {
 };
 
 window.datosHatoCache = [];
+window.catalogoLotesCache = [];
+window.catalogoVacunasCache = [];
+
 let unsubscribeHato = null;
-let lotesListenerActivo = false;
-let vacunasListenerActivo = false;
+let unsubscribeLotes = null;
+let unsubscribeVacunas = null;
 
 // ==========================================
 // 📜 HELPER DE BITÁCORA (ONLINE + COLA OFFLINE)
@@ -430,9 +433,39 @@ window.importarCSV = function(event) {
 };
 
 // ==========================================
+// 🔄 SINCRONIZADOR DE SELECTORES (LOTES Y VACUNAS)
+// ==========================================
+function renderizarSelectoresLotes() {
+    const selectLote = document.getElementById('a-lote');
+    const selectMasivoLote = document.getElementById('m-nuevo-lote-select');
+
+    const opcionesHtml = `<option value="General">👉 General / Sin Asignar</option>` +
+        window.catalogoLotesCache.map(l => `<option value="${l.nombre}">${l.nombre}</option>`).join('');
+
+    if (selectLote) selectLote.innerHTML = opcionesHtml;
+    if (selectMasivoLote) selectMasivoLote.innerHTML = opcionesHtml;
+}
+
+function renderizarSelectoresVacunas() {
+    const selectMasivoVacunas = document.getElementById('m-vacuna-nombre');
+    const selectRafagaVacunas = document.getElementById('manga-vacuna-rafaga');
+
+    const opcionesVacunas = window.catalogoVacunasCache
+        .map(v => `<option value="${v.nombre}">${v.nombre}</option>`)
+        .join('');
+
+    if (selectMasivoVacunas) {
+        selectMasivoVacunas.innerHTML = '<option value="">Seleccione un tratamiento...</option>' + opcionesVacunas;
+    }
+    if (selectRafagaVacunas) {
+        selectRafagaVacunas.innerHTML = '<option value="">Seleccione vacuna activa...</option>' + opcionesVacunas;
+    }
+}
+
+// ==========================================
 // ⚡ ACCIÓN MASIVA (VACUNAS, DESTETE Y LOTE)
 // ==========================================
-window.abrirModalMasivo = function() {
+window.abrirModalMasivo = async function() {
     const seleccionados = document.querySelectorAll('.chk-animal:checked');
     if (seleccionados.length === 0) {
         if (window.mostrarToast) window.mostrarToast("Seleccione al menos un animal en la tabla.", "error");
@@ -440,9 +473,6 @@ window.abrirModalMasivo = function() {
         return;
     }
 
-    if (window.cargarListaLotes) window.cargarListaLotes();
-    if (window.cargarListaVacunas) window.cargarListaVacunas();
-    
     document.getElementById('m-count').innerText = seleccionados.length;
     document.getElementById('form-masivo').reset();
     document.getElementById('m-tipo').value = 'Sanidad';
@@ -450,6 +480,24 @@ window.abrirModalMasivo = function() {
     document.getElementById('m-div-destete').style.display = 'none';
     const divLote = document.getElementById('m-div-lote');
     if (divLote) divLote.style.display = 'none';
+
+    // Si aún no hay caché cargada, consulta directa a Firestore antes de poblar
+    if (window.db && window.catalogoVacunasCache.length === 0) {
+        try {
+            const snapVac = await getDocs(collection(window.db, "config_vacunas"));
+            window.catalogoVacunasCache = snapVac.docs.map(d => ({ id: d.id, nombre: d.data().nombre }));
+        } catch (e) { console.error("Error leyendo vacunas:", e); }
+    }
+    if (window.db && window.catalogoLotesCache.length === 0) {
+        try {
+            const snapLot = await getDocs(collection(window.db, "config_lotes"));
+            window.catalogoLotesCache = snapLot.docs.map(d => ({ id: d.id, nombre: d.data().nombre || 'Lote Sin Nombre' }));
+        } catch (e) { console.error("Error leyendo lotes:", e); }
+    }
+
+    renderizarSelectoresVacunas();
+    renderizarSelectoresLotes();
+
     document.getElementById('modal-masivo').style.display = 'flex';
 };
 
@@ -1083,20 +1131,22 @@ if (formAnimal) {
 // ==========================================
 window.cargarListaLotes = function() {
     const listaUI = document.getElementById('lista-lotes-ui');
-    const selectLote = document.getElementById('a-lote');
-    const selectMasivoLote = document.getElementById('m-nuevo-lote-select');
-    if (!listaUI || !selectLote || !window.db || lotesListenerActivo) return;
+    if (!listaUI || !window.db) return;
 
-    lotesListenerActivo = true;
-    onSnapshot(query(collection(window.db, "config_lotes")), (snapshot) => {
+    if (unsubscribeLotes) {
+        renderizarSelectoresLotes();
+        return;
+    }
+
+    unsubscribeLotes = onSnapshot(query(collection(window.db, "config_lotes")), (snapshot) => {
+        window.catalogoLotesCache = [];
         listaUI.innerHTML = `<li style="padding: 8px 5px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center;"><span>👉 General / Sin Asignar</span></li>`;
-        selectLote.innerHTML = `<option value="General">👉 General / Sin Asignar</option>`;
-        if (selectMasivoLote) selectMasivoLote.innerHTML = `<option value="General">👉 General / Sin Asignar</option>`;
 
         snapshot.forEach((docSnap) => {
             const data = docSnap.data();
             const loteId = docSnap.id;
             const nombreLote = data.nombre || 'Lote Sin Nombre';
+            window.catalogoLotesCache.push({ id: loteId, nombre: nombreLote });
             
             listaUI.innerHTML += `
                 <li style="padding: 8px 5px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center;">
@@ -1104,11 +1154,10 @@ window.cargarListaLotes = function() {
                     <button onclick="window.eliminarLoteActivo('${loteId}', '${nombreLote.replace(/'/g, "\\'")}')" style="background: #fef2f2; color: #ef4444; border: 1px solid #fecdd3; border-radius: 4px; padding: 2px 6px; cursor: pointer; font-weight: bold;" title="Borrar Lote">❌</button>
                 </li>
             `;
-            selectLote.innerHTML += `<option value="${nombreLote}">${nombreLote}</option>`;
-            if (selectMasivoLote) selectMasivoLote.innerHTML += `<option value="${nombreLote}">${nombreLote}</option>`;
         });
+        renderizarSelectoresLotes();
     }, (err) => {
-        lotesListenerActivo = false;
+        unsubscribeLotes = null;
         console.error("Error cargando lotes:", err);
     });
 };
@@ -1148,23 +1197,24 @@ window.eliminarLoteActivo = async function(idLote, nombreLote) {
 // ==========================================
 window.cargarListaVacunas = function() {
     const listaVacunasUI = document.getElementById('lista-vacunas-ui');
-    const selectMasivoVacunas = document.getElementById('m-vacuna-nombre');
-    const selectRafagaVacunas = document.getElementById('manga-vacuna-rafaga');
+    if (!listaVacunasUI || !window.db) return;
 
-    if (!listaVacunasUI || !window.db || vacunasListenerActivo) return;
+    if (unsubscribeVacunas) {
+        renderizarSelectoresVacunas();
+        return;
+    }
 
-    vacunasListenerActivo = true;
-    onSnapshot(query(collection(window.db, "config_vacunas")), (snapshot) => {
+    unsubscribeVacunas = onSnapshot(query(collection(window.db, "config_vacunas")), (snapshot) => {
+        window.catalogoVacunasCache = [];
         listaVacunasUI.innerHTML = '';
-        if (selectMasivoVacunas) selectMasivoVacunas.innerHTML = '<option value="">Seleccione un tratamiento...</option>';
-        if (selectRafagaVacunas) selectRafagaVacunas.innerHTML = '<option value="">Seleccione vacuna activa...</option>';
 
-        let hayVacunas = false;
         snapshot.forEach((docSnap) => {
-            hayVacunas = true;
             const data = docSnap.data();
             const vacunaId = docSnap.id;
             const nombreVacuna = data.nombre;
+            if (!nombreVacuna) return;
+
+            window.catalogoVacunasCache.push({ id: vacunaId, nombre: nombreVacuna });
             
             listaVacunasUI.innerHTML += `
                 <li style="padding: 8px 5px; border-bottom: 1px solid #fef08a; display: flex; justify-content: space-between; align-items: center;">
@@ -1172,15 +1222,14 @@ window.cargarListaVacunas = function() {
                     <button onclick="window.eliminarVacunaActiva('${vacunaId}', '${nombreVacuna.replace(/'/g, "\\'")}')" style="background: #fef2f2; color: #ef4444; border: 1px solid #fecdd3; border-radius: 4px; padding: 2px 6px; cursor: pointer; font-weight: bold;">❌</button>
                 </li>
             `;
-            if (selectMasivoVacunas) selectMasivoVacunas.innerHTML += `<option value="${nombreVacuna}">${nombreVacuna}</option>`;
-            if (selectRafagaVacunas) selectRafagaVacunas.innerHTML += `<option value="${nombreVacuna}">${nombreVacuna}</option>`;
         });
 
-        if (!hayVacunas) {
+        if (window.catalogoVacunasCache.length === 0) {
             listaVacunasUI.innerHTML = '<li style="padding: 5px 0; font-style: italic; color: #a16207;">No hay tratamientos registrados.</li>';
         }
+        renderizarSelectoresVacunas();
     }, (err) => {
-        vacunasListenerActivo = false;
+        unsubscribeVacunas = null;
         console.error("Error cargando vacunas:", err);
     });
 };
@@ -1322,10 +1371,8 @@ document.addEventListener('DOMContentLoaded', () => {
         btnAddVacuna.onclick = window.agregarVacunaNueva;
     }
 
-    setTimeout(() => {
-        if (window.db) {
-            if (window.cargarListaLotes) window.cargarListaLotes();
-            if (window.cargarListaVacunas) window.cargarListaVacunas();
-        }
-    }, 1200); 
+    if (window.db) {
+        if (window.cargarListaLotes) window.cargarListaLotes();
+        if (window.cargarListaVacunas) window.cargarListaVacunas();
+    }
 });
