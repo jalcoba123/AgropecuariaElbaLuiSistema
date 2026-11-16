@@ -20,6 +20,20 @@ window.obtenerFincaActual = function() {
 window.datosHatoCache = [];
 
 // ==========================================
+// 📜 HELPER DE BITÁCORA (ONLINE + COLA OFFLINE)
+// ==========================================
+function registrarBitacoraHato(finca, tipo, descripcion) {
+    const fincaFinal = (!finca || finca === 'Global') ? 'Agua Clara' : finca;
+    if (navigator.onLine && typeof window.registrarEnBitacora === 'function') {
+        window.registrarEnBitacora(fincaFinal, tipo, descripcion);
+    } else {
+        let colaBitacora = JSON.parse(localStorage.getItem('elbalui_bitacora_offline') || '[]');
+        colaBitacora.push({ finca: fincaFinal, tipo, descripcion });
+        localStorage.setItem('elbalui_bitacora_offline', JSON.stringify(colaBitacora));
+    }
+}
+
+// ==========================================
 // 🌐 MONITOREO DE CONEXIÓN A INTERNET
 // ==========================================
 function actualizarEstadoConexion() {
@@ -184,7 +198,18 @@ document.addEventListener('DOMContentLoaded', () => {
                                     salud: `🟢 Sano (Vacunado: ${vacunaSel})`,
                                     historialReproductivo: historialEventos
                                 });
+                                registrarBitacoraHato(
+                                    animalEncontrado.finca,
+                                    'Manga',
+                                    `Vacunación ráfaga (${vacunaSel}) aplicada a Arete #${animalEncontrado.arete} (${animalEncontrado.categoria})`
+                                );
                             } catch (err) { console.error("Error aplicando ráfaga:", err); }
+                        } else {
+                            registrarBitacoraHato(
+                                animalEncontrado.finca,
+                                'Manga',
+                                `Lectura/Conteo en manga: Arete #${animalEncontrado.arete} (${animalEncontrado.categoria} - Lote: ${animalEncontrado.lote || 'General'})`
+                            );
                         }
 
                         window.faenaActualLista.push({
@@ -212,6 +237,11 @@ document.addEventListener('DOMContentLoaded', () => {
                             if (animalPorArete) {
                                 try {
                                     await updateDoc(doc(window.db, "animales", animalPorArete.id), { chipRFID: codigoRFID });
+                                    registrarBitacoraHato(
+                                        animalPorArete.finca,
+                                        'Manga',
+                                        `Chip RFID (${codigoRFID}) vinculado al Arete #${animalPorArete.arete}`
+                                    );
                                     alert(`✅ Chip vinculado al arete ${animalPorArete.arete}`);
                                 } catch (err) { alert("❌ Error vinculando chip: " + err.message); }
                             } else { alert(`⚠️ Arete "${areteAsociar}" no encontrado.`); }
@@ -251,7 +281,7 @@ window.cambiarModuloHato = function(evento, idModulo) {
 };
 
 // ==========================================
-// SELECCIÓN Y FILTROS EN TABLA (NUEVO)
+// SELECCIÓN Y FILTROS EN TABLA
 // ==========================================
 window.toggleAllCheckboxes = function(source) {
     const checkboxes = document.querySelectorAll('.chk-animal');
@@ -344,6 +374,7 @@ window.importarCSV = function(event) {
         const text = e.target.result;
         const lineas = text.split('\n');
         let contador = 0;
+        const fincaDestino = window.obtenerFincaActual() === 'Global' ? 'Agua Clara' : window.obtenerFincaActual();
         
         const batch = writeBatch(window.db);
         
@@ -359,7 +390,7 @@ window.importarCSV = function(event) {
 
                 const refNuevo = doc(collection(window.db, "animales"));
                 batch.set(refNuevo, {
-                    finca: window.obtenerFincaActual(),
+                    finca: fincaDestino,
                     arete: arete,
                     categoria: cat,
                     lote: lote,
@@ -378,6 +409,11 @@ window.importarCSV = function(event) {
             try {
                 document.body.style.cursor = 'wait';
                 await batch.commit();
+                registrarBitacoraHato(
+                    fincaDestino,
+                    'Inventario',
+                    `Importación masiva CSV: ${contador} animales incorporados al inventario`
+                );
                 alert(`✅ Importación exitosa: ${contador} animales registrados desde el Excel/CSV.`);
             } catch (err) {
                 alert("❌ Error al importar: " + err.message);
@@ -391,7 +427,7 @@ window.importarCSV = function(event) {
 };
 
 // ==========================================
-// ⚡ ACCIÓN MASIVA (VACUNAS Y DESTETE LOTE)
+// ⚡ ACCIÓN MASIVA (VACUNAS, DESTETE Y LOTE)
 // ==========================================
 window.abrirModalMasivo = function() {
     const seleccionados = document.querySelectorAll('.chk-animal:checked');
@@ -401,6 +437,8 @@ window.abrirModalMasivo = function() {
     document.getElementById('form-masivo').reset();
     document.getElementById('m-div-vacuna').style.display = 'block';
     document.getElementById('m-div-destete').style.display = 'none';
+    const divLote = document.getElementById('m-div-lote');
+    if (divLote) divLote.style.display = 'none';
     document.getElementById('modal-masivo').style.display = 'flex';
 };
 
@@ -411,6 +449,7 @@ if (formMasivo) {
         const tipoAccion = document.getElementById('m-tipo').value;
         const seleccionados = document.querySelectorAll('.chk-animal:checked');
         const btn = document.getElementById('btn-submit-masivo');
+        const fincaActual = window.obtenerFincaActual();
         
         btn.innerText = "Procesando Lote..."; btn.disabled = true;
         const batch = writeBatch(window.db);
@@ -438,6 +477,11 @@ if (formMasivo) {
                     }
                 }
                 await batch.commit();
+                registrarBitacoraHato(
+                    fincaActual,
+                    'Inventario',
+                    `Vacunación masiva (${vacunaStr}) aplicada a ${seleccionados.length} animales`
+                );
                 alert(`✅ Vacunación (${vacunaStr}) aplicada a ${seleccionados.length} animales.`);
             } 
             else if (tipoAccion === 'Destete') {
@@ -460,7 +504,28 @@ if (formMasivo) {
                     }
                 }
                 await batch.commit();
+                registrarBitacoraHato(
+                    fincaActual,
+                    'Inventario',
+                    `Destete masivo ejecutado en ${seleccionados.length} animales (Peso prom: ${pesoPromedio} kg)`
+                );
                 alert(`✅ Destete completado. Los becerros pasaron a Mautes.`);
+            }
+            else if (tipoAccion === 'MoverLote') {
+                const nuevoLote = document.getElementById('m-nuevo-lote-select').value;
+                if (!nuevoLote) throw new Error("Seleccione el lote o potrero de destino.");
+
+                for (let chk of seleccionados) {
+                    const docRef = doc(window.db, "animales", chk.value);
+                    batch.update(docRef, { lote: nuevoLote });
+                }
+                await batch.commit();
+                registrarBitacoraHato(
+                    fincaActual,
+                    'Inventario',
+                    `Traslado masivo de ${seleccionados.length} animales al lote/potrero "${nuevoLote}"`
+                );
+                alert(`✅ ${seleccionados.length} animales movidos al lote "${nuevoLote}".`);
             }
 
             document.getElementById('modal-masivo').style.display = 'none';
@@ -476,7 +541,14 @@ if (formMasivo) {
 window.eliminarAnimal = async function(idDoc, arete) {
     if (confirm(`⚠️ ALERTA: ¿Eliminar PERMANENTEMENTE Arete "${arete}" de la base de datos?\n\n(Recomendamos usar "Dar de Baja" si el animal murió o se vendió para no alterar estadísticas pasadas)`)) {
         try { 
+            const animalCache = window.datosHatoCache.find(a => a.id === idDoc);
+            const fincaAnimal = animalCache ? animalCache.finca : window.obtenerFincaActual();
             await deleteDoc(doc(window.db, "animales", idDoc)); 
+            registrarBitacoraHato(
+                fincaAnimal,
+                'Inventario',
+                `Eliminación permanente de registro: Arete #${arete}`
+            );
             document.getElementById('modal-ficha').style.display = 'none';
         } 
         catch (err) { alert("Error al eliminar: " + err.message); }
@@ -487,10 +559,17 @@ window.mandarABaja = async function(idDoc, arete) {
     const razon = prompt(`☠️ Registrar Baja / Venta para el Arete ${arete}\n\nEscriba el motivo (Ej. Venta a Matadero, Muerte por mordedura de serpiente, etc.):`);
     if (razon !== null && razon.trim() !== "") {
         try {
+            const animalCache = window.datosHatoCache.find(a => a.id === idDoc);
+            const fincaAnimal = animalCache ? animalCache.finca : window.obtenerFincaActual();
             await updateDoc(doc(window.db, "animales", idDoc), { 
                 estado: "Baja (Vendido/Muerto)",
                 salud: `☠️ Baja: ${razon}` 
             });
+            registrarBitacoraHato(
+                fincaAnimal,
+                'Inventario',
+                `Baja/Salida registrada para Arete #${arete}. Motivo: ${razon.trim()}`
+            );
             alert("✅ Animal dado de baja correctamente. Se quitó del inventario activo.");
             document.getElementById('modal-ficha').style.display = 'none';
         } catch (err) {
@@ -519,11 +598,17 @@ if (formNovedad) {
             const docRef = doc(window.db, "animales", idDoc);
             const docSnap = await getDoc(docRef);
             if (docSnap.exists()) {
-                let historialRepro = docSnap.data().historialReproductivo || [];
+                const data = docSnap.data();
+                let historialRepro = data.historialReproductivo || [];
                 historialRepro.push({
                     tipo: '🏥 Novedad Salud', fecha: new Date().toISOString().split('T')[0], detalle: nuevoEstado, dispositivo: ID_DISPOSITIVO
                 });
                 await updateDoc(docRef, { salud: nuevoEstado, historialReproductivo: historialRepro });
+                registrarBitacoraHato(
+                    data.finca,
+                    'Inventario',
+                    `Novedad médica en Arete #${data.arete}: ${nuevoEstado}`
+                );
             }
             document.getElementById('modal-novedad').style.display = 'none';
         } catch (err) { alert("Error: " + err.message); } 
@@ -754,9 +839,17 @@ const formCambioCategoria = document.getElementById('form-cambio-categoria');
 if (formCambioCategoria) {
     formCambioCategoria.addEventListener('submit', async (e) => {
         e.preventDefault();
+        const idDoc = document.getElementById('p-id-doc').value;
+        const nuevaCat = document.getElementById('c-nueva-categoria').value;
         try {
-            await updateDoc(doc(window.db, "animales", document.getElementById('p-id-doc').value), { categoria: document.getElementById('c-nueva-categoria').value });
-            alert("✅ Categoría actualizada."); window.abrirFicha(document.getElementById('p-id-doc').value);
+            const animalCache = window.datosHatoCache.find(a => a.id === idDoc);
+            await updateDoc(doc(window.db, "animales", idDoc), { categoria: nuevaCat });
+            registrarBitacoraHato(
+                animalCache ? animalCache.finca : window.obtenerFincaActual(),
+                'Inventario',
+                `Cambio de categoría: Arete #${animalCache ? animalCache.arete : idDoc} pasó a ${nuevaCat}`
+            );
+            alert("✅ Categoría actualizada."); window.abrirFicha(idDoc);
         } catch (err) { alert("Error: " + err.message); }
     });
 }
@@ -775,6 +868,7 @@ if (formNuevoRepro) {
             const data = docSnap.data();
             let historialRepro = data.historialReproductivo || [];
             let fep = '-', nuevoEstado = data.estado, nuevaCat = data.categoria, detalle = '', tercioStr = '-';
+            let logExtra = '';
 
             if (tipoEvento === 'Palpación (+ Preñada)') {
                 nuevoEstado = 'Gestante';
@@ -785,6 +879,7 @@ if (formNuevoRepro) {
                 else if (tercio === '3') { d.setDate(d.getDate() + 30); tercioStr = '3er Tercio'; }
                 fep = d.toISOString().split('T')[0];
                 detalle = `Confirmada preñez en ${tercioStr}.`;
+                logExtra = ` (${tercioStr}, FEP: ${fep})`;
             } 
             else if (tipoEvento === 'Palpación (- Vacía)') { nuevoEstado = 'Vacía'; detalle = 'Vacía.'; } 
             else if (tipoEvento === 'Parto') {
@@ -793,9 +888,11 @@ if (formNuevoRepro) {
                 detalle = 'Parto exitoso.';
                 const areteCria = document.getElementById('r-cria-arete').value.trim();
                 if (areteCria) {
+                    const sexoCria = document.getElementById('r-cria-sexo').value;
                     detalle += ` Nacimiento Cría: ${areteCria}.`;
+                    logExtra = ` - Cría registrada: Arete #${areteCria} (${sexoCria})`;
                     await addDoc(collection(window.db, "animales"), {
-                        finca: data.finca || window.obtenerFincaActual(), arete: areteCria, categoria: document.getElementById('r-cria-sexo').value,
+                        finca: data.finca || window.obtenerFincaActual(), arete: areteCria, categoria: sexoCria,
                         peso: document.getElementById('r-cria-peso').value || null, fechaNacimiento: fecha, lote: 'General',
                         historialPesos: document.getElementById('r-cria-peso').value ? [{ fecha: fecha, peso: document.getElementById('r-cria-peso').value, dispositivo: ID_DISPOSITIVO }] : [],
                         historialReproductivo: [], padre: 'N/D', madre: data.arete || 'N/D', estado: 'Activo/Creciendo', salud: "🟢 Sano", fechaRegistro: serverTimestamp()
@@ -804,6 +901,11 @@ if (formNuevoRepro) {
             }
             historialRepro.push({ tipo: tipoEvento, fecha: fecha, tercio: tercioStr, fep: fep, detalle: detalle, dispositivo: ID_DISPOSITIVO });
             await updateDoc(docRef, { estado: nuevoEstado, categoria: nuevaCat, historialReproductivo: historialRepro });
+            registrarBitacoraHato(
+                data.finca,
+                'Inventario',
+                `Evento reproductivo [${tipoEvento}] en Arete #${data.arete}${logExtra}`
+            );
             document.getElementById('form-nuevo-repro').style.display = 'none'; alert(`✅ Evento guardado.`); window.abrirFicha(idDoc);
         } catch (err) { alert("Error: " + err.message); }
     });
@@ -834,6 +936,11 @@ if (formDestete) {
                     await updateDoc(doc(window.db, "animales", madreDoc.id), { historialReproductivo: madreHistorial });
                 }
             }
+            registrarBitacoraHato(
+                data.finca,
+                'Inventario',
+                `Destete individual: Arete #${data.arete} pasó a ${nuevaCat} con ${pesoDestete} kg`
+            );
             alert(`✅ Destete completado.`); document.getElementById('form-destete').style.display = 'none'; window.abrirFicha(idDoc);
         } catch (err) { alert("Error: " + err.message); }
     });
@@ -852,7 +959,6 @@ if (formAnimal) {
             return;
         }
 
-        // Función para detectar exactamente qué campo falta y evitar el error "null"
         const obtenerValor = (id) => {
             const elemento = document.getElementById(id);
             if (!elemento) {
@@ -865,7 +971,6 @@ if (formAnimal) {
         if (btn) btn.disabled = true;
 
         try {
-            // Leemos los campos uno por uno con la función segura
             const fincaVal = obtenerValor('a-finca-select');
             const areteVal = obtenerValor('a-arete').trim();
             const categoriaVal = obtenerValor('a-categoria');
@@ -895,24 +1000,27 @@ if (formAnimal) {
                 fechaRegistro: serverTimestamp()
             };
 
-            // Guardado local offline
-            let pendientesOffline = JSON.parse(localStorage.getItem('elbalui_pendientes_offline') || '[]');
-            pendientesOffline.push(nuevoAnimal);
-            localStorage.setItem('elbalui_pendientes_offline', JSON.stringify(pendientesOffline));
-
-            // Envío a Firestore
             if (navigator.onLine) {
-                addDoc(collection(window.db, "animales"), nuevoAnimal).catch(err => {
-                    console.log("Guardado en segundo plano en cola.");
-                });
+                await addDoc(collection(window.db, "animales"), nuevoAnimal);
+            } else {
+                let pendientesOffline = JSON.parse(localStorage.getItem('elbalui_pendientes_offline') || '[]');
+                pendientesOffline.push(nuevoAnimal);
+                localStorage.setItem('elbalui_pendientes_offline', JSON.stringify(pendientesOffline));
             }
 
+            registrarBitacoraHato(
+                fincaVal,
+                'Inventario',
+                `Nuevo animal registrado: Arete #${areteVal} (${categoriaVal}) - Lote: ${loteValor}${pesoValor ? ' - Peso: ' + pesoValor + ' kg' : ''}`
+            );
+
+            if (window.mostrarToast) window.mostrarToast(`Animal #${areteVal} guardado correctamente.`, "exito");
             formAnimal.reset(); 
             document.getElementById('modal-animal').style.display = 'none';
             if (window.cargarHato) window.cargarHato();
 
         } catch (err) { 
-            alert("❌ Error:\n\n" + err.message + "\n\n(Si dice que falta un campo, tu navegador sigue cargando la versión vieja de Vercel. Tienes que borrar el caché del navegador)."); 
+            alert("❌ Error:\n\n" + err.message); 
         } finally { 
             if (btn) {
                 btn.innerText = "Guardar Animal"; 
@@ -928,11 +1036,13 @@ if (formAnimal) {
 window.cargarListaLotes = function() {
     const listaUI = document.getElementById('lista-lotes-ui');
     const selectLote = document.getElementById('a-lote');
+    const selectMasivoLote = document.getElementById('m-nuevo-lote-select');
     if (!listaUI || !selectLote || !window.db) return;
 
     onSnapshot(query(collection(window.db, "config_lotes")), (snapshot) => {
         listaUI.innerHTML = `<li style="padding: 8px 5px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center;"><span>👉 General / Sin Asignar</span></li>`;
         selectLote.innerHTML = `<option value="General">👉 General / Sin Asignar</option>`;
+        if (selectMasivoLote) selectMasivoLote.innerHTML = `<option value="General">👉 General / Sin Asignar</option>`;
 
         snapshot.forEach((docSnap) => {
             const data = docSnap.data();
@@ -946,6 +1056,7 @@ window.cargarListaLotes = function() {
                 </li>
             `;
             selectLote.innerHTML += `<option value="${nombreLote}">${nombreLote}</option>`;
+            if (selectMasivoLote) selectMasivoLote.innerHTML += `<option value="${nombreLote}">${nombreLote}</option>`;
         });
     }, (err) => console.error("Error cargando lotes:", err));
 };
@@ -957,13 +1068,25 @@ window.agregarLoteNuevo = async function() {
     
     try {
         await addDoc(collection(window.db, "config_lotes"), { nombre: nombreLote, fechaCreacion: serverTimestamp() });
+        registrarBitacoraHato(
+            window.obtenerFincaActual(),
+            'Inventario',
+            `Nuevo lote/potrero configurado: "${nombreLote}"`
+        );
         inputLote.value = ''; 
     } catch (err) { alert("❌ Error al crear lote: " + err.message); }
 };
 
 window.eliminarLoteActivo = async function(idLote, nombreLote) {
     if (confirm(`¿Estás seguro de eliminar el lote "${nombreLote}"?`)) {
-        try { await deleteDoc(doc(window.db, "config_lotes", idLote)); } 
+        try { 
+            await deleteDoc(doc(window.db, "config_lotes", idLote)); 
+            registrarBitacoraHato(
+                window.obtenerFincaActual(),
+                'Inventario',
+                `Lote/potrero eliminado: "${nombreLote}"`
+            );
+        } 
         catch (err) { alert("❌ Error al borrar el lote: " + err.message); }
     }
 };
@@ -1010,13 +1133,25 @@ window.agregarVacunaNueva = async function() {
     if (!nombreVacuna) return alert("⚠️ Escriba el nombre de la vacuna/tratamiento.");
     try {
         await addDoc(collection(window.db, "config_vacunas"), { nombre: nombreVacuna });
+        registrarBitacoraHato(
+            window.obtenerFincaActual(),
+            'Inventario',
+            `Nuevo tratamiento sanitario añadido al catálogo: "${nombreVacuna}"`
+        );
         inputVacuna.value = ''; 
     } catch (err) { alert("❌ Error: " + err.message); }
 };
 
 window.eliminarVacunaActiva = async function(idVacuna, nombreVacuna) {
     if (confirm(`¿Eliminar el tratamiento "${nombreVacuna}" del catálogo?`)) {
-        try { await deleteDoc(doc(window.db, "config_vacunas", idVacuna)); } 
+        try { 
+            await deleteDoc(doc(window.db, "config_vacunas", idVacuna)); 
+            registrarBitacoraHato(
+                window.obtenerFincaActual(),
+                'Inventario',
+                `Tratamiento sanitario eliminado del catálogo: "${nombreVacuna}"`
+            );
+        } 
         catch (err) { alert("❌ Error: " + err.message); }
     }
 };
@@ -1108,7 +1243,15 @@ window.addEventListener('online', async () => {
             } catch (e) { console.error("Error sincronizando:", e); }
         }
         localStorage.removeItem('elbalui_pendientes_offline');
-        alert("☁️ ¡Datos locales sincronizados exitosamente con la nube!");
+        if (window.mostrarToast) window.mostrarToast("¡Datos locales sincronizados con la nube!", "exito");
+    }
+
+    const bitacoraPendiente = JSON.parse(localStorage.getItem('elbalui_bitacora_offline') || '[]');
+    if (bitacoraPendiente.length > 0 && typeof window.registrarEnBitacora === 'function') {
+        for (let item of bitacoraPendiente) {
+            await window.registrarEnBitacora(item.finca, item.tipo, item.descripcion + ' [Sync Offline]');
+        }
+        localStorage.removeItem('elbalui_bitacora_offline');
     }
 });
 
