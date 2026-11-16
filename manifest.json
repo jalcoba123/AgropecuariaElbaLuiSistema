@@ -1,20 +1,14 @@
 {
-  "name": "GanadoControl ERP",
+  "name": "GanadoControl ERP - ElbaLui",
   "short_name": "GanadoControl",
-  "description": "Sistema ERP de Manejo Ganadero para Agropecuaria ElbaLui",
-  "start_url": "./index.html",
+  "start_url": "/",
+  "scope": "/",
   "display": "standalone",
   "background_color": "#0f172a",
-  "theme_color": "#0f172a",
-  "orientation": "any",
+  "theme_color": "#15803d",
   "icons": [
     {
-      "src": "logo.jpg",
-      "sizes": "192x192",
-      "type": "image/jpeg"
-    },
-    {
-      "src": "logo.jpg",
+      "src": "/logo.jpg",
       "sizes": "512x512",
       "type": "image/jpeg"
     }
