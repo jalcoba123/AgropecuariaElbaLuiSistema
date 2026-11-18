@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ganadocontrol-erp-v5';
+const CACHE_NAME = 'ganadocontrol-erp-v6';
 
 const LOCAL_ASSETS = [
   './',
@@ -6,7 +6,7 @@ const LOCAL_ASSETS = [
   './style.css',
   './manifest.json',
   './logo.jpg',
-  './js/hato.js?v=124',
+  './js/hato.js?v=125',
   './js/hato.js',
   './js/modulos-erp.js',
   './js/online-sync.js'
@@ -22,13 +22,11 @@ const FIREBASE_SDK_ASSETS = [
 self.addEventListener('install', (e) => {
   e.waitUntil(
     caches.open(CACHE_NAME).then(async (cache) => {
-      // Cachear archivos locales sin que un 404 aislado aborte todo el SW
       await Promise.allSettled(
         LOCAL_ASSETS.map((url) =>
           cache.add(url).catch((err) => console.warn('[SW] No se pudo cachear:', url, err))
         )
       );
-      // Cachear SDK de Firebase para arranque 100% offline
       await Promise.allSettled(
         FIREBASE_SDK_ASSETS.map((url) =>
           cache.add(new Request(url, { mode: 'cors' })).catch((err) =>
@@ -56,7 +54,6 @@ self.addEventListener('activate', (e) => {
 self.addEventListener('fetch', (e) => {
   const url = e.request.url;
 
-  // No interceptar peticiones de API de Firebase ni métodos distintos a GET
   if (
     e.request.method !== 'GET' ||
     url.includes('firestore.googleapis.com') ||
@@ -67,7 +64,6 @@ self.addEventListener('fetch', (e) => {
     return;
   }
 
-  // Navegación HTML: intentar red con timeout rápido (3s) y caer a index.html en caché
   if (e.request.mode === 'navigate') {
     e.respondWith(
       Promise.race([
@@ -84,7 +80,6 @@ self.addEventListener('fetch', (e) => {
     return;
   }
 
-  // Estáticos (JS, CSS, imágenes, fuentes): Cache-First + actualización en segundo plano
   e.respondWith(
     caches.match(e.request, { ignoreSearch: true }).then((cached) => {
       const fetchPromise = fetch(e.request)
