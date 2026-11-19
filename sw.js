@@ -6,7 +6,6 @@ const LOCAL_ASSETS = [
   './style.css',
   './manifest.json',
   './logo.jpg',
-  './js/hato.js?v=125',
   './js/hato.js',
   './js/modulos-erp.js',
   './js/online-sync.js'
@@ -82,7 +81,7 @@ self.addEventListener('fetch', (e) => {
 
   e.respondWith(
     caches.match(e.request, { ignoreSearch: true }).then((cached) => {
-      const fetchPromise = fetch(e.request)
+      const fetchAndCache = fetch(e.request)
         .then((res) => {
           if (res && (res.status === 200 || res.type === 'opaque')) {
             const copia = res.clone();
@@ -90,9 +89,9 @@ self.addEventListener('fetch', (e) => {
           }
           return res;
         })
-        .catch(() => null);
+        .catch(() => cached || new Response('', { status: 503, statusText: 'Offline' }));
 
-      return cached || fetchPromise;
+      return cached || fetchAndCache;
     })
   );
 });
