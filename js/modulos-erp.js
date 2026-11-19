@@ -1,469 +1,389 @@
-function esperarFirebaseERP(maxIntentos = 40) {
-  return new Promise((resolve, reject) => {
-    let intentos = 0;
-    const timer = setInterval(() => {
-      if (window.fbERP && window.fbERP.db) {
-        clearInterval(timer);
-        resolve(window.fbERP);
-      } else if (++intentos >= maxIntentos) {
-        clearInterval(timer);
-        reject(new Error('No se encontró window.fbERP. Verifica index.html.'));
-      }
-    }, 150);
-  });
-}
+const COLECCION_AGRONOMIA = 'agronomia_labores';
+const COLECCION_OPERACIONES = 'operaciones_equipos';
+const COLECCION_FINANZAS_ERP = 'finanzas_movimientos';
+
+let agronomiaCache = [];
+let operacionesCache = [];
+let finanzasCache = [];
+let unsubAgro = null;
+let unsubOp = null;
+let unsubFin = null;
 
 function obtenerFincaActiva() {
-  return window.fincaActual || 'Agua Clara';
+    return window.fincaActual || 'Agua Clara';
 }
 
-function perteneceAFinca(registroData, fincaActiva) {
-  if (fincaActiva === 'Global') return true;
-  return registroData.finca === fincaActiva;
+function obtenerFincaDestinoEscritura() {
+    const actual = obtenerFincaActiva();
+    return actual === 'Global' ? 'Agua Clara' : actual;
 }
 
-function notificarERP(msg, tipo = 'exito') {
-  if (typeof window.mostrarToast === 'function') {
-    window.mostrarToast(msg, tipo);
-  } else if (tipo === 'error') {
-    console.error(msg);
-  }
+function escaparHTML(valor) {
+    return String(valor ?? '')
+        .replace(/&/g, '&')
+        .replace(/</g, '<')
+        .replace(/>/g, '>')
+        .replace(/"/g, '"');
 }
 
-document.addEventListener('DOMContentLoaded', async () => {
-  let fb;
-  try {
-    fb = await esperarFirebaseERP();
-  } catch (err) {
-    console.error(err.message);
-    return;
-  }
+function formatearMoneda(valor) {
+    const num = Number(valor) || 0;
+    return `$${num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+}
 
-  const {
-    db,
-    collection,
-    addDoc,
-    onSnapshot,
-    query,
-    orderBy,
-    limit,
-    deleteDoc,
-    doc,
-    serverTimestamp
-  } = fb;
+function filtrarPorFinca(lista) {
+    const finca = obtenerFincaActiva();
+    if (finca === 'Global') return lista;
+    return lista.filter(item => (item.finca || 'Agua Clara') === finca);
+}
 
-  const hoyISO = new Date().toISOString().split('T')[0];
-  ['lech-fecha', 'agro-fecha', 'op-fecha', 'fin-fecha'].forEach((id) => {
-    const el = document.getElementById(id);
-    if (el) el.value = hoyISO;
-  });
+function inicializarFechasFormularios() {
+    const hoy = new Date();
+    const yyyy = hoy.getFullYear();
+    const mm = String(hoy.getMonth() + 1).padStart(2, '0');
+    const dd = String(hoy.getDate()).padStart(2, '0');
+    const fechaHoy = `${yyyy}-${mm}-${dd}`;
 
-  // Selector de finca dentro de cada formulario cuando la vista está en Consolidado ('Global')
-  const configuracionFormularios = [
-    { formId: 'form-lecheria', selectId: 'erp-finca-lech' },
-    { formId: 'form-agronomia', selectId: 'erp-finca-agro' },
-    { formId: 'form-operaciones', selectId: 'erp-finca-op' },
-    { formId: 'form-finanzas', selectId: 'erp-finca-fin' }
-  ];
-
-  configuracionFormularios.forEach(({ formId, selectId }) => {
-    const formEl = document.getElementById(formId);
-    if (!formEl) return;
-    const sel = document.createElement('select');
-    sel.id = selectId;
-    sel.style.display = 'none';
-    sel.innerHTML = `
-      <option value="">Selecciona finca...</option>
-      <option value="Agua Clara">Agua Clara</option>
-      <option value="El Sur">El Sur</option>
-    `;
-    formEl.insertBefore(sel, formEl.lastElementChild);
-  });
-
-  function actualizarSelectoresFincaGlobal() {
-    const esGlobal = obtenerFincaActiva() === 'Global';
-    configuracionFormularios.forEach(({ selectId }) => {
-      const sel = document.getElementById(selectId);
-      if (!sel) return;
-      sel.style.display = esGlobal ? 'block' : 'none';
-      sel.required = esGlobal;
-      if (!esGlobal) sel.value = '';
+    ['agro-fecha', 'op-fecha', 'fin-fecha'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el && !el.value) el.value = fechaHoy;
     });
-  }
+}
 
-  function resolverFincaParaGuardar(selectId) {
-    const activa = obtenerFincaActiva();
-    if (activa === 'Agua Clara' || activa === 'El Sur') {
-      return activa;
-    }
-    const sel = document.getElementById(selectId);
-    return sel ? sel.value : '';
-  }
-
-  const caches = {
-    lecheria: [],
-    agronomia: [],
-    operaciones: [],
-    finanzas: []
-  };
-
-  window.eliminarDocERP = async (coleccion, id) => {
-    if (!confirm('¿Eliminar este registro de la base de datos?')) return;
-    try {
-      await deleteDoc(doc(db, coleccion, id));
-      notificarERP('Registro eliminado.', 'exito');
-    } catch (err) {
-      console.error('Error eliminando documento ERP:', err);
-      notificarERP('No se pudo eliminar el registro.', 'error');
-    }
-  };
-
-  // --- 1. LECHERÍA & RACIONES ---
-  function renderLecheria() {
-    const tbody = document.getElementById('tbody-lecheria');
-    if (!tbody) return;
-
-    const fincaActiva = obtenerFincaActiva();
-    const registros = caches.lecheria.filter((r) => perteneceAFinca(r.data, fincaActiva));
-
-    tbody.innerHTML = '';
-    let litrosHoy = 0;
-    let vacasHoy = 0;
-    let ingresoHoy = 0;
-
-    if (registros.length === 0) {
-      const contexto = fincaActiva === 'Global' ? 'el consolidado' : fincaActiva;
-      tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:#64748b;padding:16px;">Sin registros de ordeño para ${contexto}.</td></tr>`;
-    } else {
-      registros.forEach(({ id, data: d }) => {
-        const litros = Number(d.litros) || 0;
-        const vacas = Number(d.vacas) || 0;
-        const ingreso = Number(d.ingreso ?? litros * (Number(d.precio) || 0));
-        const promedio = d.promedio != null ? Number(d.promedio) : (vacas > 0 ? litros / vacas : 0);
-
-        if (d.fecha === hoyISO) {
-          litrosHoy += litros;
-          vacasHoy = Math.max(vacasHoy, vacas);
-          ingresoHoy += ingreso;
-        }
-
-        const etiquetaFinca = fincaActiva === 'Global'
-          ? ` <span style="font-size:0.75rem;color:#475569;">(${d.finca || 'Sin finca'})</span>`
-          : '';
-
-        tbody.innerHTML += `
-          <tr>
-            <td>${d.fecha || ''}${etiquetaFinca}</td>
-            <td>${vacas}</td>
-            <td><strong>${litros.toFixed(1)} L</strong></td>
-            <td>${promedio.toFixed(2)} L</td>
-            <td>${d.racion || ''}</td>
-            <td style="color:#15803d;font-weight:700;">$${ingreso.toFixed(2)}</td>
-            <td><button type="button" class="erp-btn-del" onclick="eliminarDocERP('lecheria_registros','${id}')">Eliminar</button></td>
-          </tr>`;
-      });
-    }
-
-    const kpiHoy = document.getElementById('kpi-leche-hoy');
-    const kpiProm = document.getElementById('kpi-leche-promedio');
-    const kpiIng = document.getElementById('kpi-leche-ingreso');
-    if (kpiHoy) kpiHoy.textContent = `${litrosHoy.toFixed(1)} L`;
-    if (kpiProm) kpiProm.textContent = vacasHoy > 0 ? `${(litrosHoy / vacasHoy).toFixed(1)} L` : '0.0 L';
-    if (kpiIng) kpiIng.textContent = `$${ingresoHoy.toFixed(2)}`;
-  }
-
-  const formLecheria = document.getElementById('form-lecheria');
-  if (formLecheria) {
-    formLecheria.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const fincaGuardada = resolverFincaParaGuardar('erp-finca-lech');
-      if (!fincaGuardada) {
-        notificarERP('Selecciona si el registro corresponde a Agua Clara o El Sur.', 'error');
-        return;
-      }
-
-      const vacas = Number(document.getElementById('lech-vacas').value);
-      const litros = Number(document.getElementById('lech-litros').value);
-      const precio = Number(document.getElementById('lech-precio').value);
-
-      if (vacas <= 0 || litros < 0) {
-        notificarERP('Verifica la cantidad de vacas y litros.', 'error');
-        return;
-      }
-
-      try {
-        await addDoc(collection(db, 'lecheria_registros'), {
-          finca: fincaGuardada,
-          fecha: document.getElementById('lech-fecha').value,
-          vacas,
-          litros,
-          precio,
-          ingreso: Number((litros * precio).toFixed(2)),
-          promedio: Number((litros / vacas).toFixed(2)),
-          racion: document.getElementById('lech-racion').value,
-          createdAt: serverTimestamp()
-        });
-
-        formLecheria.reset();
-        document.getElementById('lech-fecha').value = hoyISO;
-        document.getElementById('lech-precio').value = precio;
-        actualizarSelectoresFincaGlobal();
-        notificarERP(`Ordeño guardado en ${fincaGuardada}.`, 'exito');
-      } catch (err) {
-        console.error('Error guardando ordeño:', err);
-        notificarERP('Error al guardar el registro de lechería.', 'error');
-      }
-    });
-
-    const qLech = query(collection(db, 'lecheria_registros'), orderBy('fecha', 'desc'), limit(60));
-    onSnapshot(qLech, (snap) => {
-      caches.lecheria = snap.docs.map((d) => ({ id: d.id, data: d.data() }));
-      renderLecheria();
-    });
-  }
-
-  // --- 2. PALMA & AGRONOMÍA ---
-  function renderAgronomia() {
+// --- PALMA & AGRONOMÍA ---
+function renderizarAgronomia() {
     const tbody = document.getElementById('tbody-agronomia');
     if (!tbody) return;
 
-    const fincaActiva = obtenerFincaActiva();
-    const registros = caches.agronomia.filter((r) => perteneceAFinca(r.data, fincaActiva));
-
-    tbody.innerHTML = '';
-    if (registros.length === 0) {
-      const contexto = fincaActiva === 'Global' ? 'el consolidado' : fincaActiva;
-      tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:#64748b;padding:16px;">Sin labores agronómicas para ${contexto}.</td></tr>`;
-      return;
+    const lista = filtrarPorFinca(agronomiaCache);
+    if (lista.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:1.5rem; color:#64748b;">No hay labores agronómicas registradas para ${escaparHTML(obtenerFincaActiva())}.</td></tr>`;
+        return;
     }
 
-    registros.forEach(({ id, data: d }) => {
-      const etiquetaFinca = fincaActiva === 'Global'
-        ? ` <span style="font-size:0.75rem;color:#475569;">(${d.finca || 'Sin finca'})</span>`
-        : '';
+    tbody.innerHTML = lista.map(reg => {
+        const fincaPrefix = obtenerFincaActiva() === 'Global'
+            ? `<strong>${escaparHTML(reg.finca || 'Agua Clara')}</strong> • `
+            : '';
+        return `
+            <tr>
+                <td>${escaparHTML(reg.fecha || '-')}</td>
+                <td>${fincaPrefix}<strong>${escaparHTML(reg.cultivo || '-')}</strong></td>
+                <td>${escaparHTML(reg.lote || '-')}</td>
+                <td>${escaparHTML(reg.labor || '-')}</td>
+                <td>${Number(reg.cantidad) || 0}</td>
+                <td>
+                    <button type="button" class="erp-btn-del" onclick="window.eliminarRegistroERP('${COLECCION_AGRONOMIA}', '${escaparHTML(reg.id)}')">Borrar</button>
+                </td>
+            </tr>
+        `;
+    }).join('');
+}
 
-      tbody.innerHTML += `
-        <tr>
-          <td>${d.fecha || ''}${etiquetaFinca}</td>
-          <td><strong>${d.cultivo || ''}</strong></td>
-          <td>${d.lote || ''}</td>
-          <td>${d.labor || ''}</td>
-          <td><strong>${d.cantidad ?? 0}</strong></td>
-          <td><button type="button" class="erp-btn-del" onclick="eliminarDocERP('agronomia_registros','${id}')">Eliminar</button></td>
-        </tr>`;
-    });
-  }
+async function manejarSubmitAgronomia(e) {
+    e.preventDefault();
+    if (!window.fbERP) return;
 
-  const formAgro = document.getElementById('form-agronomia');
-  if (formAgro) {
-    formAgro.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const fincaGuardada = resolverFincaParaGuardar('erp-finca-agro');
-      if (!fincaGuardada) {
-        notificarERP('Selecciona si el registro corresponde a Agua Clara o El Sur.', 'error');
+    const fecha = document.getElementById('agro-fecha')?.value;
+    const cultivo = document.getElementById('agro-cultivo')?.value || '';
+    const labor = document.getElementById('agro-labor')?.value || '';
+    const lote = (document.getElementById('agro-lote')?.value || '').trim();
+    const cantidad = Number(document.getElementById('agro-cantidad')?.value);
+
+    if (!fecha || !lote || isNaN(cantidad)) {
+        if (window.mostrarToast) window.mostrarToast('Completa fecha, lote y cantidad.', 'error');
         return;
-      }
+    }
 
-      try {
-        await addDoc(collection(db, 'agronomia_registros'), {
-          finca: fincaGuardada,
-          fecha: document.getElementById('agro-fecha').value,
-          cultivo: document.getElementById('agro-cultivo').value,
-          labor: document.getElementById('agro-labor').value,
-          lote: document.getElementById('agro-lote').value,
-          cantidad: Number(document.getElementById('agro-cantidad').value),
-          createdAt: serverTimestamp()
+    const finca = obtenerFincaDestinoEscritura();
+
+    try {
+        const { db, collection, addDoc, serverTimestamp } = window.fbERP;
+        await addDoc(collection(db, COLECCION_AGRONOMIA), {
+            finca,
+            fecha,
+            cultivo,
+            labor,
+            lote,
+            cantidad,
+            fechaCreacion: serverTimestamp()
         });
-        formAgro.reset();
-        document.getElementById('agro-fecha').value = hoyISO;
-        actualizarSelectoresFincaGlobal();
-        notificarERP(`Labor agronómica registrada en ${fincaGuardada}.`, 'exito');
-      } catch (err) {
+
+        if (window.registrarEnBitacora) {
+            await window.registrarEnBitacora(
+                finca,
+                'Agronomia',
+                `${labor} en ${cultivo} (Lote: ${lote}) — Cantidad: ${cantidad} (${fecha})`
+            );
+        }
+
+        if (window.mostrarToast) window.mostrarToast('Labor agronómica registrada.', 'exito');
+        document.getElementById('agro-lote').value = '';
+        document.getElementById('agro-cantidad').value = '';
+    } catch (err) {
         console.error('Error guardando agronomía:', err);
-        notificarERP('Error al guardar la labor agronómica.', 'error');
-      }
-    });
+        if (window.mostrarToast) window.mostrarToast('Error al guardar labor.', 'error');
+    }
+}
 
-    const qAgro = query(collection(db, 'agronomia_registros'), orderBy('fecha', 'desc'), limit(60));
-    onSnapshot(qAgro, (snap) => {
-      caches.agronomia = snap.docs.map((d) => ({ id: d.id, data: d.data() }));
-      renderAgronomia();
-    });
-  }
-
-  // --- 3. OPERACIONES & ACTIVOS ---
-  function renderOperaciones() {
+// --- OPERACIONES & ACTIVOS ---
+function renderizarOperaciones() {
     const tbody = document.getElementById('tbody-operaciones');
     if (!tbody) return;
 
-    const fincaActiva = obtenerFincaActiva();
-    const registros = caches.operaciones.filter((r) => perteneceAFinca(r.data, fincaActiva));
-
-    tbody.innerHTML = '';
-    if (registros.length === 0) {
-      const contexto = fincaActiva === 'Global' ? 'el consolidado' : fincaActiva;
-      tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:#64748b;padding:16px;">Sin registros de maquinaria/activos para ${contexto}.</td></tr>`;
-      return;
+    const lista = filtrarPorFinca(operacionesCache);
+    if (lista.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:1.5rem; color:#64748b;">No hay registros de maquinaria/activos para ${escaparHTML(obtenerFincaActiva())}.</td></tr>`;
+        return;
     }
 
-    registros.forEach(({ id, data: d }) => {
-      const etiquetaFinca = fincaActiva === 'Global'
-        ? ` <span style="font-size:0.75rem;color:#475569;">(${d.finca || 'Sin finca'})</span>`
-        : '';
+    tbody.innerHTML = lista.map(reg => {
+        const fincaPrefix = obtenerFincaActiva() === 'Global'
+            ? `<strong>${escaparHTML(reg.finca || 'Agua Clara')}</strong> • `
+            : '';
+        const horoIni = Number(reg.horoIni) || 0;
+        const horoFin = Number(reg.horoFin) || 0;
+        const horas = Math.max(0, horoFin - horoIni);
 
-      tbody.innerHTML += `
-        <tr>
-          <td>${d.fecha || ''}${etiquetaFinca}</td>
-          <td><strong>${d.equipo || ''}</strong></td>
-          <td>${d.horometroIni ?? 0} → ${d.horometroFin ?? 0}</td>
-          <td><strong>${d.horas ?? 0} h</strong></td>
-          <td>${d.gasoil ?? 0} L</td>
-          <td><button type="button" class="erp-btn-del" onclick="eliminarDocERP('operaciones_registros','${id}')">Eliminar</button></td>
-        </tr>`;
-    });
-  }
+        return `
+            <tr>
+                <td>${escaparHTML(reg.fecha || '-')}</td>
+                <td>${fincaPrefix}<strong>${escaparHTML(reg.equipo || '-')}</strong></td>
+                <td>${horoIni.toFixed(1)} → ${horoFin.toFixed(1)}</td>
+                <td><strong>${horas.toFixed(1)} h</strong></td>
+                <td>${(Number(reg.gasoil) || 0).toFixed(1)} L</td>
+                <td>
+                    <button type="button" class="erp-btn-del" onclick="window.eliminarRegistroERP('${COLECCION_OPERACIONES}', '${escaparHTML(reg.id)}')">Borrar</button>
+                </td>
+            </tr>
+        `;
+    }).join('');
+}
 
-  const formOp = document.getElementById('form-operaciones');
-  if (formOp) {
-    formOp.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const fincaGuardada = resolverFincaParaGuardar('erp-finca-op');
-      if (!fincaGuardada) {
-        notificarERP('Selecciona si el registro corresponde a Agua Clara o El Sur.', 'error');
+async function manejarSubmitOperaciones(e) {
+    e.preventDefault();
+    if (!window.fbERP) return;
+
+    const fecha = document.getElementById('op-fecha')?.value;
+    const equipo = (document.getElementById('op-equipo')?.value || '').trim();
+    const horoIni = Number(document.getElementById('op-horo-ini')?.value);
+    const horoFin = Number(document.getElementById('op-horo-fin')?.value);
+    const gasoil = Number(document.getElementById('op-gasoil')?.value) || 0;
+
+    if (!fecha || !equipo || isNaN(horoIni) || isNaN(horoFin)) {
+        if (window.mostrarToast) window.mostrarToast('Completa equipo y horómetros.', 'error');
         return;
-      }
+    }
 
-      const ini = Number(document.getElementById('op-horo-ini').value);
-      const fin = Number(document.getElementById('op-horo-fin').value);
-      if (fin < ini) {
-        notificarERP('El horómetro final no puede ser menor al inicial.', 'error');
+    if (horoFin < horoIni) {
+        if (window.mostrarToast) window.mostrarToast('El horómetro final no puede ser menor al inicial.', 'error');
         return;
-      }
+    }
 
-      try {
-        await addDoc(collection(db, 'operaciones_registros'), {
-          finca: fincaGuardada,
-          fecha: document.getElementById('op-fecha').value,
-          equipo: document.getElementById('op-equipo').value,
-          horometroIni: ini,
-          horometroFin: fin,
-          horas: Number((fin - ini).toFixed(1)),
-          gasoil: Number(document.getElementById('op-gasoil').value || 0),
-          createdAt: serverTimestamp()
+    const finca = obtenerFincaDestinoEscritura();
+    const horasTrabajadas = horoFin - horoIni;
+
+    try {
+        const { db, collection, addDoc, serverTimestamp } = window.fbERP;
+        await addDoc(collection(db, COLECCION_OPERACIONES), {
+            finca,
+            fecha,
+            equipo,
+            horoIni,
+            horoFin,
+            horasTrabajadas,
+            gasoil,
+            fechaCreacion: serverTimestamp()
         });
-        formOp.reset();
-        document.getElementById('op-fecha').value = hoyISO;
+
+        if (window.registrarEnBitacora) {
+            await window.registrarEnBitacora(
+                finca,
+                'Maquinaria',
+                `Uso de ${equipo}: ${horasTrabajadas.toFixed(1)} h (${horoIni}→${horoFin}), Combustible: ${gasoil.toFixed(1)} L (${fecha})`
+            );
+        }
+
+        if (window.mostrarToast) window.mostrarToast('Uso de equipo registrado.', 'exito');
+        document.getElementById('op-equipo').value = '';
+        document.getElementById('op-horo-ini').value = '';
+        document.getElementById('op-horo-fin').value = '';
         document.getElementById('op-gasoil').value = '0';
-        actualizarSelectoresFincaGlobal();
-        notificarERP(`Operación guardada en ${fincaGuardada}.`, 'exito');
-      } catch (err) {
+    } catch (err) {
         console.error('Error guardando operación:', err);
-        notificarERP('Error al guardar el registro de operaciones.', 'error');
-      }
-    });
-
-    const qOp = query(collection(db, 'operaciones_registros'), orderBy('fecha', 'desc'), limit(60));
-    onSnapshot(qOp, (snap) => {
-      caches.operaciones = snap.docs.map((d) => ({ id: d.id, data: d.data() }));
-      renderOperaciones();
-    });
-  }
-
-  // --- 4. FINANZAS & COSTOS ---
-  function renderFinanzas() {
-    const tbody = document.getElementById('tbody-finanzas');
-    if (!tbody) return;
-
-    const fincaActiva = obtenerFincaActiva();
-    const registros = caches.finanzas.filter((r) => perteneceAFinca(r.data, fincaActiva));
-
-    tbody.innerHTML = '';
-    let ingresos = 0;
-    let egresos = 0;
-
-    if (registros.length === 0) {
-      const contexto = fincaActiva === 'Global' ? 'el consolidado' : fincaActiva;
-      tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:#64748b;padding:16px;">Sin movimientos financieros para ${contexto}.</td></tr>`;
-    } else {
-      registros.forEach(({ id, data: d }) => {
-        const monto = Number(d.monto) || 0;
-        if (d.tipo === 'Ingreso') ingresos += monto;
-        else egresos += monto;
-
-        const color = d.tipo === 'Ingreso' ? '#15803d' : '#dc2626';
-        const etiquetaFinca = fincaActiva === 'Global'
-          ? ` <span style="font-size:0.75rem;color:#475569;">(${d.finca || 'Sin finca'})</span>`
-          : '';
-
-        tbody.innerHTML += `
-          <tr>
-            <td>${d.fecha || ''}${etiquetaFinca}</td>
-            <td style="color:${color};font-weight:700;">${d.tipo || ''}</td>
-            <td>${d.centro || ''}</td>
-            <td>${d.concepto || ''}</td>
-            <td style="color:${color};font-weight:700;">$${monto.toFixed(2)}</td>
-            <td><button type="button" class="erp-btn-del" onclick="eliminarDocERP('finanzas_movimientos','${id}')">Eliminar</button></td>
-          </tr>`;
-      });
+        if (window.mostrarToast) window.mostrarToast('Error al guardar el registro.', 'error');
     }
+}
 
+// --- FINANZAS & COSTOS ---
+function renderizarFinanzas() {
+    const tbody = document.getElementById('tbody-finanzas');
     const kpiIng = document.getElementById('kpi-fin-ingresos');
     const kpiEgr = document.getElementById('kpi-fin-egresos');
     const kpiBal = document.getElementById('kpi-fin-balance');
-    if (kpiIng) kpiIng.textContent = `$${ingresos.toFixed(2)}`;
-    if (kpiEgr) kpiEgr.textContent = `$${egresos.toFixed(2)}`;
-    if (kpiBal) kpiBal.textContent = `$${(ingresos - egresos).toFixed(2)}`;
-  }
 
-  const formFin = document.getElementById('form-finanzas');
-  if (formFin) {
-    formFin.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const fincaGuardada = resolverFincaParaGuardar('erp-finca-fin');
-      if (!fincaGuardada) {
-        notificarERP('Selecciona si el registro corresponde a Agua Clara o El Sur.', 'error');
+    const lista = filtrarPorFinca(finanzasCache);
+    let totalIngresos = 0;
+    let totalEgresos = 0;
+
+    lista.forEach(reg => {
+        const monto = Math.max(0, Number(reg.monto) || 0);
+        if (reg.tipo === 'Egreso') {
+            totalEgresos += monto;
+        } else {
+            totalIngresos += monto;
+        }
+    });
+
+    const balance = totalIngresos - totalEgresos;
+
+    if (kpiIng) kpiIng.textContent = formatearMoneda(totalIngresos);
+    if (kpiEgr) kpiEgr.textContent = formatearMoneda(totalEgresos);
+    if (kpiBal) {
+        kpiBal.textContent = formatearMoneda(balance);
+        kpiBal.style.color = balance < 0 ? '#dc2626' : '#065f46';
+    }
+
+    if (!tbody) return;
+
+    if (lista.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:1.5rem; color:#64748b;">No hay movimientos financieros para ${escaparHTML(obtenerFincaActiva())}.</td></tr>`;
         return;
-      }
+    }
 
-      try {
-        await addDoc(collection(db, 'finanzas_movimientos'), {
-          finca: fincaGuardada,
-          fecha: document.getElementById('fin-fecha').value,
-          tipo: document.getElementById('fin-tipo').value,
-          centro: document.getElementById('fin-centro').value,
-          concepto: document.getElementById('fin-concepto').value,
-          monto: Number(document.getElementById('fin-monto').value),
-          createdAt: serverTimestamp()
+    tbody.innerHTML = lista.map(reg => {
+        const fincaPrefix = obtenerFincaActiva() === 'Global'
+            ? `<strong>${escaparHTML(reg.finca || 'Agua Clara')}</strong> • `
+            : '';
+        const esEgreso = reg.tipo === 'Egreso';
+        const colorMonto = esEgreso ? 'color:#dc2626; font-weight:700;' : 'color:#15803d; font-weight:700;';
+        const signo = esEgreso ? '-' : '+';
+
+        return `
+            <tr>
+                <td>${escaparHTML(reg.fecha || '-')}</td>
+                <td>${escaparHTML(reg.tipo || 'Ingreso')}</td>
+                <td>${fincaPrefix}${escaparHTML(reg.centro || '-')}</td>
+                <td>${escaparHTML(reg.concepto || '-')}</td>
+                <td style="${colorMonto}">${signo}${formatearMoneda(reg.monto)}</td>
+                <td>
+                    <button type="button" class="erp-btn-del" onclick="window.eliminarRegistroERP('${COLECCION_FINANZAS_ERP}', '${escaparHTML(reg.id)}')">Borrar</button>
+                </td>
+            </tr>
+        `;
+    }).join('');
+}
+
+async function manejarSubmitFinanzas(e) {
+    e.preventDefault();
+    if (!window.fbERP) return;
+
+    const fecha = document.getElementById('fin-fecha')?.value;
+    const tipo = document.getElementById('fin-tipo')?.value || 'Ingreso';
+    const centro = document.getElementById('fin-centro')?.value || 'Lechería';
+    const concepto = (document.getElementById('fin-concepto')?.value || '').trim();
+    const monto = Number(document.getElementById('fin-monto')?.value);
+
+    if (!fecha || !concepto || isNaN(monto) || monto <= 0) {
+        if (window.mostrarToast) window.mostrarToast('Completa fecha, concepto y monto válido.', 'error');
+        return;
+    }
+
+    const finca = obtenerFincaDestinoEscritura();
+
+    try {
+        const { db, collection, addDoc, serverTimestamp } = window.fbERP;
+        await addDoc(collection(db, COLECCION_FINANZAS_ERP), {
+            finca,
+            fecha,
+            tipo,
+            centro,
+            concepto,
+            monto,
+            origenModulo: 'finanzas',
+            fechaCreacion: serverTimestamp()
         });
-        formFin.reset();
-        document.getElementById('fin-fecha').value = hoyISO;
-        actualizarSelectoresFincaGlobal();
-        notificarERP(`Movimiento registrado en ${fincaGuardada}.`, 'exito');
-      } catch (err) {
-        console.error('Error guardando finanza:', err);
-        notificarERP('Error al guardar el movimiento financiero.', 'error');
-      }
-    });
 
-    const qFin = query(collection(db, 'finanzas_movimientos'), orderBy('fecha', 'desc'), limit(80));
-    onSnapshot(qFin, (snap) => {
-      caches.finanzas = snap.docs.map((d) => ({ id: d.id, data: d.data() }));
-      renderFinanzas();
-    });
-  }
+        if (window.mostrarToast) window.mostrarToast(`${tipo} registrado en Finanzas.`, 'exito');
+        document.getElementById('fin-concepto').value = '';
+        document.getElementById('fin-monto').value = '';
+    } catch (err) {
+        console.error('Error guardando movimiento financiero:', err);
+        if (window.mostrarToast) window.mostrarToast('Error al guardar movimiento.', 'error');
+    }
+}
 
-  // --- SINCRONIZACIÓN CON CAMBIO DE FINCA Y NAVEGACIÓN ---
-  window.cargarModulosERP = () => {
-    actualizarSelectoresFincaGlobal();
-    renderLecheria();
-    renderAgronomia();
-    renderOperaciones();
-    renderFinanzas();
-  };
+window.eliminarRegistroERP = async function(coleccion, id) {
+    if (!coleccion || !id || !window.fbERP) return;
+    try {
+        const { db, doc, deleteDoc } = window.fbERP;
+        await deleteDoc(doc(db, coleccion, id));
+        if (window.mostrarToast) window.mostrarToast('Registro eliminado.', 'info');
+    } catch (err) {
+        console.error(`Error eliminando en ${coleccion}:`, err);
+        if (window.mostrarToast) window.mostrarToast('No se pudo eliminar el registro.', 'error');
+    }
+};
 
-  window.addEventListener('fincaCambiada', () => {
-    window.cargarModulosERP();
-  });
+function suscribirColeccionesERP() {
+    if (!window.fbERP) return;
+    const { db, collection, query, orderBy, onSnapshot } = window.fbERP;
 
-  window.cargarModulosERP();
+    if (unsubAgro) unsubAgro();
+    unsubAgro = onSnapshot(query(collection(db, COLECCION_AGRONOMIA), orderBy('fecha', 'desc')), snap => {
+        agronomiaCache = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        renderizarAgronomia();
+    }, err => console.error('Error escuchando agronomía:', err));
+
+    if (unsubOp) unsubOp();
+    unsubOp = onSnapshot(query(collection(db, COLECCION_OPERACIONES), orderBy('fecha', 'desc')), snap => {
+        operacionesCache = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        renderizarOperaciones();
+    }, err => console.error('Error escuchando operaciones:', err));
+
+    if (unsubFin) unsubFin();
+    unsubFin = onSnapshot(query(collection(db, COLECCION_FINANZAS_ERP), orderBy('fecha', 'desc')), snap => {
+        finanzasCache = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        renderizarFinanzas();
+    }, err => console.error('Error escuchando finanzas:', err));
+}
+
+function enlazarFormulariosERP() {
+    const fAgro = document.getElementById('form-agronomia');
+    if (fAgro && !fAgro.dataset.bound) {
+        fAgro.dataset.bound = '1';
+        fAgro.addEventListener('submit', manejarSubmitAgronomia);
+    }
+
+    const fOp = document.getElementById('form-operaciones');
+    if (fOp && !fOp.dataset.bound) {
+        fOp.dataset.bound = '1';
+        fOp.addEventListener('submit', manejarSubmitOperaciones);
+    }
+
+    const fFin = document.getElementById('form-finanzas');
+    if (fFin && !fFin.dataset.bound) {
+        fFin.dataset.bound = '1';
+        fFin.addEventListener('submit', manejarSubmitFinanzas);
+    }
+}
+
+window.cargarModulosERP = function() {
+    inicializarFechasFormularios();
+    enlazarFormulariosERP();
+    suscribirColeccionesERP();
+    renderizarAgronomia();
+    renderizarOperaciones();
+    renderizarFinanzas();
+};
+
+window.addEventListener('fincaCambiada', () => {
+    renderizarAgronomia();
+    renderizarOperaciones();
+    renderizarFinanzas();
+});
+
+document.addEventListener('DOMContentLoaded', () => {
+    inicializarFechasFormularios();
+    enlazarFormulariosERP();
 });
