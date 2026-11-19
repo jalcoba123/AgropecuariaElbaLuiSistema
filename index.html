@@ -36,15 +36,13 @@
         @media print {
             body { background: white; margin: 0; padding: 0; }
             header, .category-nav, .finca-banner, .tabs-hato-container,
-            .btn-action, #offline-status-bar, #modal-animal, #modal-ficha, #modal-novedad, #modal-masivo, #modal-subir-doc, #login-screen,
-            .finca-toggle, button[onclick="window.print()"], .no-print { display: none !important; }
-            #app-container { display: block !important; box-shadow: none !important; border: none !important; }
-            .section-view:not(.active) { display: none !important; }
-            .section-view.active { display: block !important; }
-            #subtab-lector, #subtab-config, #subtab-calendario,
+            .btn-action, #offline-status-bar, #modal-animal, #modal-ficha, #modal-novedad, #login-screen,
+            .finca-toggle, button[onclick="window.print()"] { display: none !important; }
+            .section-view, #app-container, .modulo-hato { display: block !important; box-shadow: none !important; border: none !important; }
+            #tab-dashboard, #tab-lecheria, #tab-palma, #tab-operaciones, #tab-finanzas, #tab-documentos, #tab-bitacora,
+            #subtab-lector, #subtab-config, #subtab-calendario, #subtab-planificacion-bovina,
             div[style*="grid-template-columns: repeat(auto-fit, minmax(140px, 1fr))"] { display: none !important; }
-            #tabla-hato th:first-child, #tabla-hato td:first-child,
-            #tabla-hato th:last-child, #tabla-hato td:last-child { display: none !important; }
+            th:first-child, td:first-child, th:last-child, td:last-child { display: none !important; }
             table { border: 1px solid #ccc !important; width: 100% !important; }
             th, td { padding: 6px !important; font-size: 9pt !important; border-bottom: 1px solid #ddd !important; }
         }
@@ -192,7 +190,7 @@
                         </div>
                     </div>
 
-                    <div class="no-print" style="background: #fff1f2; border-radius: 12px; border: 1px solid #fecdd3; padding: 16px; margin-bottom: 20px;">
+                    <div style="background: #fff1f2; border-radius: 12px; border: 1px solid #fecdd3; padding: 16px; margin-bottom: 20px;">
                         <h3 style="color: #be123c; margin-bottom: 10px; font-size: 0.95rem;">🏥 Animales en Observación Médica</h3>
                         <div id="panel-alertas" style="display: flex; gap: 10px; flex-wrap: wrap; font-size: 0.85rem;">
                             <span style="color: #9f1239; font-style: italic;">Cargando estado sanitario...</span>
@@ -203,7 +201,7 @@
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;">
                             <h3 style="font-size: 1rem; color: var(--green-dark); margin: 0;">🐮 Inventario y Hoja de Vida</h3>
 
-                            <div class="no-print" style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap; flex-grow: 1; justify-content: flex-end;">
+                            <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap; flex-grow: 1; justify-content: flex-end;">
                                 <input type="text" id="buscador-hato" placeholder="🔍 Buscar Arete..." onkeyup="window.aplicarFiltroHato()" style="padding: 6px 12px; border-radius: 6px; border: 1px solid var(--border-light); font-size: 0.85rem; width: 150px; outline: none;">
 
                                 <select id="filtro-categoria" onchange="window.aplicarFiltroHato()" style="padding: 6px; border-radius: 6px; border: 1px solid var(--border-light); font-size: 0.85rem;">
@@ -223,7 +221,7 @@
                                     <button class="btn-action" onclick="document.getElementById('input-importar-csv').click()" style="background: #3b82f6; color: white; font-size: 0.8rem;" title="Importar CSV Masivo">⬆️ Importar CSV</button>
                                 </div>
                                 <button class="btn-action" onclick="window.abrirModalMasivo()" style="background: #eab308; color: white;">⚡ Acción Masiva</button>
-                                <button class="btn-action" onclick="window.abrirModalRegistrarAnimal()">+ Registrar Animal</button>
+                                <button class="btn-action" onclick="document.getElementById('modal-animal').style.display='flex'">+ Registrar Animal</button>
                             </div>
                         </div>
 
@@ -270,7 +268,7 @@
                             </div>
                         </div>
 
-                        <div id="manga-alerta-banner" style="display: none; background: #fef2f2; border: 2px solid #ef4444; color: #991b1b; padding: 12px; border-radius: 8px; font-weight: bold; text-align: center; margin-bottom: 15px; font-size: 1.1rem;">
+                        <div id="manga-alerta-banner" style="display: none; background: #fef2f2; border: 2px solid #ef4444; color: #991b1b; padding: 12px; border-radius: 8px; font-weight: bold; text-align: center; margin-bottom: 15px; font-size: 1.1rem; animation: pulse 1s infinite;">
                             ⚠️ ALERTA EN MANGA
                         </div>
 
@@ -280,7 +278,8 @@
 
                             <form id="form-rfid-scanner" onsubmit="event.preventDefault();">
                                 <input type="text" id="rfid-scanner-input" placeholder="📟 Pase el bastón RFID por el arete..." autocomplete="off"
-                                       style="padding: 15px; width: 90%; font-size: 1.2rem; border-radius: 8px; border: 2px solid #0ea5e9; text-align: center; box-shadow: 0 4px 6px -1px rgba(14, 165, 233, 0.2); outline: none; font-weight: bold; color: #0284c7;">
+                                       style="padding: 15px; width: 90%; font-size: 1.2rem; border-radius: 8px; border: 2px solid #0ea5e9; text-align: center; box-shadow: 0 4px 6px -1px rgba(14, 165, 233, 0.2); outline: none; font-weight: bold; color: #0284c7;"
+                                       autofocus>
                             </form>
                             <p style="font-size: 0.75rem; color: #64748b; margin-top: 10px;">🟢 El sistema está escuchando al bastón automáticamente.</p>
                         </div>
@@ -350,7 +349,7 @@
                             <h3 style="color: #b45309; margin: 0; border-bottom: 2px solid #fde68a; padding-bottom: 10px;">💉 Catálogo de Tratamientos</h3>
                             <div style="display: flex; gap: 10px; margin-bottom: 15px;">
                                 <input type="text" id="input-nueva-vacuna" placeholder="Ej. Aftosa, Complejo AD3E..." style="flex-grow: 1; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.9rem; outline: none;">
-                                <button id="btn-add-vacuna" onclick="window.agregarVacunaNueva()" style="background: #eab308; color: white; border: none; padding: 10px 15px; border-radius: 6px; cursor: pointer; font-weight: bold;">+ Añadir</button>
+                                <button id="btn-add-vacuna" style="background: #eab308; color: white; border: none; padding: 10px 15px; border-radius: 6px; cursor: pointer; font-weight: bold;">+ Añadir</button>
                             </div>
                             <div style="background: #fefce8; border: 1px solid #fef08a; border-radius: 6px; padding: 10px;">
                                 <ul id="lista-vacunas-ui" style="list-style: none; padding: 0; margin: 0; font-size: 0.9rem; color: #713f12; max-height: 150px; overflow-y: auto;">
@@ -392,14 +391,14 @@
                                 <h2 style="color: var(--green-dark); margin: 0;">🎯 Planificación Bovina • Simulador de Movimiento</h2>
                                 <p style="font-size: 0.9rem; color: var(--text-muted); margin: 5px 0 0 0;">Proyección exacta (Inicio, Natalidad, Mortalidad, Saldo, Selección, Eliminación).</p>
                             </div>
-                            <div class="no-print" style="display: flex; gap: 10px;">
+                            <div style="display: flex; gap: 10px;">
                                 <button onclick="window.cargarVacasReales()" style="background: #eab308; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-weight: bold;">📥 Usar Hembras Reales</button>
                                 <button onclick="window.print()" class="btn-action" style="background: #475569; color: white;">🖨️ Imprimir Proyección</button>
                             </div>
                         </div>
 
                         <!-- PANEL DE VARIABLES EDITABLES -->
-                        <div class="no-print" style="background: #f8fafc; border: 1px solid #cbd5e1; padding: 15px; border-radius: 8px; margin-bottom: 25px;">
+                        <div style="background: #f8fafc; border: 1px solid #cbd5e1; padding: 15px; border-radius: 8px; margin-bottom: 25px;">
                             <h3 style="margin-top: 0; font-size: 0.95rem; color: #0f172a; margin-bottom: 15px;">⚙️ Variables del Simulador (Editables)</h3>
                             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 15px;">
                                 <div class="form-field">
@@ -749,9 +748,9 @@
 
     <!-- MODALES -->
     <div id="modal-animal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 1000; padding: 20px;">
-        <div style="background: white; padding: 24px; border-radius: 12px; width: 100%; max-width: 450px; max-height: 90vh; overflow-y: auto;">
+        <div style="background: white; padding: 24px; border-radius: 12px; width: 100%; max-width: 450px;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                <h3 style="color: var(--green-dark); margin: 0;">Registrar Animal</h3>
+                <h3 style="color: var(--green-dark);">Registrar Animal</h3>
                 <button onclick="document.getElementById('modal-animal').style.display='none'" style="background:none; border:none; font-size:1.5rem; cursor:pointer;">×</button>
             </div>
             <form id="form-animal">
@@ -761,17 +760,11 @@
                     <div class="form-field"><label>Arete / ID</label><input type="text" id="a-arete" required></div>
                 </div>
 
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                    <div class="form-field">
-                        <label>Lote / Potrero Asignado</label>
-                        <select id="a-lote">
-                            <option value="General">👉 General / Sin Asignar</option>
-                        </select>
-                    </div>
-                    <div class="form-field">
-                        <label>Chip RFID (Opcional)</label>
-                        <input type="text" id="a-chip" placeholder="15 dígitos ISO">
-                    </div>
+                <div class="form-field">
+                    <label>Lote / Potrero Asignado</label>
+                    <select id="a-lote">
+                        <option value="General">👉 General / Sin Asignar</option>
+                    </select>
                 </div>
 
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
@@ -790,7 +783,7 @@
                     </div>
                     <div class="form-field"><label>Fecha de Nac.</label><input type="date" id="a-nacimiento"></div>
                 </div>
-                <div class="form-field"><label>Peso Inicial (Kg)</label><input type="number" id="a-peso" step="0.1" placeholder="Opcional"></div>
+                <div class="form-field"><label>Peso Inicial (Kg)</label><input type="number" id="a-peso" placeholder="Opcional"></div>
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
                     <div class="form-field"><label>Padre</label><input type="text" id="a-padre" placeholder="Opcional"></div>
                     <div class="form-field"><label>Madre</label><input type="text" id="a-madre" placeholder="Opcional"></div>
@@ -841,7 +834,7 @@
 
                 <div id="m-div-destete" class="form-field" style="display:none;">
                     <label>Peso Promedio Destete (Kg)</label>
-                    <input type="number" id="m-destete-peso" step="0.1" placeholder="Ej. 180">
+                    <input type="number" id="m-destete-peso" placeholder="Ej. 180">
                 </div>
 
                 <button type="submit" id="btn-submit-masivo" class="btn-action" style="width:100%; margin-top:10px; background: #eab308; color: white;">Ejecutar Acción a Todos</button>
@@ -907,7 +900,6 @@
             <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; margin-bottom: 15px;">
                 <div>
                     <span id="f-finca-tag" style="font-size: 0.7rem; font-weight: bold; color: #0369a1; background: #e0f2fe; padding: 2px 8px; border-radius: 4px;">FINCA: AGUA CLARA</span>
-                    <span id="f-lote-tag" style="font-size: 0.7rem; font-weight: bold; color: #15803d; background: #dcfce7; padding: 2px 8px; border-radius: 4px; margin-left: 4px;">LOTE: GENERAL</span>
                     <h3 style="color: #0f172a; margin: 4px 0 0 0;">📋 Expediente Clínico • Arete #<span id="f-arete">--</span></h3>
                 </div>
                 <button onclick="document.getElementById('modal-ficha').style.display='none'" style="background:none; border:none; font-size:1.5rem; cursor:pointer; color: #64748b;">×</button>
@@ -915,7 +907,7 @@
 
             <div id="f-alerta-repro"></div>
 
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(115px, 1fr)); gap: 10px; font-size: 0.85rem; margin-bottom: 15px;">
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; font-size: 0.85rem; margin-bottom: 15px;">
                 <div style="background: #f8fafc; padding: 8px; border-radius: 6px; border: 1px solid #cbd5e1;">
                     <span style="color: #64748b; font-weight: bold; font-size: 0.7rem;">CATEGORÍA</span>
                     <div id="f-categoria" style="font-weight: bold; color: #16a34a;">--</div>
@@ -925,12 +917,12 @@
                     <div id="f-estado" style="font-weight: bold;">--</div>
                 </div>
                 <div style="background: #f8fafc; padding: 8px; border-radius: 6px; border: 1px solid #cbd5e1;">
-                    <span style="color: #64748b; font-weight: bold; font-size: 0.7rem;">PADRE / MADRE</span>
-                    <div style="font-weight: bold;"><span id="f-padre">--</span> / <span id="f-madre">--</span></div>
+                    <span style="color: #64748b; font-weight: bold; font-size: 0.7rem;">PADRE</span>
+                    <div id="f-padre" style="font-weight: bold;">--</div>
                 </div>
                 <div style="background: #f8fafc; padding: 8px; border-radius: 6px; border: 1px solid #cbd5e1;">
-                    <span style="color: #64748b; font-weight: bold; font-size: 0.7rem;">CHIP RFID</span>
-                    <div id="f-chip" style="font-weight: bold; font-size: 0.75rem; word-break: break-all; color: #0369a1;">Sin chip</div>
+                    <span style="color: #64748b; font-weight: bold; font-size: 0.7rem;">MADRE</span>
+                    <div id="f-madre" style="font-weight: bold;">--</div>
                 </div>
             </div>
 
@@ -940,20 +932,10 @@
 
             <!-- BOTONES DE ACCIÓN EN FICHA -->
             <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 15px;">
-                <button type="button" onclick="const f=document.getElementById('form-nuevo-pesaje'); f.style.display=f.style.display==='none'?'block':'none';" style="background: #16a34a; color: white; border: none; padding: 6px 10px; border-radius: 6px; cursor: pointer; font-size: 0.8rem; font-weight: bold;">⚖️ + Pesaje</button>
                 <button type="button" onclick="const f=document.getElementById('form-nuevo-repro'); f.style.display=f.style.display==='none'?'block':'none';" style="background: #0ea5e9; color: white; border: none; padding: 6px 10px; border-radius: 6px; cursor: pointer; font-size: 0.8rem; font-weight: bold;">+ Evento Repro / Parto</button>
                 <button type="button" onclick="const f=document.getElementById('form-cambio-categoria'); f.style.display=f.style.display==='none'?'block':'none';" style="background: #64748b; color: white; border: none; padding: 6px 10px; border-radius: 6px; cursor: pointer; font-size: 0.8rem; font-weight: bold;">🔄 Cambiar Categoría</button>
                 <button type="button" id="btn-show-destete" onclick="const f=document.getElementById('form-destete'); f.style.display=f.style.display==='none'?'block':'none';" style="display:none; background: #eab308; color: white; border: none; padding: 6px 10px; border-radius: 6px; cursor: pointer; font-size: 0.8rem; font-weight: bold;">🏅 Destetar</button>
             </div>
-
-            <!-- FORMULARIO NUEVO PESAJE -->
-            <form id="form-nuevo-pesaje" style="display: none; background: #f0fdf4; padding: 12px; border-radius: 8px; border: 1px solid #bbf7d0; margin-bottom: 15px;">
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                    <div class="form-field"><label>Fecha Pesaje</label><input type="date" id="p-fecha" required></div>
-                    <div class="form-field"><label>Peso Actual (Kg)</label><input type="number" id="p-peso" step="0.1" min="1" required></div>
-                </div>
-                <button type="submit" class="btn-action" style="width: 100%; margin-top: 8px; background: #16a34a;">Guardar Pesaje</button>
-            </form>
 
             <!-- FORMULARIO EVENTO REPRODUCTIVO -->
             <form id="form-nuevo-repro" style="display: none; background: #f0f9ff; padding: 12px; border-radius: 8px; border: 1px solid #bae6fd; margin-bottom: 15px;">
@@ -988,7 +970,7 @@
                             <option value="Becerro">Becerro (M)</option>
                             <option value="Becerra">Becerra (H)</option>
                         </select>
-                        <input type="number" id="r-cria-peso" step="0.1" placeholder="Peso Kg">
+                        <input type="number" id="r-cria-peso" placeholder="Peso Kg">
                     </div>
                 </div>
                 <button type="submit" class="btn-action" style="width: 100%; margin-top: 10px; background: #0284c7;">Guardar Evento Reproductivo</button>
@@ -1016,7 +998,7 @@
             <form id="form-destete" style="display: none; background: #fefce8; padding: 12px; border-radius: 8px; border: 1px solid #fde047; margin-bottom: 15px;">
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
                     <div class="form-field"><label>Fecha Destete</label><input type="date" id="d-fecha" required></div>
-                    <div class="form-field"><label>Peso Destete (Kg)</label><input type="number" id="d-peso" step="0.1" required></div>
+                    <div class="form-field"><label>Peso Destete (Kg)</label><input type="number" id="d-peso" required></div>
                 </div>
                 <button type="submit" class="btn-action" style="width: 100%; margin-top: 8px; background: #ca8a04;">Confirmar Destete</button>
             </form>
@@ -1061,6 +1043,7 @@
             collection,
             addDoc,
             getDocs,
+            updateDoc,
             onSnapshot,
             query,
             orderBy,
@@ -1093,6 +1076,7 @@
             collection,
             addDoc,
             getDocs,
+            updateDoc,
             onSnapshot,
             query,
             orderBy,
@@ -1139,4 +1123,543 @@
             setTimeout(() => {
                 toast.style.opacity = '0';
                 toast.style.transform = 'translateY(20px)';
-                setTimeout(() => toast.remove
+                setTimeout(() => toast.remove(), 300);
+            }, 3500);
+        };
+
+        const loginScreen = document.getElementById('login-screen');
+        const appContainer = document.getElementById('app-container');
+
+        function abrirSistema() {
+            loginScreen.style.display = 'none';
+            appContainer.style.display = 'block';
+            if (window.cargarHato) window.cargarHato();
+            if (window.cargarModulosERP) window.cargarModulosERP();
+            cargarBibliotecaDocumentos();
+        }
+
+        if (!navigator.onLine && localStorage.getItem('elbalui_sesion_email')) {
+            abrirSistema();
+        }
+
+        onAuthStateChanged(window.auth, (user) => {
+            if (user) {
+                localStorage.setItem('elbalui_sesion_email', user.email);
+                abrirSistema();
+            } else if (!navigator.onLine && localStorage.getItem('elbalui_sesion_email')) {
+                abrirSistema();
+            } else {
+                loginScreen.style.display = 'flex';
+                appContainer.style.display = 'none';
+            }
+        });
+
+        document.getElementById('login-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            try {
+                await signInWithEmailAndPassword(window.auth, document.getElementById('login-email').value, document.getElementById('login-password').value);
+                e.target.reset();
+            } catch (error) { mostrarToast("Error al iniciar sesión: Verifique correo y contraseña.", "error"); }
+        });
+        document.getElementById('btn-logout').addEventListener('click', () => {
+            localStorage.removeItem('elbalui_sesion_email');
+            signOut(window.auth);
+        });
+
+        window.switchTab = function(tabId, element) {
+            document.querySelectorAll('.section-view').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.cat-chip').forEach(c => c.classList.remove('active'));
+            document.getElementById('tab-' + tabId).classList.add('active');
+
+            if (element) {
+                element.classList.add('active');
+            } else {
+                const chip = document.querySelector(`.cat-chip[onclick*="'${tabId}'"]`);
+                if (chip) chip.classList.add('active');
+            }
+
+            if (tabId === 'documentos') cargarBibliotecaDocumentos();
+            if (tabId === 'bitacora') window.cargarBitacoraGeneral();
+            if (['lecheria', 'palma', 'operaciones', 'finanzas'].includes(tabId) && window.cargarModulosERP) {
+                window.cargarModulosERP();
+            }
+        };
+
+        window.setFinca = function(fincaNombre) {
+            window.fincaActual = fincaNombre;
+            document.querySelectorAll('.finca-btn').forEach(b => {
+                b.classList.toggle('active', b.innerText.includes(fincaNombre === 'Global' ? 'Consolidado' : fincaNombre));
+            });
+            document.getElementById('finca-tag').innerText = fincaNombre === 'Global' ? 'VISTA: CONSOLIDADO' : 'FINCA ACTIVA: ' + fincaNombre.toUpperCase();
+
+            const titleEl = document.getElementById('finca-title');
+            const descEl = document.getElementById('finca-desc');
+            if (fincaNombre === 'Agua Clara') {
+                titleEl.innerText = 'Finca Agua Clara';
+                descEl.innerText = 'Lechería doble propósito, forraje de corte, suplementación y áreas de siembra.';
+            } else if (fincaNombre === 'El Sur') {
+                titleEl.innerText = 'Finca El Sur';
+                descEl.innerText = 'Ganadería extensiva de cría/levante y plantación comercial de palma aceitera.';
+            } else {
+                titleEl.innerText = 'Consolidado Agropecuaria ElbaLui';
+                descEl.innerText = 'Vista global unificada de inventarios, operaciones y registros de ambas fincas.';
+            }
+
+            if (window.cargarHato) window.cargarHato();
+            if (window.cargarModulosERP) window.cargarModulosERP();
+            if (document.getElementById('tab-bitacora').classList.contains('active')) {
+                window.cargarBitacoraGeneral();
+            }
+            window.dispatchEvent(new CustomEvent('fincaCambiada', { detail: { finca: fincaNombre } }));
+        };
+
+        const rfidInput = document.getElementById('rfid-scanner-input');
+        if (rfidInput) {
+            rfidInput.addEventListener('blur', (e) => {
+                const target = e.relatedTarget;
+                const esInteractivo = target && ['SELECT', 'INPUT', 'TEXTAREA', 'BUTTON'].includes(target.tagName);
+                const lectorVisible = document.getElementById('subtab-lector').style.display !== 'none';
+                const hatoActivo = document.getElementById('tab-hato').classList.contains('active');
+                const modalAbierto = ['modal-animal', 'modal-masivo', 'modal-subir-doc', 'modal-ficha', 'modal-novedad'].some(
+                    id => document.getElementById(id).style.display === 'flex'
+                );
+
+                if (hatoActivo && lectorVisible && !esInteractivo && !modalAbierto) {
+                    setTimeout(() => rfidInput.focus(), 10);
+                }
+            });
+        }
+
+        // --- FUNCIONES DE LA BITÁCORA GENERAL ---
+        window.registrarEnBitacora = async function(finca, tipo, descripcion) {
+            try {
+                const usuarioActual = window.auth.currentUser
+                    ? window.auth.currentUser.email
+                    : (localStorage.getItem('elbalui_sesion_email') || 'Productor / Operador');
+
+                await addDoc(collection(window.db, "bitacora_general"), {
+                    finca: finca || window.fincaActual || 'Agua Clara',
+                    tipo: tipo,
+                    descripcion: descripcion,
+                    fechaSubida: serverTimestamp(),
+                    usuario: usuarioActual
+                });
+            } catch (error) {
+                console.error("Error registrando en bitácora:", error);
+            }
+        };
+
+        window.cargarBitacoraGeneral = async function() {
+            const tbody = document.getElementById('tabla-bitacora-body');
+            if (!tbody) return;
+
+            tbody.innerHTML = '<tr><td colspan="5" style="padding: 20px; text-align: center; color: var(--text-muted);">⏳ Sincronizando bitácora...</td></tr>';
+
+            try {
+                const q = query(collection(window.db, "bitacora_general"), orderBy("fechaSubida", "desc"));
+                const querySnapshot = await getDocs(q);
+
+                if (querySnapshot.empty) {
+                    tbody.innerHTML = '<tr><td colspan="5" style="padding: 20px; text-align: center; color: var(--text-muted); font-style: italic;">No hay registros en la bitácora todavía.</td></tr>';
+                    return;
+                }
+
+                const filtroTipo = document.getElementById('filtro-bitacora-tipo') ? document.getElementById('filtro-bitacora-tipo').value : 'Todos';
+                const fincaActiva = window.fincaActual || 'Agua Clara';
+                let htmlRows = '';
+
+                querySnapshot.forEach((docSnap) => {
+                    const data = docSnap.data();
+
+                    if (filtroTipo !== 'Todos' && data.tipo !== filtroTipo) return;
+                    if (fincaActiva !== 'Global' && data.finca && data.finca !== fincaActiva) return;
+
+                    let fechaFormateada = 'Pendiente de sincronizar';
+                    if (data.fechaSubida && data.fechaSubida.toDate) {
+                        fechaFormateada = data.fechaSubida.toDate().toLocaleString('es-VE');
+                    }
+
+                    let badgeColor = '#3b82f6';
+                    if (data.tipo === 'Inventario') badgeColor = '#10b981';
+                    if (data.tipo === 'Manga') badgeColor = '#0ea5e9';
+                    if (data.tipo === 'Agronomia') badgeColor = '#16a34a';
+                    if (data.tipo === 'Maquinaria') badgeColor = '#b45309';
+
+                    htmlRows += `
+                        <tr style="border-bottom: 1px solid #f1f5f9;">
+                            <td style="padding: 10px; white-space: nowrap; color: #475569;">${fechaFormateada}</td>
+                            <td style="padding: 10px; font-weight: bold; color: #0f172a;">${data.finca || 'Agua Clara'}</td>
+                            <td style="padding: 10px;"><span style="background: ${badgeColor}15; color: ${badgeColor}; padding: 3px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: bold;">${data.tipo}</span></td>
+                            <td style="padding: 10px; color: #1e293b;">${data.descripcion}</td>
+                            <td style="padding: 10px; color: #64748b; font-size: 0.8rem;">${data.usuario}</td>
+                        </tr>
+                    `;
+                });
+
+                tbody.innerHTML = htmlRows || '<tr><td colspan="5" style="padding: 20px; text-align: center; color: var(--text-muted);">No hay registros para este filtro o finca.</td></tr>';
+            } catch (error) {
+                console.error("Error al cargar la bitácora:", error);
+                tbody.innerHTML = '<tr><td colspan="5" style="padding: 20px; text-align: center; color: #ef4444;">❌ Error cargando la bitácora.</td></tr>';
+            }
+        };
+
+        async function cargarBibliotecaDocumentos() {
+            const contenedor = document.getElementById('contenedor-documentos');
+            if(!contenedor) return;
+            contenedor.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; padding: 30px; color: var(--text-muted);"><span style="font-size: 2rem;">⏳</span><br>Cargando documentos...</div>';
+
+            try {
+                const q = query(collection(window.db, "biblioteca_documentos"), orderBy("fechaSubida", "desc"));
+                const querySnapshot = await getDocs(q);
+
+                if (querySnapshot.empty) {
+                    contenedor.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; padding: 30px; color: var(--text-muted); background: #f8fafc; border-radius: 8px; border: 1px dashed #cbd5e1;">Aún no hay documentos en la biblioteca. ¡Sube el primero!</div>';
+                    return;
+                }
+
+                let htmlContent = '';
+                querySnapshot.forEach((docSnap) => {
+                    const data = docSnap.data();
+                    let icono = '📄';
+                    if(data.tipoArchivo && data.tipoArchivo.includes('pdf')) icono = '📋';
+                    if(data.tipoArchivo && data.tipoArchivo.includes('image')) icono = '🖼️';
+                    if(data.tipoArchivo && (data.tipoArchivo.includes('spreadsheet') || data.tipoArchivo.includes('excel'))) icono = '📊';
+
+                    htmlContent += `
+                        <div style="background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 15px; display: flex; flex-direction: column; justify-content: space-between;">
+                            <div>
+                                <span style="font-size: 1.5rem;">${icono}</span>
+                                <h4 style="margin: 10px 0 5px 0; color: #0f172a;">${data.titulo}</h4>
+                                <p style="font-size: 0.85rem; color: #475569; margin: 0 0 15px 0;">${data.descripcion || 'Sin descripción'}</p>
+                            </div>
+                            <div style="display: flex; gap: 10px;">
+                                <button onclick="window.open('${data.urlDescarga}', '_blank')" style="background: #0ea5e9; color: white; border: none; padding: 8px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 0.85rem; flex: 1;">Ver Documento</button>
+                            </div>
+                        </div>
+                    `;
+                });
+                contenedor.innerHTML = htmlContent;
+            } catch (error) {
+                console.error("Error cargando documentos:", error);
+                contenedor.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; padding: 30px; color: #ef4444;">❌ Error cargando la biblioteca.</div>';
+            }
+        }
+
+        document.getElementById('form-subir-doc').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            if (!navigator.onLine) return mostrarToast("Conéctate a internet para subir archivos nuevos.", "error");
+
+            const btnSubmit = document.getElementById('btn-submit-doc');
+            const titulo = document.getElementById('doc-titulo').value;
+            const desc = document.getElementById('doc-desc').value;
+            const archivoInput = document.getElementById('doc-archivo');
+            const barraContenedor = document.getElementById('barra-progreso-container');
+            const barra = document.getElementById('barra-progreso');
+            const textoProgreso = document.getElementById('texto-progreso');
+
+            if (archivoInput.files.length === 0) return mostrarToast("Selecciona un archivo primero.", "error");
+            const archivo = archivoInput.files[0];
+
+            btnSubmit.disabled = true; btnSubmit.innerText = "Subiendo archivo...";
+            barraContenedor.style.display = 'block'; textoProgreso.style.display = 'block';
+
+            const storageRef = ref(window.storage, 'documentos_erp/' + Date.now() + '_' + archivo.name);
+            const uploadTask = uploadBytesResumable(storageRef, archivo);
+
+            uploadTask.on('state_changed',
+                (snapshot) => {
+                    const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                    barra.style.width = progress + '%';
+                    textoProgreso.innerText = `Subiendo... ${Math.round(progress)}%`;
+                },
+                (error) => {
+                    mostrarToast("Error subiendo el archivo: " + error.message, "error");
+                    resetFormularioDocs();
+                },
+                async () => {
+                    try {
+                        const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+                        await addDoc(collection(window.db, "biblioteca_documentos"), {
+                            titulo: titulo, descripcion: desc, urlDescarga: downloadURL,
+                            nombreArchivoOriginal: archivo.name, tipoArchivo: archivo.type,
+                            fechaSubida: serverTimestamp(),
+                            usuario: window.auth.currentUser ? window.auth.currentUser.email : 'Usuario Desconocido'
+                        });
+                        mostrarToast("¡Documento subido y guardado exitosamente!", "exito");
+                        document.getElementById('modal-subir-doc').style.display = 'none';
+                        cargarBibliotecaDocumentos();
+                        resetFormularioDocs();
+                    } catch (firestoreError) {
+                        mostrarToast("El archivo se subió, pero hubo un error al guardar los datos.", "error");
+                        resetFormularioDocs();
+                    }
+                }
+            );
+
+            function resetFormularioDocs() {
+                btnSubmit.disabled = false; btnSubmit.innerText = "Subir y Guardar";
+                barraContenedor.style.display = 'none'; textoProgreso.style.display = 'none';
+                barra.style.width = '0%'; document.getElementById('form-subir-doc').reset();
+            }
+        });
+    </script>
+
+    <script type="module" src="js/hato.js?v=124"></script>
+    <script src="js/online-sync.js"></script>
+    <script type="module" src="js/modulos-erp.js"></script>
+
+    <!-- MOTOR DE SIMULACIÓN DE PLANIFICACIÓN BOVINA -->
+    <script>
+        window.cargarVacasReales = async function() {
+            try {
+                if (window.fbERP && window.fbERP.getDocs) {
+                    const { db, collection, getDocs } = window.fbERP;
+                    const snap = await getDocs(collection(db, 'animales'));
+                    const fincaActiva = window.fincaActual || 'Agua Clara';
+                    let vientres = 0;
+
+                    snap.forEach((docSnap) => {
+                        const a = docSnap.data();
+                        if (a.estado === 'Baja (Vendido/Muerto)') return;
+                        if (fincaActiva !== 'Global' && a.finca && a.finca !== fincaActiva) return;
+                        if (['Vaca Ordeño', 'Vaca Seca / Escampa', 'Novilla'].includes(a.categoria)) {
+                            vientres++;
+                        }
+                    });
+
+                    if (vientres > 0) {
+                        document.getElementById('sim-vacas-ini').value = vientres;
+                        if (window.mostrarToast) window.mostrarToast(`Cargados ${vientres} vientres reales desde el inventario.`, 'exito');
+                        window.calcularMovimientoRebano();
+                        return;
+                    }
+                }
+            } catch (err) {
+                console.error('Error leyendo hembras reales:', err);
+            }
+
+            let vacasActivas = document.getElementById('kpi-gestantes') ? parseInt(document.getElementById('kpi-gestantes').innerText) || 0 : 0;
+            let totalVientresFinca = vacasActivas > 0 ? vacasActivas * 2 : 100;
+            document.getElementById('sim-vacas-ini').value = totalVientresFinca;
+            if (window.mostrarToast) window.mostrarToast('Hembras iniciales actualizadas.', 'info');
+            window.calcularMovimientoRebano();
+        };
+
+        window.calcularMovimientoRebano = function() {
+            let cur_h = parseInt(document.getElementById('sim-vacas-ini').value) || 0;
+            let rel_hm = parseFloat(document.getElementById('sim-rel-hm').value) || 25;
+            let p_nat = parseFloat(document.getElementById('sim-p-nat').value) / 100;
+            let p_morta = parseFloat(document.getElementById('sim-p-morta').value) / 100;
+            let p_mortc = parseFloat(document.getElementById('sim-p-mortc').value) / 100;
+            let p_selh = parseFloat(document.getElementById('sim-p-selh').value) / 100;
+            let p_elim = parseFloat(document.getElementById('sim-p-elim').value) / 100;
+
+            let cur_m = Math.round(cur_h / rel_hm);
+            let tbodyMatriz = document.getElementById('tbody-matriz-rebano');
+            let tbodyCompo = document.getElementById('tbody-composicion-rebano');
+
+            tbodyMatriz.innerHTML = '';
+
+            let ceba_acumulada = 0;
+            let ceba_lotes = [];
+            let hist_vt = [cur_h];
+            let hist_m = [cur_m];
+            let hist_ceba = [0];
+
+            for (let ano = 1; ano <= 3; ano++) {
+                let nat_total = cur_h * p_nat;
+                let nat_h = Math.round(nat_total * 0.5);
+                let nat_m = Math.round(nat_total * 0.5);
+
+                let mort_ah = Math.round(cur_h * p_morta);
+                let mort_am = Math.round(cur_m * p_morta);
+                let mort_ch = Math.round(nat_h * p_mortc);
+                let mort_cm = Math.round(nat_m * p_mortc);
+
+                let saldo_ah = cur_h - mort_ah;
+                let saldo_am = cur_m - mort_am;
+                let saldo_ch = nat_h - mort_ch;
+                let saldo_cm = nat_m - mort_cm;
+
+                let sel_h = Math.round(saldo_ch * p_selh);
+                let elim_h = Math.round(saldo_ah * p_elim);
+                let elim_m = Math.round(saldo_am * p_elim);
+
+                let final_h = saldo_ah + sel_h - elim_h;
+                let final_m = Math.round(final_h / rel_hm);
+
+                let sel_m = Math.max(0, final_m - saldo_am + elim_m);
+                let elim_ch = Math.max(0, saldo_ch - sel_h);
+                let ceba_in = Math.max(0, saldo_cm - sel_m);
+
+                let ceba_out_matadero = 0;
+                let ceba_out_ventas = 0;
+                ceba_lotes.push(ceba_in);
+
+                if (ceba_lotes.length > 2) {
+                    ceba_out_matadero = ceba_lotes.shift();
+                    ceba_out_ventas = Math.max(0, ceba_in - ceba_out_matadero);
+                }
+                ceba_acumulada = ceba_lotes.reduce((acc, v) => acc + v, 0);
+
+                let labelInicio = ano === 1 ? "Inicio 1er Año" : (ano === 2 ? "Inicio 2do Año" : "Inicio 3er Año");
+                let labelFinal = ano === 1 ? "Final 1er Año" : (ano === 2 ? "Final 2do Año" : "Final 3er Año");
+                let ceba_inicio_ano = ano > 1 ? hist_ceba[ano - 1] : 0;
+
+                let row_inicio = `<tr style="background: #dcfce7; font-weight: bold;">
+                    <td style="border: 1px solid #cbd5e1; padding: 4px; text-align: left;">${labelInicio}</td>
+                    <td style="border: 1px solid #cbd5e1; padding: 4px;">${cur_h}</td><td style="border: 1px solid #cbd5e1; padding: 4px;">${cur_m}</td>
+                    <td style="border: 1px solid #cbd5e1;"></td><td style="border: 1px solid #cbd5e1;"></td>
+                    <td style="border: 1px solid #cbd5e1;"></td><td style="border: 1px solid #cbd5e1;"></td>
+                    <td style="border: 1px solid #cbd5e1; padding: 4px; background: #e2e8f0;">${ceba_inicio_ano > 0 ? ceba_inicio_ano : ''}</td>
+                    <td style="border: 1px solid #cbd5e1;"></td><td style="border: 1px solid #cbd5e1;"></td>
+                    <td style="border: 1px solid #cbd5e1;"></td><td style="border: 1px solid #cbd5e1;"></td>
+                    <td style="border: 1px solid #cbd5e1; padding: 4px; background: #dcfce7;">${cur_h + cur_m + ceba_inicio_ano}</td>
+                </tr>`;
+
+                let row_nat = `<tr>
+                    <td style="border: 1px solid #cbd5e1; padding: 4px; text-align: left; font-weight: bold;">Natalidad</td>
+                    <td style="border: 1px solid #cbd5e1;"></td><td style="border: 1px solid #cbd5e1;"></td>
+                    <td style="border: 1px solid #cbd5e1; padding: 4px;">${nat_h}</td><td style="border: 1px solid #cbd5e1; padding: 4px;">${nat_m}</td>
+                    <td style="border: 1px solid #cbd5e1;"></td><td style="border: 1px solid #cbd5e1;"></td>
+                    <td style="border: 1px solid #cbd5e1;"></td><td style="border: 1px solid #cbd5e1;"></td><td style="border: 1px solid #cbd5e1;"></td><td style="border: 1px solid #cbd5e1;"></td><td style="border: 1px solid #cbd5e1;"></td><td style="border: 1px solid #cbd5e1;"></td>
+                </tr>`;
+
+                let row_mort = `<tr>
+                    <td style="border: 1px solid #cbd5e1; padding: 4px; text-align: left; font-weight: bold;">Mortalidad</td>
+                    <td style="border: 1px solid #cbd5e1; padding: 4px;">-${mort_ah}</td><td style="border: 1px solid #cbd5e1; padding: 4px;">${mort_am === 0 ? '0' : '-'+mort_am}</td>
+                    <td style="border: 1px solid #cbd5e1; padding: 4px;">-${mort_ch}</td><td style="border: 1px solid #cbd5e1; padding: 4px;">-${mort_cm}</td>
+                    <td style="border: 1px solid #cbd5e1; padding: 4px;">+ ${mort_ah}<br>+ ${mort_ch}</td>
+                    <td style="border: 1px solid #cbd5e1; padding: 4px;">${mort_am}<br>+ ${mort_cm}</td>
+                    <td style="border: 1px solid #cbd5e1;"></td><td style="border: 1px solid #cbd5e1;"></td><td style="border: 1px solid #cbd5e1;"></td><td style="border: 1px solid #cbd5e1;"></td><td style="border: 1px solid #cbd5e1;"></td><td style="border: 1px solid #cbd5e1;"></td>
+                </tr>`;
+
+                let row_saldo = `<tr>
+                    <td style="border: 1px solid #cbd5e1; padding: 4px; text-align: left; font-weight: bold;">Saldo</td>
+                    <td style="border: 1px solid #cbd5e1; padding: 4px;">${saldo_ah}</td><td style="border: 1px solid #cbd5e1; padding: 4px;">${saldo_am}</td>
+                    <td style="border: 1px solid #cbd5e1; padding: 4px;">${saldo_ch}</td><td style="border: 1px solid #cbd5e1; padding: 4px;">${saldo_cm}</td>
+                    <td style="border: 1px solid #cbd5e1;"></td><td style="border: 1px solid #cbd5e1;"></td>
+                    <td style="border: 1px solid #cbd5e1;"></td><td style="border: 1px solid #cbd5e1;"></td><td style="border: 1px solid #cbd5e1;"></td><td style="border: 1px solid #cbd5e1;"></td><td style="border: 1px solid #cbd5e1;"></td><td style="border: 1px solid #cbd5e1;"></td>
+                </tr>`;
+
+                let row_sel = `<tr>
+                    <td style="border: 1px solid #cbd5e1; padding: 4px; text-align: left; font-weight: bold;">Selección</td>
+                    <td style="border: 1px solid #cbd5e1; padding: 4px;">+ ${sel_h}</td><td style="border: 1px solid #cbd5e1; padding: 4px; color: #ef4444;">+ ${sel_m}</td>
+                    <td style="border: 1px solid #cbd5e1; padding: 4px;">- ${sel_h}</td><td style="border: 1px solid #cbd5e1; padding: 4px; color: #ef4444;">- ${sel_m}</td>
+                    <td style="border: 1px solid #cbd5e1;"></td><td style="border: 1px solid #cbd5e1;"></td>
+                    <td style="border: 1px solid #cbd5e1; padding: 4px;">+${ceba_in}<br>${ceba_out_ventas > 0 ? ceba_out_ventas : ''}</td>
+                    <td style="border: 1px solid #cbd5e1;"></td><td style="border: 1px solid #cbd5e1;"></td><td style="border: 1px solid #cbd5e1;"></td><td style="border: 1px solid #cbd5e1;"></td><td style="border: 1px solid #cbd5e1;"></td>
+                </tr>`;
+
+                let row_elim = `<tr>
+                    <td style="border: 1px solid #cbd5e1; padding: 4px; text-align: left; font-weight: bold;">Eliminación</td>
+                    <td style="border: 1px solid #cbd5e1; padding: 4px;">-${elim_h}</td><td style="border: 1px solid #cbd5e1; padding: 4px;">-${elim_m}</td>
+                    <td style="border: 1px solid #cbd5e1; padding: 4px;">${elim_ch}</td><td style="border: 1px solid #cbd5e1; padding: 4px;">${ceba_in}</td>
+                    <td style="border: 1px solid #cbd5e1;"></td><td style="border: 1px solid #cbd5e1;"></td>
+                    <td style="border: 1px solid #cbd5e1;"></td>
+                    <td style="border: 1px solid #cbd5e1; padding: 4px;">+${elim_ch}</td>
+                    <td style="border: 1px solid #cbd5e1; padding: 4px;">${ceba_out_ventas > 0 ? '+'+ceba_out_ventas : ''}</td>
+                    <td style="border: 1px solid #cbd5e1; padding: 4px;">+${elim_h}</td>
+                    <td style="border: 1px solid #cbd5e1; padding: 4px;">+${elim_m}${ceba_out_matadero > 0 ? '<br>+'+ceba_out_matadero : ''}</td>
+                    <td style="border: 1px solid #cbd5e1;"></td>
+                </tr>`;
+
+                let row_final = `<tr style="background: #93c5fd; font-weight: bold;">
+                    <td style="border: 1px solid #cbd5e1; padding: 4px; text-align: left;">${labelFinal}</td>
+                    <td style="border: 1px solid #cbd5e1; padding: 4px; background: #bfdbfe;">${final_h}</td><td style="border: 1px solid #cbd5e1; padding: 4px; background: #bfdbfe;">${final_m}</td>
+                    <td style="border: 1px solid #cbd5e1; background: #bfdbfe;"></td><td style="border: 1px solid #cbd5e1; background: #bfdbfe;"></td>
+                    <td style="border: 1px solid #cbd5e1; background: #bfdbfe;"></td><td style="border: 1px solid #cbd5e1; background: #bfdbfe;"></td>
+                    <td style="border: 1px solid #cbd5e1; padding: 4px; background: #93c5fd;">${ceba_acumulada}</td>
+                    <td style="border: 1px solid #cbd5e1; background: #bfdbfe;"></td><td style="border: 1px solid #cbd5e1; background: #bfdbfe;"></td>
+                    <td style="border: 1px solid #cbd5e1; background: #bfdbfe;"></td><td style="border: 1px solid #cbd5e1; background: #bfdbfe;"></td>
+                    <td style="border: 1px solid #cbd5e1; padding: 4px; background: #93c5fd;">${final_h + final_m + ceba_acumulada}</td>
+                </tr>`;
+
+                tbodyMatriz.innerHTML += row_inicio + row_nat + row_mort + row_saldo + row_sel + row_elim + row_final;
+
+                cur_h = final_h;
+                cur_m = final_m;
+
+                hist_vt.push(final_h);
+                hist_m.push(final_m);
+                hist_ceba.push(ceba_acumulada);
+            }
+
+            let proposito = document.getElementById('sim-proposito') ? document.getElementById('sim-proposito').value : 'doble';
+            let p_vt, p_nv, p_n, p_mauta;
+            let label_proposito = "";
+
+            if (proposito === 'leche') {
+                p_vt = 0.50; p_nv = 0.14; p_n = 0.14; p_mauta = 0.22;
+                label_proposito = "Lechería Especializada";
+            } else if (proposito === 'doble') {
+                p_vt = 0.45; p_nv = 0.15; p_n = 0.15; p_mauta = 0.25;
+                label_proposito = "Doble Propósito";
+            } else {
+                p_vt = 0.60; p_nv = 0.10; p_n = 0.12; p_mauta = 0.18;
+                label_proposito = "Cría / Carne";
+            }
+
+            document.getElementById('titulo-composicion').innerText = `🥛 Composición del Rebaño (Regla Técnica: ${label_proposito})`;
+
+            let trs = "";
+            const tdRow = (label, pct_lbl, vals) => {
+                let row = `<tr>
+                    <td style="padding: 6px; border: 1px solid #cbd5e1; text-align: left; font-weight: 500;">${label}</td>
+                    <td style="padding: 6px; border: 1px solid #cbd5e1; color: #64748b;">${pct_lbl}</td>`;
+                vals.forEach(v => row += `<td style="padding: 6px; border: 1px solid #cbd5e1;">${v}</td>`);
+                row += `</tr>`;
+                return row;
+            };
+
+            let vt = hist_vt.map(h => Math.round(h * p_vt));
+            trs += tdRow("Vacas Totales (VT)", (p_vt*100)+"%", vt);
+            trs += tdRow("↳ VT: Vacas Ordeño", "70% (de VT)", vt.map(v => Math.round(v * 0.70)));
+            trs += tdRow("↳ VT: Vacas Secas", "30% (de VT)", vt.map(v => Math.round(v * 0.30)));
+            trs += tdRow("Novillas Vientres", (p_nv*100)+"%", hist_vt.map(h => Math.round(h * p_nv)));
+            trs += tdRow("Novillas (12-18m)", (p_n*100)+"%", hist_vt.map(h => Math.round(h * p_n)));
+            trs += tdRow("Mautas (6-12m)", (p_mauta*100)+"%", hist_vt.map(h => Math.round(h * p_mauta)));
+            trs += tdRow("Toros Reproductores", "-", hist_m);
+            trs += tdRow("Ceba / Mautes (Acumulado)", "-", hist_ceba);
+
+            tbodyCompo.innerHTML = trs;
+        };
+
+        setTimeout(() => {
+            if(document.getElementById('sim-vacas-ini')) window.calcularMovimientoRebano();
+        }, 500);
+
+        document.getElementById('sim-proposito').addEventListener('change', window.calcularMovimientoRebano);
+    </script>
+
+    <!-- REGISTRO DE SERVICE WORKER Y NOTIFICACIÓN INTERNA DE MODO OFFLINE -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                    .then((reg) => {
+                        reg.addEventListener('updatefound', () => {
+                            const nuevoSW = reg.installing;
+                            if (nuevoSW) {
+                                nuevoSW.addEventListener('statechange', () => {
+                                    if (nuevoSW.state === 'activated' && window.mostrarToast) {
+                                        window.mostrarToast('Sistema guardado en memoria: listo para trabajar sin internet.', 'exito');
+                                    }
+                                });
+                            }
+                        });
+                    })
+                    .catch((err) => console.error('Error instalando soporte Offline:', err));
+            });
+
+            navigator.serviceWorker.addEventListener('message', (event) => {
+                if (event.data && event.data.type === 'OFFLINE_LISTO') {
+                    if (window.mostrarToast) {
+                        window.mostrarToast('Modo sin conexión activo en este dispositivo.', 'exito');
+                    }
+                }
+            });
+        }
+    </script>
+</body>
+</html>
