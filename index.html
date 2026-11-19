@@ -33,6 +33,11 @@
         .erp-table th { background: #f1f5f9; padding: 0.75rem 1rem; font-size: 0.75rem; text-transform: uppercase; color: #475569; border-bottom: 1px solid #cbd5e1; }
         .erp-table td { padding: 0.65rem 1rem; border-bottom: 1px solid #e2e8f0; }
 
+        .lech-subtabs { display: flex; gap: 10px; margin: 1rem 0 1.25rem 0; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; flex-wrap: wrap; }
+        .lech-subtab-btn { padding: 8px 14px; border-radius: 8px; cursor: pointer; font-weight: 700; font-size: 0.85rem; border: 1px solid #cbd5e1; background: #ffffff; color: #334155; }
+        .lech-subtab-btn.active { background: #0369a1; color: #ffffff; border-color: #0369a1; }
+        .lech-proy-input { width: 82px; padding: 0.35rem 0.45rem; border: 1px solid #cbd5e1; border-radius: 0.375rem; font-size: 0.82rem; text-align: right; font-weight: 600; background: #ffffff; }
+
         @media print {
             body { background: white; margin: 0; padding: 0; }
             header, .category-nav, .finca-banner, .tabs-hato-container,
@@ -493,10 +498,16 @@
             <!-- MÓDULO 3: LECHERÍA & RACIONES -->
             <div id="tab-lecheria" class="section-view">
                 <div style="background: white; padding: 20px; border-radius: 12px; border: 1px solid var(--border-light);">
-                    <h2 style="color: #0369a1; margin-top: 0;">🥛 Lechería & Raciones (Agua Clara)</h2>
-                    <p style="color: var(--text-muted); font-size: 0.9rem;">Control de producción diaria de leche y raciones de silo Cuba 22 con melaza, nepe de cervecería y pollinaza.</p>
+                    <h2 id="lech-titulo-finca" style="color: #0369a1; margin-top: 0;">🥛 Lechería & Raciones (Agua Clara)</h2>
+                    <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 0;">Control de producción diaria de leche, raciones de silo Cuba 22 con melaza, nepe de cervecería, gallinaza/pollinaza y proyección de venta a 5 años.</p>
 
-                    <div class="erp-module-body">
+                    <div class="lech-subtabs">
+                        <button type="button" id="btn-lech-subtab-diario" class="lech-subtab-btn active" onclick="window.cambiarSubtabLecheria('diario')">📋 Ordeño Diario & Ración</button>
+                        <button type="button" id="btn-lech-subtab-proyeccion" class="lech-subtab-btn" onclick="window.cambiarSubtabLecheria('proyeccion')">📈 Proyección Venta Leche (5 Años)</button>
+                    </div>
+
+                    <!-- SUBVISTA A: ORDEÑO DIARIO & RACIÓN -->
+                    <div id="lech-subtab-diario" class="erp-module-body" style="margin-top: 0;">
                         <div class="erp-kpi-grid">
                             <div class="erp-kpi-card green">
                                 <span class="erp-kpi-label">Producción Hoy</span>
@@ -510,19 +521,41 @@
                                 <span class="erp-kpi-label">Ingreso Estimado Hoy</span>
                                 <p id="kpi-leche-ingreso" class="erp-kpi-val">$0.00</p>
                             </div>
+                            <div class="erp-kpi-card">
+                                <span class="erp-kpi-label">Margen s/ Ración (IOFC)</span>
+                                <p id="kpi-leche-margen" class="erp-kpi-val">$0.00</p>
+                            </div>
                         </div>
+
+                        <div id="lech-alertas-panel" style="margin-bottom: 1rem;"></div>
 
                         <form id="form-lecheria" class="erp-form-grid">
                             <input type="date" id="lech-fecha" required>
+                            <select id="lech-turno" title="Turno de ordeño">
+                                <option value="Mañana">Turno Mañana</option>
+                                <option value="Tarde">Turno Tarde</option>
+                                <option value="Día completo">Día completo</option>
+                            </select>
                             <input type="number" id="lech-vacas" placeholder="Vacas ordeño" min="1" required>
                             <input type="number" id="lech-litros" placeholder="Litros totales" step="0.1" min="0" required>
                             <input type="number" id="lech-precio" placeholder="Precio $/L" step="0.01" value="0.68" required>
+                            <select id="lech-destino" title="Destino principal de la leche">
+                                <option value="Venta">Destino: Venta</option>
+                                <option value="Queso / Interno">Destino: Queso / Interno</option>
+                                <option value="Becerros">Destino: Becerros</option>
+                                <option value="Descarte">Destino: Descarte</option>
+                            </select>
                             <select id="lech-racion">
                                 <option value="Silo Cuba 22 + Melaza">Silo Cuba 22 + Melaza</option>
                                 <option value="Pollinaza + Nepe">Pollinaza + Nepe</option>
-                                <option value="Ración Completa (Silo + Pollinaza + Nepe)">Ración Completa</option>
+                                <option value="Ración Completa (Silo + Pollinaza + Nepe)">Ración Completa (Silo + Pollinaza + Nepe)</option>
                                 <option value="Pastoreo Medícula">Solo Pastoreo Medícula</option>
                             </select>
+                            <input type="number" id="lech-costo-racion" placeholder="Costo ración día ($)" step="0.01" min="0" value="0">
+                            <label style="display: flex; align-items: center; gap: 6px; font-size: 0.8rem; color: #334155; padding: 0.25rem 0.4rem;">
+                                <input type="checkbox" id="lech-sync-finanzas" checked style="width: auto;">
+                                Enviar venta a Finanzas
+                            </label>
                             <button type="submit" class="erp-btn-primary">Guardar Ordeño</button>
                         </form>
 
@@ -531,17 +564,58 @@
                                 <thead>
                                     <tr>
                                         <th>Fecha</th>
+                                        <th>Finca / Turno</th>
                                         <th>Vacas</th>
                                         <th>Litros</th>
                                         <th>Prom/Vaca</th>
+                                        <th>Destino</th>
                                         <th>Ración Base</th>
                                         <th>Ingreso ($)</th>
+                                        <th>Margen ($)</th>
                                         <th>Acción</th>
                                     </tr>
                                 </thead>
                                 <tbody id="tbody-lecheria"></tbody>
                             </table>
                         </div>
+                    </div>
+
+                    <!-- SUBVISTA B: PROYECCIÓN VENTA DE LECHE (5 AÑOS) -->
+                    <div id="lech-subtab-proyeccion" class="erp-module-body" style="display: none; margin-top: 0;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; background: #f8fafc; border: 1px solid #cbd5e1; padding: 1rem; border-radius: 0.5rem; margin-bottom: 1rem;">
+                            <div>
+                                <strong style="color: #0f172a; font-size: 0.95rem;">📊 Venta de Leche Estimada (Para 5 Años)</strong>
+                                <div id="lech-comparativa-real" style="font-size: 0.82rem; color: #475569; margin-top: 3px;">Promedio real actual: calculando...</div>
+                            </div>
+                            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                                <button type="button" id="btn-lech-cargar-vacas" class="erp-btn-dark" style="background: #eab308; color: #ffffff;">📥 Precargar Vacas Activas</button>
+                                <button type="button" id="btn-lech-restaurar-base" class="erp-btn-dark">↺ Modelo Base (3→5→6 L)</button>
+                                <button type="button" id="btn-lech-guardar-proy" class="erp-btn-primary">💾 Guardar Proyección</button>
+                            </div>
+                        </div>
+
+                        <div class="erp-table-wrap">
+                            <table class="erp-table" id="tabla-proyeccion-leche">
+                                <thead>
+                                    <tr>
+                                        <th>Años</th>
+                                        <th>Vacas en Producción</th>
+                                        <th>Período Lactancia (días)</th>
+                                        <th>Prom. L / Vaca / Día</th>
+                                        <th>Prod. / Vaca Ciclo (L)</th>
+                                        <th>Total Prod. Leche (L)</th>
+                                        <th>Valor / Litro ($)</th>
+                                        <th>Ingresos Leche ($)</th>
+                                        <th>Ingresos ($/Mes)</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tbody-proyeccion-leche"></tbody>
+                            </table>
+                        </div>
+
+                        <p style="font-size: 0.82rem; color: #475569; margin-top: 0.75rem;">
+                            <strong>Observación:</strong> Ajusta vacas en producción, días de lactancia, promedio diario (L/vaca) y valor por litro ($) para simular escenarios por finca o en consolidado.
+                        </p>
                     </div>
                 </div>
             </div>
@@ -1134,6 +1208,7 @@
             loginScreen.style.display = 'none';
             appContainer.style.display = 'block';
             if (window.cargarHato) window.cargarHato();
+            if (window.cargarLecheria) window.cargarLecheria();
             if (window.cargarModulosERP) window.cargarModulosERP();
             cargarBibliotecaDocumentos();
         }
@@ -1180,7 +1255,8 @@
 
             if (tabId === 'documentos') cargarBibliotecaDocumentos();
             if (tabId === 'bitacora') window.cargarBitacoraGeneral();
-            if (['lecheria', 'palma', 'operaciones', 'finanzas'].includes(tabId) && window.cargarModulosERP) {
+            if (tabId === 'lecheria' && window.cargarLecheria) window.cargarLecheria();
+            if (['palma', 'operaciones', 'finanzas'].includes(tabId) && window.cargarModulosERP) {
                 window.cargarModulosERP();
             }
         };
@@ -1206,6 +1282,7 @@
             }
 
             if (window.cargarHato) window.cargarHato();
+            if (window.cargarLecheria) window.cargarLecheria();
             if (window.cargarModulosERP) window.cargarModulosERP();
             if (document.getElementById('tab-bitacora').classList.contains('active')) {
                 window.cargarBitacoraGeneral();
@@ -1406,6 +1483,7 @@
 
     <script type="module" src="js/hato.js?v=124"></script>
     <script src="js/online-sync.js"></script>
+    <script type="module" src="js/lecheria.js?v=100"></script>
     <script type="module" src="js/modulos-erp.js"></script>
 
     <!-- MOTOR DE SIMULACIÓN DE PLANIFICACIÓN BOVINA -->
