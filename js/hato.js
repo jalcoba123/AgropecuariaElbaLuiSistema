@@ -35,11 +35,25 @@ let unsubscribeHato = null;
 let unsubscribeLotes = null;
 let unsubscribeVacunas = null;
 
+function esperarDbHato(maxIntentos = 50) {
+    return new Promise((resolve) => {
+        if (window.db) return resolve(window.db);
+        let intentos = 0;
+        const timer = setInterval(() => {
+            if (window.db || ++intentos >= maxIntentos) {
+                clearInterval(timer);
+                resolve(window.db || null);
+            }
+        }, 150);
+    });
+}
+
 // ==========================================
 // 📜 HELPER DE BITÁCORA (ONLINE + COLA OFFLINE)
 // ==========================================
 function registrarBitacoraHato(finca, tipo, descripcion) {
-    const fincaFinal = (!finca || finca === 'Global') ? 'Agua Clara' : finca;
+    const fincaActiva = typeof window.obtenerFincaActual === 'function' ? window.obtenerFincaActual() : '';
+    const fincaFinal = finca || (fincaActiva && fincaActiva !== 'Global' ? fincaActiva : 'Sin finca');
     if (navigator.onLine && typeof window.registrarEnBitacora === 'function') {
         window.registrarEnBitacora(fincaFinal, tipo, descripcion);
     } else {
@@ -130,40 +144,55 @@ function actualizarTableroManga() {
 
     let conteoCat = {};
     let conteoLote = {};
-    tablaFaenaUi.innerHTML = '';
-    
+
     if (window.faenaActualLista.length === 0) {
-        tablaFaenaUi.innerHTML = `<tr><td colspan="6" style="padding: 15px; text-align: center; color: #94a3b8;">No se han pasado animales por la manga en esta sesión.</td></tr>`;
-        desgloseCatUi.innerHTML = '<em>Sin lecturas aún.</em>';
-        desgloseLoteUi.innerHTML = '<em>Sin lecturas aún.</em>';
+        if (tablaFaenaUi) {
+            tablaFaenaUi.innerHTML = `<tr><td colspan="6" style="padding: 15px; text-align: center; color: #94a3b8;">No se han pasado animales por la manga en esta sesión.</td></tr>`;
+        }
+        if (desgloseCatUi) desgloseCatUi.innerHTML = '<em>Sin lecturas aún.</em>';
+        if (desgloseLoteUi) desgloseLoteUi.innerHTML = '<em>Sin lecturas aún.</em>';
         return;
     }
 
-    window.faenaActualLista.slice().reverse().forEach((item, index) => {
-        const cat = item.categoria || 'N/D';
-        const lote = item.lote || 'General';
+    if (tablaFaenaUi) {
+        tablaFaenaUi.innerHTML = '';
+        window.faenaActualLista.slice().reverse().forEach((item, index) => {
+            const cat = item.categoria || 'N/D';
+            const lote = item.lote || 'General';
 
-        conteoCat[cat] = (conteoCat[cat] || 0) + 1;
-        conteoLote[lote] = (conteoLote[lote] || 0) + 1;
+            conteoCat[cat] = (conteoCat[cat] || 0) + 1;
+            conteoLote[lote] = (conteoLote[lote] || 0) + 1;
 
-        const idxInverso = window.faenaActualLista.length - index;
+            const idxInverso = window.faenaActualLista.length - index;
 
-        tablaFaenaUi.innerHTML += `
-            <tr>
-                <td style="padding: 8px; border-bottom: 1px solid #e2e8f0; font-weight: bold; color: #64748b;">${idxInverso}</td>
-                <td style="padding: 8px; border-bottom: 1px solid #e2e8f0;"><strong>${item.arete}</strong></td>
-                <td style="padding: 8px; border-bottom: 1px solid #e2e8f0;">${cat}</td>
-                <td style="padding: 8px; border-bottom: 1px solid #e2e8f0;">${lote}</td>
-                <td style="padding: 8px; border-bottom: 1px solid #e2e8f0; font-weight: 600; color: #0369a1;">${item.accionAplicada}</td>
-                <td style="padding: 8px; border-bottom: 1px solid #e2e8f0; text-align: center;">
-                    <button onclick="abrirFicha('${item.id}')" style="background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; padding: 2px 6px; border-radius: 4px; cursor: pointer;">👁️</button>
-                </td>
-            </tr>
-        `;
-    });
+            tablaFaenaUi.innerHTML += `
+                <tr>
+                    <td style="padding: 8px; border-bottom: 1px solid #e2e8f0; font-weight: bold; color: #64748b;">${idxInverso}</td>
+                    <td style="padding: 8px; border-bottom: 1px solid #e2e8f0;"><strong>${item.arete}</strong></td>
+                    <td style="padding: 8px; border-bottom: 1px solid #e2e8f0;">${cat}</td>
+                    <td style="padding: 8px; border-bottom: 1px solid #e2e8f0;">${lote}</td>
+                    <td style="padding: 8px; border-bottom: 1px solid #e2e8f0; font-weight: 600; color: #0369a1;">${item.accionAplicada}</td>
+                    <td style="padding: 8px; border-bottom: 1px solid #e2e8f0; text-align: center;">
+                        <button onclick="abrirFicha('${item.id}')" style="background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; padding: 2px 6px; border-radius: 4px; cursor: pointer;">👁️</button>
+                    </td>
+                </tr>
+            `;
+        });
+    } else {
+        window.faenaActualLista.forEach((item) => {
+            const cat = item.categoria || 'N/D';
+            const lote = item.lote || 'General';
+            conteoCat[cat] = (conteoCat[cat] || 0) + 1;
+            conteoLote[lote] = (conteoLote[lote] || 0) + 1;
+        });
+    }
 
-    desgloseCatUi.innerHTML = Object.entries(conteoCat).map(([c, n]) => `<div><strong>${c}:</strong> ${n}</div>`).join('');
-    desgloseLoteUi.innerHTML = Object.entries(conteoLote).map(([l, n]) => `<div><strong>${l}:</strong> ${n}</div>`).join('');
+    if (desgloseCatUi) {
+        desgloseCatUi.innerHTML = Object.entries(conteoCat).map(([c, n]) => `<div><strong>${c}:</strong> ${n}</div>`).join('');
+    }
+    if (desgloseLoteUi) {
+        desgloseLoteUi.innerHTML = Object.entries(conteoLote).map(([l, n]) => `<div><strong>${l}:</strong> ${n}</div>`).join('');
+    }
 }
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -284,12 +313,15 @@ window.cambiarModuloHato = function(evento, idModulo) {
         btn.style.border = '1px solid #cbd5e1';
     });
 
-    document.getElementById(idModulo).style.display = 'block';
+    const destino = document.getElementById(idModulo);
+    if (destino) destino.style.display = 'block';
 
     const btnActivo = evento.currentTarget;
-    btnActivo.style.background = '#0f172a';
-    btnActivo.style.color = 'white';
-    btnActivo.style.border = 'none';
+    if (btnActivo) {
+        btnActivo.style.background = '#0f172a';
+        btnActivo.style.color = 'white';
+        btnActivo.style.border = 'none';
+    }
 
     if (idModulo === 'subtab-lector') {
         const inputLector = document.getElementById('rfid-scanner-input');
@@ -310,7 +342,8 @@ window.toggleAllCheckboxes = function(source) {
 };
 
 window.aplicarFiltroHato = function() {
-    const filtroSelect = document.getElementById('filtro-categoria').value;
+    const filtroSelect = document.getElementById('filtro-categoria');
+    const filtroValor = filtroSelect ? filtroSelect.value : 'Todos';
     const inputBusqueda = document.getElementById('buscador-hato');
     const textoBusqueda = inputBusqueda ? inputBusqueda.value.toUpperCase() : "";
     const filas = document.querySelectorAll('#tabla-hato-body tr');
@@ -324,12 +357,12 @@ window.aplicarFiltroHato = function() {
 
         let mostrar = false;
 
-        if (filtroSelect === 'Todos' && estado !== 'Baja (Vendido/Muerto)') mostrar = true;
-        else if (filtroSelect === 'Bajas' && estado === 'Baja (Vendido/Muerto)') mostrar = true;
-        else if (filtroSelect === 'Becerros' && cat.includes('Becerr') && estado !== 'Baja (Vendido/Muerto)') mostrar = true;
-        else if (filtroSelect === 'Mautes' && cat.includes('Maut') && estado !== 'Baja (Vendido/Muerto)') mostrar = true;
-        else if (filtroSelect === 'Vacas' && cat.includes('Vaca') && estado !== 'Baja (Vendido/Muerto)') mostrar = true;
-        else if (filtroSelect === 'Gestantes' && estado === 'Gestante') mostrar = true;
+        if (filtroValor === 'Todos' && estado !== 'Baja (Vendido/Muerto)') mostrar = true;
+        else if (filtroValor === 'Bajas' && estado === 'Baja (Vendido/Muerto)') mostrar = true;
+        else if (filtroValor === 'Becerros' && cat.includes('Becerr') && estado !== 'Baja (Vendido/Muerto)') mostrar = true;
+        else if (filtroValor === 'Mautes' && cat.includes('Maut') && estado !== 'Baja (Vendido/Muerto)') mostrar = true;
+        else if (filtroValor === 'Vacas' && cat.includes('Vaca') && estado !== 'Baja (Vendido/Muerto)') mostrar = true;
+        else if (filtroValor === 'Gestantes' && estado === 'Gestante') mostrar = true;
 
         if (mostrar && textoBusqueda !== "") {
             if (arete.indexOf(textoBusqueda) === -1) {
@@ -353,6 +386,7 @@ window.aplicarFiltroHato = function() {
 // ==========================================
 window.exportarExcel = function(tablaId, nombreArchivo) {
     let tabla = document.getElementById(tablaId);
+    if (!tabla) return;
     let filas = tabla.querySelectorAll('tr');
     let csv = [];
     
@@ -387,12 +421,19 @@ window.importarCSV = function(event) {
     const file = event.target.files[0];
     if (!file) return;
 
+    const fincaActiva = window.obtenerFincaActual();
+    if (fincaActiva !== 'Agua Clara' && fincaActiva !== 'El Sur') {
+        notificar("Selecciona Agua Clara o El Sur (no Consolidado) antes de importar un CSV.", "error");
+        event.target.value = '';
+        return;
+    }
+    const fincaDestino = fincaActiva;
+
     const reader = new FileReader();
     reader.onload = async function(e) {
         const text = e.target.result;
         const lineas = text.split('\n');
         let contador = 0;
-        const fincaDestino = window.obtenerFincaActual() === 'Global' ? 'Agua Clara' : window.obtenerFincaActual();
         
         const batch = writeBatch(window.db);
         
@@ -430,9 +471,9 @@ window.importarCSV = function(event) {
                 registrarBitacoraHato(
                     fincaDestino,
                     'Inventario',
-                    `Importación masiva CSV: ${contador} animales incorporados al inventario`
+                    `Importación masiva CSV (${fincaDestino}): ${contador} animales incorporados al inventario`
                 );
-                notificar(`Importación exitosa: ${contador} animales registrados.`, "exito");
+                notificar(`Importación exitosa en ${fincaDestino}: ${contador} animales registrados.`, "exito");
             } catch (err) {
                 notificar("Error al importar: " + err.message, "error");
             } finally {
@@ -751,13 +792,14 @@ window.cargarHato = function() {
 
             if (!esBaja) {
                 total++;
-                if (a.categoria.includes("Maute") || a.categoria.includes("Mauta")) mautes++;
+                if (a.categoria && (a.categoria.includes("Maute") || a.categoria.includes("Mauta"))) mautes++;
                 if (a.estado === "Gestante") gestantes++;
                 if (!saludActual.includes("Sano")) conteoSalud[saludActual] = (conteoSalud[saludActual] || 0) + 1;
             }
 
             const escapeStr = (val) => String(val || '').replace(/'/g, "\\'");
             const nombreLote = a.lote ? a.lote : 'General';
+            const etiquetaFinca = a.finca || 'Sin finca';
 
             let textoTiempo = `<span style="color:#94a3b8;">-</span>`;
             
@@ -773,7 +815,7 @@ window.cargarHato = function() {
                     else textoTiempo = `Faltan ${diasParaParto} días`;
                 }
             } 
-            else if (a.categoria.includes("Becerr") || a.categoria.includes("Maut")) {
+            else if (a.categoria && (a.categoria.includes("Becerr") || a.categoria.includes("Maut"))) {
                 let fechaNac = a.fechaNacimiento;
                 if (!fechaNac && a.historialPesos && a.historialPesos.length > 0) {
                     fechaNac = a.historialPesos[0].fecha;
@@ -792,9 +834,9 @@ window.cargarHato = function() {
                     </td>
                     <td style="padding: 10px; border-bottom: 1px solid var(--border-light);">
                         <strong>${a.arete}</strong><br>
-                        <span style="font-size: 0.7rem; color: #64748b;">${a.finca} | <strong>Lote: ${nombreLote}</strong></span>
+                        <span style="font-size: 0.7rem; color: #64748b;">${etiquetaFinca} | <strong>Lote: ${nombreLote}</strong></span>
                     </td>
-                    <td style="padding: 10px; border-bottom: 1px solid var(--border-light);">${a.categoria}</td>
+                    <td style="padding: 10px; border-bottom: 1px solid var(--border-light);">${a.categoria || ''}</td>
                     <td style="padding: 10px; border-bottom: 1px solid var(--border-light); font-size: 0.8rem;">${textoTiempo}</td>
                     <td style="padding: 10px; border-bottom: 1px solid var(--border-light); font-weight: 600; color: ${esBaja ? '#475569' : 'inherit'};">${saludActual}</td>
                     <td style="padding: 10px; border-bottom: 1px solid var(--border-light); text-align: center; white-space: nowrap;">
@@ -812,13 +854,17 @@ window.cargarHato = function() {
         if (document.getElementById('kpi-mautes')) document.getElementById('kpi-mautes').innerText = mautes;
         if (document.getElementById('kpi-gestantes')) document.getElementById('kpi-gestantes').innerText = gestantes;
 
-        let htmlAlertas = "";
-        let totalEnfermos = 0;
-        for (const [enfermedad, cantidad] of Object.entries(conteoSalud)) {
-            htmlAlertas += `<span style="background: white; padding: 6px 12px; border-radius: 20px; border: 1px solid #fecdd3; color: #be123c; font-weight: 600;">${enfermedad}: ${cantidad}</span>`;
-            totalEnfermos += cantidad;
+        if (panelAlertas) {
+            let htmlAlertas = "";
+            let totalEnfermos = 0;
+            for (const [enfermedad, cantidad] of Object.entries(conteoSalud)) {
+                htmlAlertas += `<span style="background: white; padding: 6px 12px; border-radius: 20px; border: 1px solid #fecdd3; color: #be123c; font-weight: 600;">${enfermedad}: ${cantidad}</span>`;
+                totalEnfermos += cantidad;
+            }
+            panelAlertas.innerHTML = totalEnfermos === 0
+                ? `<span style="background: #ecfdf5; padding: 6px 12px; border-radius: 20px; border: 1px solid #a7f3d0; color: #047857; font-weight: 600;">🟢 Hato 100% Sano.</span>`
+                : htmlAlertas;
         }
-        panelAlertas.innerHTML = totalEnfermos === 0 ? `<span style="background: #ecfdf5; padding: 6px 12px; border-radius: 20px; border: 1px solid #a7f3d0; color: #047857; font-weight: 600;">🟢 Hato 100% Sano.</span>` : htmlAlertas;
 
         if (window.datosHatoCache.length === 0) tabla.innerHTML = `<tr><td colspan="6" style="padding: 15px; text-align: center; color: var(--text-muted);">Sin animales registrados.</td></tr>`;
     }, (err) => console.error("Error Firestore:", err));
@@ -853,7 +899,7 @@ window.abrirFicha = async function(idDoc) {
 
         document.getElementById('f-arete').innerText = a.arete || 'N/D';
         document.getElementById('f-categoria').innerText = a.categoria || 'N/D';
-        document.getElementById('f-finca-tag').innerText = `FINCA: ${(a.finca || 'Agua Clara').toUpperCase()}`;
+        document.getElementById('f-finca-tag').innerText = `FINCA: ${(a.finca || 'SIN FINCA').toUpperCase()}`;
         document.getElementById('f-padre').innerText = a.padre || 'N/D';
         document.getElementById('f-madre').innerText = a.madre || 'N/D';
         document.getElementById('f-estado').innerText = a.estado || 'Activo';
@@ -899,7 +945,7 @@ window.abrirFicha = async function(idDoc) {
             });
         }
 
-        if (ultimaFechaClave && a.estado !== 'Gestante' && a.estado !== 'Baja (Vendido/Muerto)' && a.categoria.includes("Vaca")) {
+        if (ultimaFechaClave && a.estado !== 'Gestante' && a.estado !== 'Baja (Vendido/Muerto)' && a.categoria && a.categoria.includes("Vaca")) {
             const diffDias = Math.floor((new Date() - new Date(ultimaFechaClave)) / (1000 * 60 * 60 * 24));
             if (diffDias >= 730) alertaRepro.innerHTML += `<div style="background: #fee2e2; border: 1px solid #fca5a5; color: #991b1b; padding: 12px; border-radius: 8px; margin-bottom: 10px; font-weight: bold; font-size: 0.85rem;">⚠️ ALERTA INFERTILIDAD: ${diffDias} días vacía.</div>`;
         }
@@ -994,11 +1040,12 @@ if (formNuevoRepro) {
                 detalle = 'Parto exitoso.';
                 const areteCria = document.getElementById('r-cria-arete').value.trim();
                 if (areteCria) {
+                    const fincaCria = data.finca || (window.obtenerFincaActual() !== 'Global' ? window.obtenerFincaActual() : 'Sin finca');
                     const sexoCria = document.getElementById('r-cria-sexo').value;
                     detalle += ` Nacimiento Cría: ${areteCria}.`;
                     logExtra = ` - Cría registrada: Arete #${areteCria} (${sexoCria})`;
                     await addDoc(collection(window.db, "animales"), {
-                        finca: data.finca || window.obtenerFincaActual(), arete: areteCria, categoria: sexoCria,
+                        finca: fincaCria, arete: areteCria, categoria: sexoCria,
                         peso: document.getElementById('r-cria-peso').value || null, fechaNacimiento: fecha, lote: 'General',
                         historialPesos: document.getElementById('r-cria-peso').value ? [{ fecha: fecha, peso: document.getElementById('r-cria-peso').value, dispositivo: ID_DISPOSITIVO }] : [],
                         historialReproductivo: [], padre: 'N/D', madre: data.arete || 'N/D', estado: 'Activo/Creciendo', salud: "🟢 Sano", fechaRegistro: serverTimestamp()
@@ -1326,7 +1373,7 @@ function actualizarDashboard(datosHato) {
             }
         }
 
-        if (a.categoria.includes("Becerr")) {
+        if (a.categoria && a.categoria.includes("Becerr")) {
             let fechaNac = a.fechaNacimiento;
             if (!fechaNac && a.historialPesos && a.historialPesos.length > 0) fechaNac = a.historialPesos[0].fecha;
             
@@ -1345,10 +1392,10 @@ function actualizarDashboard(datosHato) {
         }
     });
 
-    countSecado.innerText = numSecado;
+    if (countSecado) countSecado.innerText = numSecado;
     listSecado.innerHTML = numSecado > 0 ? htmlSecado : `<p style="color: var(--text-muted); font-style: italic; padding: 10px 0;">🟢 Ninguna vaca próxima a secado/parto.</p>`;
     
-    countDestete.innerText = numDestete;
+    if (countDestete) countDestete.innerText = numDestete;
     listDestete.innerHTML = numDestete > 0 ? htmlDestete : `<p style="color: var(--text-muted); font-style: italic; padding: 10px 0;">🟢 Ningún becerro ha alcanzado la edad de destete aún.</p>`;
 }
 
@@ -1382,13 +1429,14 @@ window.addEventListener('online', async () => {
 // ==========================================
 // 🚀 INICIALIZACIÓN FINAL DEL ERP
 // ==========================================
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     const btnAddVacuna = document.getElementById('btn-add-vacuna');
     if (btnAddVacuna) {
         btnAddVacuna.onclick = window.agregarVacunaNueva;
     }
 
-    if (window.db) {
+    const db = await esperarDbHato();
+    if (db) {
         if (window.cargarListaLotes) window.cargarListaLotes();
         if (window.cargarListaVacunas) window.cargarListaVacunas();
     }
