@@ -1110,7 +1110,7 @@ const formAnimal = document.getElementById('form-animal');
 if (formAnimal) {
     formAnimal.onsubmit = async (e) => {
         e.preventDefault();
-        
+
         if (!window.db) {
             notificar("Base de datos no inicializada.", "error");
             return;
@@ -1125,11 +1125,16 @@ if (formAnimal) {
         };
 
         let btn = formAnimal.querySelector('button[type="submit"]');
-        if (btn) btn.disabled = true;
+        if (btn) {
+            btn.innerText = "Guardando...";
+            btn.disabled = true;
+        }
 
         try {
             const fincaVal = obtenerValor('a-finca-select');
             const areteVal = obtenerValor('a-arete').trim();
+            if (!areteVal) throw new Error("Ingrese el número de arete o ID.");
+
             const categoriaVal = obtenerValor('a-categoria');
             const nacimientoVal = obtenerValor('a-nacimiento') || null;
             const pesoInput = obtenerValor('a-peso').trim();
@@ -1137,7 +1142,7 @@ if (formAnimal) {
             const padreVal = obtenerValor('a-padre').trim() || 'N/D';
             const madreVal = obtenerValor('a-madre').trim() || 'N/D';
             const estadoVal = obtenerValor('a-estado');
-            
+
             const loteInput = document.getElementById('a-lote');
             const loteValor = (loteInput && loteInput.value.trim() !== '') ? loteInput.value.trim() : 'General';
 
@@ -1145,7 +1150,7 @@ if (formAnimal) {
                 finca: fincaVal,
                 arete: areteVal,
                 categoria: categoriaVal,
-                lote: loteValor, 
+                lote: loteValor,
                 peso: pesoValor,
                 fechaNacimiento: nacimientoVal,
                 historialPesos: pesoValor ? [{ fecha: new Date().toISOString().split('T')[0], peso: pesoValor, dispositivo: ID_DISPOSITIVO }] : [],
@@ -1157,12 +1162,16 @@ if (formAnimal) {
                 fechaRegistro: serverTimestamp()
             };
 
-            if (navigator.onLine) {
+            try {
                 await addDoc(collection(window.db, "animales"), nuevoAnimal);
-            } else {
-                let pendientesOffline = JSON.parse(localStorage.getItem('elbalui_pendientes_offline') || '[]');
-                pendientesOffline.push(nuevoAnimal);
-                localStorage.setItem('elbalui_pendientes_offline', JSON.stringify(pendientesOffline));
+            } catch (firestoreErr) {
+                if (!navigator.onLine) {
+                    const pendientesOffline = JSON.parse(localStorage.getItem('elbalui_pendientes_offline') || '[]');
+                    pendientesOffline.push(nuevoAnimal);
+                    localStorage.setItem('elbalui_pendientes_offline', JSON.stringify(pendientesOffline));
+                } else {
+                    throw firestoreErr;
+                }
             }
 
             registrarBitacoraHato(
@@ -1171,17 +1180,21 @@ if (formAnimal) {
                 `Nuevo animal registrado: Arete #${areteVal} (${categoriaVal}) - Lote: ${loteValor}${pesoValor ? ' - Peso: ' + pesoValor + ' kg' : ''}`
             );
 
-            notificar(`Animal #${areteVal} guardado correctamente.`, "exito");
-            formAnimal.reset(); 
+            notificar(
+                navigator.onLine
+                    ? `Animal #${areteVal} guardado correctamente.`
+                    : `Animal #${areteVal} guardado sin conexión (pendiente de sincronizar).`,
+                "exito"
+            );
+            formAnimal.reset();
             document.getElementById('modal-animal').style.display = 'none';
-            if (window.cargarHato) window.cargarHato();
 
-        } catch (err) { 
-            notificar(err.message, "error"); 
-        } finally { 
+        } catch (err) {
+            notificar(err.message, "error");
+        } finally {
             if (btn) {
-                btn.innerText = "Guardar Animal"; 
-                btn.disabled = false; 
+                btn.innerText = "Guardar Animal";
+                btn.disabled = false;
             }
         }
     };
