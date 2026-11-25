@@ -38,10 +38,106 @@
         .lech-subtab-btn.active { background: #0369a1; color: #ffffff; border-color: #0369a1; }
         .lech-proy-input { width: 82px; padding: 0.35rem 0.45rem; border: 1px solid #cbd5e1; border-radius: 0.375rem; font-size: 0.82rem; text-align: right; font-weight: 600; background: #ffffff; }
 
+        /* BARRA DE MODO PRUEBA */
+        #test-mode-banner {
+            display: none;
+            background: #fef3c7;
+            color: #92400e;
+            border-bottom: 2px solid #f59e0b;
+            padding: 8px 16px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            text-align: center;
+        }
+        #test-mode-banner button {
+            margin-left: 10px;
+            background: #dc2626;
+            color: #ffffff;
+            border: none;
+            border-radius: 6px;
+            padding: 4px 10px;
+            font-size: 0.78rem;
+            font-weight: 700;
+            cursor: pointer;
+        }
+        .header-util-btn {
+            background: rgba(255,255,255,0.14);
+            border: 1px solid rgba(255,255,255,0.45);
+            color: #ffffff;
+            padding: 5px 10px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+        .header-util-btn.test-on {
+            background: #f59e0b;
+            border-color: #fde68a;
+            color: #0f172a;
+        }
+
+        /* MODO OSCURO */
+        body.modo-oscuro {
+            background: #0b1120 !important;
+            color: #e2e8f0 !important;
+        }
+        body.modo-oscuro #app-container .container > div,
+        body.modo-oscuro #app-container .section-view > div,
+        body.modo-oscuro #app-container .modulo-hato > div > div,
+        body.modo-oscuro #app-container .erp-table-wrap,
+        body.modo-oscuro #app-container .erp-form-grid,
+        body.modo-oscuro #app-container .erp-kpi-card {
+            background: #111827 !important;
+            color: #e2e8f0 !important;
+            border-color: #1f2937 !important;
+        }
+        body.modo-oscuro #app-container .erp-kpi-card.green { background: #064e3b !important; color: #d1fae5 !important; border-color: #047857 !important; }
+        body.modo-oscuro #app-container .erp-kpi-card.blue { background: #1e3a8a !important; color: #dbeafe !important; border-color: #1d4ed8 !important; }
+        body.modo-oscuro #app-container .erp-kpi-card.amber { background: #78350f !important; color: #fef3c7 !important; border-color: #b45309 !important; }
+        body.modo-oscuro #app-container .erp-kpi-card.red { background: #7f1d1d !important; color: #fee2e2 !important; border-color: #b91c1c !important; }
+        body.modo-oscuro #app-container table,
+        body.modo-oscuro #app-container th,
+        body.modo-oscuro #app-container td {
+            background: #111827 !important;
+            color: #e2e8f0 !important;
+            border-color: #1f2937 !important;
+        }
+        body.modo-oscuro #app-container th {
+            background: #1e293b !important;
+            color: #cbd5e1 !important;
+        }
+        body.modo-oscuro #app-container input,
+        body.modo-oscuro #app-container select,
+        body.modo-oscuro #app-container textarea {
+            background: #0f172a !important;
+            color: #f8fafc !important;
+            border-color: #334155 !important;
+        }
+        body.modo-oscuro #app-container .cat-chip {
+            background: #111827 !important;
+            color: #e2e8f0 !important;
+            border-color: #334155 !important;
+        }
+        body.modo-oscuro #app-container .cat-chip.active {
+            background: #15803d !important;
+            color: #ffffff !important;
+            border-color: #16a34a !important;
+        }
+        body.modo-oscuro #modal-animal > div,
+        body.modo-oscuro #modal-masivo > div,
+        body.modo-oscuro #modal-subir-doc > div,
+        body.modo-oscuro #modal-novedad > div,
+        body.modo-oscuro #modal-ficha > div {
+            background: #111827 !important;
+            color: #f1f5f9 !important;
+            border: 1px solid #334155 !important;
+        }
+
         @media print {
             body { background: white; margin: 0; padding: 0; }
             header, .category-nav, .finca-banner, .tabs-hato-container,
-            .btn-action, #offline-status-bar, #modal-animal, #modal-ficha, #modal-novedad, #login-screen,
+            .btn-action, #offline-status-bar, #test-mode-banner, #modal-animal, #modal-ficha, #modal-novedad, #login-screen,
             .finca-toggle, button[onclick="window.print()"] { display: none !important; }
             .section-view, #app-container, .modulo-hato { display: block !important; box-shadow: none !important; border: none !important; }
             #tab-dashboard, #tab-lecheria, #tab-palma, #tab-operaciones, #tab-finanzas, #tab-documentos, #tab-bitacora,
@@ -58,6 +154,12 @@
     <!-- BARRA DE ESTADO OFFLINE / ONLINE -->
     <div id="offline-status-bar" style="background: #10b981; color: white; text-align: center; padding: 6px 12px; font-size: 0.85rem; font-weight: bold; transition: background 0.3s ease;">
         🟢 Conectado - Sincronizado en Nube (Starlink / Datos)
+    </div>
+
+    <!-- BANNER DE MODO PRUEBA (TEST) -->
+    <div id="test-mode-banner">
+        🧪 MODO PRUEBA ACTIVO: Los registros que crees se marcarán como TEST para no contaminar la producción.
+        <button type="button" onclick="window.purgarDatosTest()">🗑️ Purgar datos TEST</button>
     </div>
 
     <!-- PANTALLA DE LOGIN -->
@@ -98,7 +200,11 @@
                 <button class="finca-btn" onclick="setFinca('El Sur')">☀️ El Sur</button>
                 <button class="finca-btn" onclick="setFinca('Global')">🌎 Consolidado</button>
             </div>
-            <button id="btn-logout" style="background: transparent; border: 1px solid white; color: white; padding: 5px 10px; border-radius: 6px; cursor: pointer; margin-left: 10px;">Salir</button>
+            <div style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap;">
+                <button type="button" id="btn-toggle-test" class="header-util-btn" onclick="window.toggleModoTest()" title="Activar o desactivar modo de pruebas">🧪 TEST: OFF</button>
+                <button type="button" id="btn-toggle-dark" class="header-util-btn" onclick="window.toggleModoOscuro()" title="Cambiar entre modo claro y oscuro">🌙 Oscuro</button>
+                <button id="btn-logout" style="background: transparent; border: 1px solid white; color: white; padding: 5px 10px; border-radius: 6px; cursor: pointer;">Salir</button>
+            </div>
         </header>
 
         <!-- BARRA DE NAVEGACIÓN PRINCIPAL DE MÓDULOS -->
@@ -124,6 +230,22 @@
 
             <!-- MÓDULO 1: TORRE DE CONTROL -->
             <div id="tab-dashboard" class="section-view active">
+                <!-- KPIs ZOOTÉCNICOS REALES DEL HATO -->
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; margin-bottom: 20px;">
+                    <div style="background: white; padding: 14px; border-radius: 10px; border: 1px solid var(--border-light);">
+                        <div style="font-size: 0.72rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase;">% Mortalidad</div>
+                        <div id="kpi-mortalidad" style="font-size: 1.5rem; font-weight: 800; color: #dc2626;">0.0%</div>
+                    </div>
+                    <div style="background: white; padding: 14px; border-radius: 10px; border: 1px solid var(--border-light);">
+                        <div style="font-size: 0.72rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase;">% Natalidad</div>
+                        <div id="kpi-natalidad" style="font-size: 1.5rem; font-weight: 800; color: #15803d;">0.0%</div>
+                    </div>
+                    <div style="background: white; padding: 14px; border-radius: 10px; border: 1px solid var(--border-light);">
+                        <div style="font-size: 0.72rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase;">GDP Promedio</div>
+                        <div id="kpi-gdp-promedio" style="font-size: 1.5rem; font-weight: 800; color: #0369a1;">0.000 kg/d</div>
+                    </div>
+                </div>
+
                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;">
                     <div style="display: flex; flex-direction: column; gap: 20px;">
                         <div style="background: white; border-radius: 12px; border: 1px solid var(--border-light); padding: 20px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
@@ -216,6 +338,7 @@
                                     <option value="Vacas">Solo Vacas</option>
                                     <option value="Gestantes">Solo Gestantes</option>
                                     <option value="Bajas">☠️ Ver Bajas/Muertes</option>
+                                    <option value="Pruebas">🧪 Solo Registros TEST</option>
                                 </select>
 
                                 <div style="display: flex; gap: 5px; border-left: 2px solid #e2e8f0; padding-left: 10px;">
@@ -822,7 +945,7 @@
 
     <!-- MODALES -->
     <div id="modal-animal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 1000; padding: 20px;">
-        <div style="background: white; padding: 24px; border-radius: 12px; width: 100%; max-width: 450px;">
+        <div style="background: white; padding: 24px; border-radius: 12px; width: 100%; max-width: 450px; max-height: 92vh; overflow-y: auto;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
                 <h3 style="color: var(--green-dark);">Registrar Animal</h3>
                 <button onclick="document.getElementById('modal-animal').style.display='none'" style="background:none; border:none; font-size:1.5rem; cursor:pointer;">×</button>
@@ -834,11 +957,17 @@
                     <div class="form-field"><label>Arete / ID</label><input type="text" id="a-arete" required></div>
                 </div>
 
-                <div class="form-field">
-                    <label>Lote / Potrero Asignado</label>
-                    <select id="a-lote">
-                        <option value="General">👉 General / Sin Asignar</option>
-                    </select>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                    <div class="form-field">
+                        <label>Lote / Potrero Asignado</label>
+                        <select id="a-lote">
+                            <option value="General">👉 General / Sin Asignar</option>
+                        </select>
+                    </div>
+                    <div class="form-field">
+                        <label>Código Chip RFID (Opcional)</label>
+                        <input type="text" id="a-chip-rfid" placeholder="Ej. 982000123456789">
+                    </div>
                 </div>
 
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
@@ -991,6 +1120,14 @@
                     <div id="f-estado" style="font-weight: bold;">--</div>
                 </div>
                 <div style="background: #f8fafc; padding: 8px; border-radius: 6px; border: 1px solid #cbd5e1;">
+                    <span style="color: #64748b; font-weight: bold; font-size: 0.7rem;">LOTE</span>
+                    <div id="f-lote" style="font-weight: bold;">General</div>
+                </div>
+                <div style="background: #f8fafc; padding: 8px; border-radius: 6px; border: 1px solid #cbd5e1;">
+                    <span style="color: #64748b; font-weight: bold; font-size: 0.7rem;">CHIP RFID</span>
+                    <div id="f-chip-rfid" style="font-weight: bold; color: #0369a1;">Sin chip</div>
+                </div>
+                <div style="background: #f8fafc; padding: 8px; border-radius: 6px; border: 1px solid #cbd5e1;">
                     <span style="color: #64748b; font-weight: bold; font-size: 0.7rem;">PADRE</span>
                     <div id="f-padre" style="font-weight: bold;">--</div>
                 </div>
@@ -1008,8 +1145,26 @@
             <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 15px;">
                 <button type="button" onclick="const f=document.getElementById('form-nuevo-repro'); f.style.display=f.style.display==='none'?'block':'none';" style="background: #0ea5e9; color: white; border: none; padding: 6px 10px; border-radius: 6px; cursor: pointer; font-size: 0.8rem; font-weight: bold;">+ Evento Repro / Parto</button>
                 <button type="button" onclick="const f=document.getElementById('form-cambio-categoria'); f.style.display=f.style.display==='none'?'block':'none';" style="background: #64748b; color: white; border: none; padding: 6px 10px; border-radius: 6px; cursor: pointer; font-size: 0.8rem; font-weight: bold;">🔄 Cambiar Categoría</button>
+                <button type="button" onclick="const f=document.getElementById('form-editar-lote-chip'); f.style.display=f.style.display==='none'?'block':'none';" style="background: #0f766e; color: white; border: none; padding: 6px 10px; border-radius: 6px; cursor: pointer; font-size: 0.8rem; font-weight: bold;">📍 Lote & Chip RFID</button>
                 <button type="button" id="btn-show-destete" onclick="const f=document.getElementById('form-destete'); f.style.display=f.style.display==='none'?'block':'none';" style="display:none; background: #eab308; color: white; border: none; padding: 6px 10px; border-radius: 6px; cursor: pointer; font-size: 0.8rem; font-weight: bold;">🏅 Destetar</button>
             </div>
+
+            <!-- FORMULARIO EDITAR LOTE Y CHIP RFID -->
+            <form id="form-editar-lote-chip" style="display: none; background: #f0fdfa; padding: 12px; border-radius: 8px; border: 1px solid #99f6e4; margin-bottom: 15px;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                    <div class="form-field">
+                        <label>Lote / Potrero</label>
+                        <select id="f-lote-select">
+                            <option value="General">👉 General / Sin Asignar</option>
+                        </select>
+                    </div>
+                    <div class="form-field">
+                        <label>Código Chip RFID</label>
+                        <input type="text" id="f-chip-input" placeholder="Ej. 982000123456789">
+                    </div>
+                </div>
+                <button type="submit" class="btn-action" style="width: 100%; margin-top: 8px; background: #0f766e;">Guardar Lote y Chip RFID</button>
+            </form>
 
             <!-- FORMULARIO EVENTO REPRODUCTIVO -->
             <form id="form-nuevo-repro" style="display: none; background: #f0f9ff; padding: 12px; border-radius: 8px; border: 1px solid #bae6fd; margin-bottom: 15px;">
@@ -1106,7 +1261,7 @@
     <!-- CONTENEDOR FLOTANTE DE NOTIFICACIONES TOAST -->
     <div id="toast-container" style="position: fixed; bottom: 20px; right: 20px; z-index: 99999; display: flex; flex-direction: column; gap: 10px;"></div>
 
-    <!-- SCRIPTS DE FIREBASE Y NAVEGACIÓN -->
+    <!-- SCRIPTS DE FIREBASE, MODO TEST / OSCURO Y NAVEGACIÓN -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
         import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
@@ -1163,6 +1318,74 @@
             serverTimestamp
         };
 
+        window.modoTestActivo = localStorage.getItem('elbalui_modo_test') === 'true';
+        window.modoOscuroActivo = localStorage.getItem('elbalui_modo_oscuro') === 'true';
+
+        function aplicarAparienciaModoTest() {
+            const banner = document.getElementById('test-mode-banner');
+            const btn = document.getElementById('btn-toggle-test');
+            if (banner) banner.style.display = window.modoTestActivo ? 'block' : 'none';
+            if (btn) {
+                btn.innerText = window.modoTestActivo ? '🧪 TEST: ON' : '🧪 TEST: OFF';
+                btn.classList.toggle('test-on', window.modoTestActivo);
+            }
+        }
+
+        function aplicarAparienciaModoOscuro() {
+            document.body.classList.toggle('modo-oscuro', window.modoOscuroActivo);
+            const btn = document.getElementById('btn-toggle-dark');
+            if (btn) btn.innerText = window.modoOscuroActivo ? '☀️ Claro' : '🌙 Oscuro';
+        }
+
+        window.toggleModoTest = function() {
+            window.modoTestActivo = !window.modoTestActivo;
+            localStorage.setItem('elbalui_modo_test', String(window.modoTestActivo));
+            aplicarAparienciaModoTest();
+            if (window.cargarHato) window.cargarHato();
+            if (window.mostrarToast) {
+                window.mostrarToast(
+                    window.modoTestActivo ? 'Modo TEST activado.' : 'Modo TEST desactivado.',
+                    window.modoTestActivo ? 'info' : 'exito'
+                );
+            }
+        };
+
+        window.toggleModoOscuro = function() {
+            window.modoOscuroActivo = !window.modoOscuroActivo;
+            localStorage.setItem('elbalui_modo_oscuro', String(window.modoOscuroActivo));
+            aplicarAparienciaModoOscuro();
+        };
+
+        window.purgarDatosTest = async function() {
+            if (!window.db) return;
+            if (!confirm('¿Eliminar permanentemente todos los registros marcados como TEST (esPrueba: true)?')) return;
+            try {
+                const qAnimales = query(collection(window.db, 'animales'), where('esPrueba', '==', true));
+                const snapAnimales = await getDocs(qAnimales);
+                let borrados = 0;
+                for (const docSnap of snapAnimales.docs) {
+                    await deleteDoc(doc(window.db, 'animales', docSnap.id));
+                    borrados++;
+                }
+
+                const qBitacora = query(collection(window.db, 'bitacora_general'), where('esPrueba', '==', true));
+                const snapBitacora = await getDocs(qBitacora);
+                for (const docSnap of snapBitacora.docs) {
+                    await deleteDoc(doc(window.db, 'bitacora_general', docSnap.id));
+                }
+
+                if (window.mostrarToast) window.mostrarToast(`Se purgaron ${borrados} registros TEST.`, 'exito');
+                if (document.getElementById('tab-bitacora').classList.contains('active') && window.cargarBitacoraGeneral) {
+                    window.cargarBitacoraGeneral();
+                }
+            } catch (err) {
+                if (window.mostrarToast) window.mostrarToast('Error purgando datos TEST: ' + err.message, 'error');
+            }
+        };
+
+        aplicarAparienciaModoTest();
+        aplicarAparienciaModoOscuro();
+
         window.mostrarToast = function(mensaje, tipo = 'exito') {
             const contenedor = document.getElementById('toast-container');
             if (!contenedor) return;
@@ -1209,6 +1432,8 @@
         function abrirSistema() {
             loginScreen.style.display = 'none';
             appContainer.style.display = 'block';
+            aplicarAparienciaModoTest();
+            aplicarAparienciaModoOscuro();
             if (window.cargarHato) window.cargarHato();
             if (window.cargarLecheria) window.cargarLecheria();
             if (window.cargarModulosERP) window.cargarModulosERP();
@@ -1320,6 +1545,7 @@
                     finca: finca || window.fincaActual || 'Agua Clara',
                     tipo: tipo,
                     descripcion: descripcion,
+                    esPrueba: Boolean(window.modoTestActivo),
                     fechaSubida: serverTimestamp(),
                     usuario: usuarioActual
                 });
@@ -1364,11 +1590,15 @@
                     if (data.tipo === 'Agronomia') badgeColor = '#16a34a';
                     if (data.tipo === 'Maquinaria') badgeColor = '#b45309';
 
+                    const badgeTest = data.esPrueba
+                        ? ' <span style="background:#fef3c7;color:#92400e;padding:2px 6px;border-radius:4px;font-size:0.7rem;font-weight:700;">TEST</span>'
+                        : '';
+
                     htmlRows += `
                         <tr style="border-bottom: 1px solid #f1f5f9;">
                             <td style="padding: 10px; white-space: nowrap; color: #475569;">${fechaFormateada}</td>
                             <td style="padding: 10px; font-weight: bold; color: #0f172a;">${data.finca || 'Agua Clara'}</td>
-                            <td style="padding: 10px;"><span style="background: ${badgeColor}15; color: ${badgeColor}; padding: 3px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: bold;">${data.tipo}</span></td>
+                            <td style="padding: 10px;"><span style="background: ${badgeColor}15; color: ${badgeColor}; padding: 3px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: bold;">${data.tipo}</span>${badgeTest}</td>
                             <td style="padding: 10px; color: #1e293b;">${data.descripcion}</td>
                             <td style="padding: 10px; color: #64748b; font-size: 0.8rem;">${data.usuario}</td>
                         </tr>
@@ -1483,7 +1713,7 @@
         });
     </script>
 
-    <script type="module" src="js/hato.js?v=124"></script>
+    <script type="module" src="js/hato.js?v=125"></script>
     <script src="js/online-sync.js"></script>
     <script type="module" src="js/lecheria.js?v=100"></script>
     <script type="module" src="js/modulos-erp.js"></script>
@@ -1500,6 +1730,7 @@
 
                     snap.forEach((docSnap) => {
                         const a = docSnap.data();
+                        if (a.esPrueba) return;
                         if (a.estado === 'Baja (Vendido/Muerto)') return;
                         if (fincaActiva !== 'Global' && a.finca && a.finca !== fincaActiva) return;
                         if (['Vaca Ordeño', 'Vaca Seca / Escampa', 'Novilla'].includes(a.categoria)) {
