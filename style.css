@@ -36,15 +36,15 @@ body { background-color: var(--bg-canvas); color: var(--text-dark); padding-bott
 }
 
 /* PANTALLA LOGIN */
-.login-container { display: flex; height: 100vh; justify-content: center; align-items: center; background: var(--bg-canvas); padding: 20px; }
+.login-container { display: flex; min-height: 100vh; justify-content: center; align-items: center; background: var(--bg-canvas); padding: 20px; }
 .login-box { background: white; padding: 40px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 100%; max-width: 400px; text-align: center; }
 
-header { background-color: var(--green-header); color: white; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
+header { background-color: var(--green-header); color: white; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
 .brand { display: flex; align-items: center; gap: 12px; }
 .brand-title { font-size: 1.1rem; font-weight: 700; line-height: 1.1; }
 .brand-sub { font-size: 0.75rem; color: #a7f3d0; }
 
-.finca-toggle { display: flex; background: rgba(0,0,0,0.3); border-radius: 20px; padding: 3px; }
+.finca-toggle { display: flex; background: rgba(0,0,0,0.3); border-radius: 20px; padding: 3px; flex-wrap: wrap; }
 .finca-btn { border: none; background: transparent; color: #a7f3d0; padding: 6px 14px; font-size: 0.8rem; font-weight: 600; border-radius: 16px; cursor: pointer; transition: all 0.2s; }
 .finca-btn.active { background-color: var(--green-primary); color: white; }
 
@@ -64,3 +64,26 @@ header { background-color: var(--green-header); color: white; padding: 12px 20px
 
 .section-view { display: none; }
 .section-view.active { display: block; }
+
+/* AJUSTES DE MODO OSCURO PARA ELEMENTOS GLOBALES */
+body.modo-oscuro .category-nav {
+    background-color: #0f172a;
+    border-bottom-color: #1f2937;
+}
+body.modo-oscuro .login-container {
+    background-color: #0b1120;
+}
+body.modo-oscuro .login-box {
+    background-color: #111827;
+    color: #f1f5f9;
+    border: 1px solid #1f2937;
+}
+body.modo-oscuro .form-field label {
+    color: #cbd5e1;
+}
+
+@media (max-width: 640px) {
+    header { padding: 10px 14px; }
+    .finca-btn { padding: 5px 10px; font-size: 0.75rem; }
+    .login-box { padding: 28px 20px; }
+}
