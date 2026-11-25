@@ -33,8 +33,17 @@ function formatearMoneda(valor) {
 
 function filtrarPorFinca(lista) {
     const finca = obtenerFincaActiva();
-    if (finca === 'Global') return lista;
-    return lista.filter(item => (item.finca || 'Agua Clara') === finca);
+    return lista.filter(item => {
+        if (Boolean(item.esPrueba) !== Boolean(window.modoTestActivo)) return false;
+        if (finca === 'Global') return true;
+        return (item.finca || 'Agua Clara') === finca;
+    });
+}
+
+function renderBadgeTest(item) {
+    return item.esPrueba
+        ? ' <span style="background:#fef3c7;color:#92400e;padding:2px 6px;border-radius:4px;font-size:0.7rem;font-weight:700;">TEST</span>'
+        : '';
 }
 
 function inicializarFechasFormularios() {
@@ -68,7 +77,7 @@ function renderizarAgronomia() {
         return `
             <tr>
                 <td>${escaparHTML(reg.fecha || '-')}</td>
-                <td>${fincaPrefix}<strong>${escaparHTML(reg.cultivo || '-')}</strong></td>
+                <td>${fincaPrefix}<strong>${escaparHTML(reg.cultivo || '-')}</strong>${renderBadgeTest(reg)}</td>
                 <td>${escaparHTML(reg.lote || '-')}</td>
                 <td>${escaparHTML(reg.labor || '-')}</td>
                 <td>${Number(reg.cantidad) || 0}</td>
@@ -90,8 +99,8 @@ async function manejarSubmitAgronomia(e) {
     const lote = (document.getElementById('agro-lote')?.value || '').trim();
     const cantidad = Number(document.getElementById('agro-cantidad')?.value);
 
-    if (!fecha || !lote || isNaN(cantidad)) {
-        if (window.mostrarToast) window.mostrarToast('Completa fecha, lote y cantidad.', 'error');
+    if (!fecha || !lote || isNaN(cantidad) || cantidad <= 0) {
+        if (window.mostrarToast) window.mostrarToast('Completa fecha, lote y una cantidad mayor a cero.', 'error');
         return;
     }
 
@@ -106,6 +115,7 @@ async function manejarSubmitAgronomia(e) {
             labor,
             lote,
             cantidad,
+            esPrueba: Boolean(window.modoTestActivo),
             fechaCreacion: serverTimestamp()
         });
 
@@ -148,7 +158,7 @@ function renderizarOperaciones() {
         return `
             <tr>
                 <td>${escaparHTML(reg.fecha || '-')}</td>
-                <td>${fincaPrefix}<strong>${escaparHTML(reg.equipo || '-')}</strong></td>
+                <td>${fincaPrefix}<strong>${escaparHTML(reg.equipo || '-')}</strong>${renderBadgeTest(reg)}</td>
                 <td>${horoIni.toFixed(1)} → ${horoFin.toFixed(1)}</td>
                 <td><strong>${horas.toFixed(1)} h</strong></td>
                 <td>${(Number(reg.gasoil) || 0).toFixed(1)} L</td>
@@ -193,6 +203,7 @@ async function manejarSubmitOperaciones(e) {
             horoFin,
             horasTrabajadas,
             gasoil,
+            esPrueba: Boolean(window.modoTestActivo),
             fechaCreacion: serverTimestamp()
         });
 
@@ -263,7 +274,7 @@ function renderizarFinanzas() {
             <tr>
                 <td>${escaparHTML(reg.fecha || '-')}</td>
                 <td>${escaparHTML(reg.tipo || 'Ingreso')}</td>
-                <td>${fincaPrefix}${escaparHTML(reg.centro || '-')}</td>
+                <td>${fincaPrefix}${escaparHTML(reg.centro || '-')}${renderBadgeTest(reg)}</td>
                 <td>${escaparHTML(reg.concepto || '-')}</td>
                 <td style="${colorMonto}">${signo}${formatearMoneda(reg.monto)}</td>
                 <td>
@@ -300,6 +311,7 @@ async function manejarSubmitFinanzas(e) {
             centro,
             concepto,
             monto,
+            esPrueba: Boolean(window.modoTestActivo),
             origenModulo: 'finanzas',
             fechaCreacion: serverTimestamp()
         });
