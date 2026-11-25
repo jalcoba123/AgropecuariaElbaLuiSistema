@@ -96,8 +96,11 @@ function calcularMetricasOrdeno(reg) {
 
 function filtrarOrdenosPorFinca() {
     const finca = obtenerFincaActiva();
-    if (finca === 'Global') return ordenosCache;
-    return ordenosCache.filter(item => (item.finca || 'Agua Clara') === finca);
+    return ordenosCache.filter(item => {
+        if (Boolean(item.esPrueba) !== Boolean(window.modoTestActivo)) return false;
+        if (finca === 'Global') return true;
+        return (item.finca || 'Agua Clara') === finca;
+    });
 }
 
 function renderizarAlertasYMetricas() {
@@ -173,13 +176,16 @@ function renderizarTablaOrdenos() {
         const fincaTag = obtenerFincaActiva() === 'Global'
             ? `<strong>${escaparHTML(reg.finca || 'Agua Clara')}</strong> • `
             : '';
+        const badgeTest = reg.esPrueba
+            ? ' <span style="background:#fef3c7;color:#92400e;padding:2px 6px;border-radius:4px;font-size:0.7rem;font-weight:700;">TEST</span>'
+            : '';
         const margenColor = m.margen < 0 ? 'color:#dc2626; font-weight:700;' : 'color:#15803d; font-weight:700;';
         const refBorrado = reg.ordenoRefId || reg.id;
 
         return `
             <tr>
                 <td>${escaparHTML(reg.fecha || '-')}</td>
-                <td>${fincaTag}${escaparHTML(reg.turno || 'Mañana')}</td>
+                <td>${fincaTag}${escaparHTML(reg.turno || 'Mañana')}${badgeTest}</td>
                 <td>${formatearEntero(m.vacas)}</td>
                 <td><strong>${formatearLitros(m.litros, 1)}</strong></td>
                 <td>${formatearLitros(m.promVaca, 1)}</td>
@@ -208,6 +214,7 @@ async function sincronizarIngresoAFinanzas(datosOrdeno, metricas, ordenoRefId) {
             centro: 'Lechería',
             concepto: `Venta leche (${metricas.litros.toFixed(1)} L - ${datosOrdeno.turno})`,
             monto: Number(metricas.ingreso.toFixed(2)),
+            esPrueba: Boolean(datosOrdeno.esPrueba),
             origenModulo: 'lecheria',
             ordenoId: ordenoRefId,
             fechaCreacion: serverTimestamp()
@@ -253,6 +260,7 @@ async function manejarSubmitOrdeno(e) {
         racion,
         costoRacion,
         syncFinanzas,
+        esPrueba: Boolean(window.modoTestActivo),
         ordenoRefId
     };
 
@@ -402,6 +410,7 @@ async function precargarVacasActivasEnProyeccion() {
 
         snap.forEach(docSnap => {
             const a = docSnap.data();
+            if (a.esPrueba) return;
             if (a.estado === 'Baja (Vendido/Muerto)') return;
             if (finca !== 'Global' && a.finca && a.finca !== finca) return;
             if (a.categoria === 'Vaca Ordeño') vacasOrdeno++;
