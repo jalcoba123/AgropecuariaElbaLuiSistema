@@ -46,6 +46,13 @@
     }
   }
 
+  window.notificarSyncCompletada = function () {
+    clearTimeout(syncTimer);
+    if (navigator.onLine) {
+      actualizarEstadoRed('🟢 Conectado — Todos los datos sincronizados en la nube', '#15803d', true);
+    }
+  };
+
   window.addEventListener('online', () => {
     clearTimeout(syncTimer);
     if (tienePendientesOffline()) {
@@ -54,7 +61,7 @@
         if (navigator.onLine) {
           actualizarEstadoRed('🟢 Conectado — Todos los datos sincronizados en la nube', '#15803d', true);
         }
-      }, 3000);
+      }, 3500);
     } else {
       actualizarEstadoRed('🟢 Conectado — Todos los datos sincronizados en la nube', '#15803d', true);
     }
