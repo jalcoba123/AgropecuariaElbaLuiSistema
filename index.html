@@ -930,10 +930,11 @@
                                     <th style="padding: 10px; border-bottom: 1px solid var(--border-light);">Categoría</th>
                                     <th style="padding: 10px; border-bottom: 1px solid var(--border-light);">Descripción de la Operación</th>
                                     <th style="padding: 10px; border-bottom: 1px solid var(--border-light);">Usuario</th>
+                                    <th style="padding: 10px; border-bottom: 1px solid var(--border-light); text-align: center;">Acción</th>
                                 </tr>
                             </thead>
                             <tbody id="tabla-bitacora-body">
-                                <tr><td colspan="5" style="padding: 20px; text-align: center; color: var(--text-muted);">Cargando bitácora de campo...</td></tr>
+                                <tr><td colspan="6" style="padding: 20px; text-align: center; color: var(--text-muted);">Cargando bitácora de campo...</td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -1554,18 +1555,35 @@
             }
         };
 
+        window.eliminarRegistroBitacora = async function(idDoc, descripcionCorta = '') {
+            if (!idDoc || !window.db) return;
+            const msg = descripcionCorta
+                ? `¿Eliminar este registro de la bitácora?\n"${descripcionCorta}"`
+                : '¿Eliminar este registro de la bitácora?';
+            if (!confirm(msg)) return;
+
+            try {
+                await deleteDoc(doc(window.db, "bitacora_general", idDoc));
+                if (window.mostrarToast) window.mostrarToast('Registro eliminado de la bitácora.', 'exito');
+                window.cargarBitacoraGeneral();
+            } catch (error) {
+                console.error("Error eliminando registro de bitácora:", error);
+                if (window.mostrarToast) window.mostrarToast('Error al eliminar de la bitácora: ' + error.message, 'error');
+            }
+        };
+
         window.cargarBitacoraGeneral = async function() {
             const tbody = document.getElementById('tabla-bitacora-body');
             if (!tbody) return;
 
-            tbody.innerHTML = '<tr><td colspan="5" style="padding: 20px; text-align: center; color: var(--text-muted);">⏳ Sincronizando bitácora...</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="6" style="padding: 20px; text-align: center; color: var(--text-muted);">⏳ Sincronizando bitácora...</td></tr>';
 
             try {
                 const q = query(collection(window.db, "bitacora_general"), orderBy("fechaSubida", "desc"));
                 const querySnapshot = await getDocs(q);
 
                 if (querySnapshot.empty) {
-                    tbody.innerHTML = '<tr><td colspan="5" style="padding: 20px; text-align: center; color: var(--text-muted); font-style: italic;">No hay registros en la bitácora todavía.</td></tr>';
+                    tbody.innerHTML = '<tr><td colspan="6" style="padding: 20px; text-align: center; color: var(--text-muted); font-style: italic;">No hay registros en la bitácora todavía.</td></tr>';
                     return;
                 }
 
@@ -1594,6 +1612,8 @@
                         ? ' <span style="background:#fef3c7;color:#92400e;padding:2px 6px;border-radius:4px;font-size:0.7rem;font-weight:700;">TEST</span>'
                         : '';
 
+                    const descEscapada = String(data.descripcion || '').replace(/'/g, "\\'").replace(/"/g, '"');
+
                     htmlRows += `
                         <tr style="border-bottom: 1px solid #f1f5f9;">
                             <td style="padding: 10px; white-space: nowrap; color: #475569;">${fechaFormateada}</td>
@@ -1601,14 +1621,17 @@
                             <td style="padding: 10px;"><span style="background: ${badgeColor}15; color: ${badgeColor}; padding: 3px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: bold;">${data.tipo}</span>${badgeTest}</td>
                             <td style="padding: 10px; color: #1e293b;">${data.descripcion}</td>
                             <td style="padding: 10px; color: #64748b; font-size: 0.8rem;">${data.usuario}</td>
+                            <td style="padding: 10px; text-align: center;">
+                                <button type="button" onclick="window.eliminarRegistroBitacora('${docSnap.id}', '${descEscapada}')" class="erp-btn-del" title="Borrar registro de la bitácora">🗑️ Borrar</button>
+                            </td>
                         </tr>
                     `;
                 });
 
-                tbody.innerHTML = htmlRows || '<tr><td colspan="5" style="padding: 20px; text-align: center; color: var(--text-muted);">No hay registros para este filtro o finca.</td></tr>';
+                tbody.innerHTML = htmlRows || '<tr><td colspan="6" style="padding: 20px; text-align: center; color: var(--text-muted);">No hay registros para este filtro o finca.</td></tr>';
             } catch (error) {
                 console.error("Error al cargar la bitácora:", error);
-                tbody.innerHTML = '<tr><td colspan="5" style="padding: 20px; text-align: center; color: #ef4444;">❌ Error cargando la bitácora.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="6" style="padding: 20px; text-align: center; color: #ef4444;">❌ Error cargando la bitácora.</td></tr>';
             }
         };
 
