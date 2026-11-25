@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ganadocontrol-erp-v6';
+const CACHE_NAME = 'ganadocontrol-erp-v7';
 
 const LOCAL_ASSETS = [
   './',
@@ -7,6 +7,7 @@ const LOCAL_ASSETS = [
   './manifest.json',
   './logo.jpg',
   './js/hato.js',
+  './js/lecheria.js',
   './js/modulos-erp.js',
   './js/online-sync.js'
 ];
@@ -64,17 +65,27 @@ self.addEventListener('fetch', (e) => {
   }
 
   if (e.request.mode === 'navigate') {
+    const networkFetch = fetch(e.request)
+      .then((res) => {
+        if (res && res.status === 200) {
+          const copia = res.clone();
+          caches.open(CACHE_NAME).then((c) => c.put('./index.html', copia));
+        }
+        return res;
+      })
+      .catch(() => null);
+
+    const timeoutPromise = new Promise((resolve) => {
+      setTimeout(() => resolve(null), 3000);
+    });
+
     e.respondWith(
-      Promise.race([
-        fetch(e.request).then((res) => {
-          if (res && res.status === 200) {
-            const copia = res.clone();
-            caches.open(CACHE_NAME).then((c) => c.put('./index.html', copia));
-          }
-          return res;
-        }),
-        new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 3000))
-      ]).catch(() => caches.match('./index.html'))
+      Promise.race([networkFetch, timeoutPromise]).then(async (res) => {
+        if (res) return res;
+        const cached = await caches.match('./index.html');
+        if (cached) return cached;
+        return networkFetch.then((r) => r || new Response('Sin conexión', { status: 503, statusText: 'Offline' }));
+      })
     );
     return;
   }
