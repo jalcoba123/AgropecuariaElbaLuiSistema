@@ -1816,27 +1816,34 @@
             localStorage.setItem('elbalui_modo_oscuro', String(window.modoOscuroActivo));
             aplicarAparienciaModoOscuro();
         };
-
-        window.purgarDatosTest = async function() {
+window.purgarDatosTest = async function() {
             if (!window.db) return;
             try {
-                const qAnimales = query(collection(window.db, 'animales'), where('esPrueba', '==', true));
-                const snapAnimales = await getDocs(qAnimales);
+                const coleccionesTest = [
+                    'animales',
+                    'bitacora_general',
+                    'lecheria_ordenos',
+                    'lecheria_invoices',
+                    'alimentacion_asignaciones',
+                    'finanzas_movimientos'
+                ];
                 let borrados = 0;
-                for (const docSnap of snapAnimales.docs) {
-                    await deleteDoc(doc(window.db, 'animales', docSnap.id));
-                    borrados++;
+
+                for (const nombreCol of coleccionesTest) {
+                    const qTest = query(collection(window.db, nombreCol), where('esPrueba', '==', true));
+                    const snapTest = await getDocs(qTest);
+                    for (const docSnap of snapTest.docs) {
+                        await deleteDoc(doc(window.db, nombreCol, docSnap.id));
+                        borrados++;
+                    }
                 }
 
-                const qBitacora = query(collection(window.db, 'bitacora_general'), where('esPrueba', '==', true));
-                const snapBitacora = await getDocs(qBitacora);
-                for (const docSnap of snapBitacora.docs for (const docSnap of snapBitacora.docs) {
-                    await deleteDoc(doc(window.db, 'bitacora_general', docSnap.id));
-                }
-
-                if (window.mostrarToast) window.mostrarToast(`Se purgaron ${borrados} registros TEST.`, 'exito');
+                if (window.mostrarToast) window.mostrarToast(`Se purgaron ${borrados} registros TEST de todos los módulos.`, 'exito');
                 window.actualizarTodosLosKPIs();
-                if (document.getElementById('tab-bitacora').classList.contains('active') && window.cargarBitacoraGeneral) {
+                if (window.cargarLecheria) window.cargarLecheria();
+                if (window.cargarAlimentacion) window.cargarAlimentacion();
+                if (window.cargarModulosERP) window.cargarModulosERP();
+                if (document.getElementById('tab-bitacora')?.classList.contains('active') && window.cargarBitacoraGeneral) {
                     window.cargarBitacoraGeneral();
                 }
             } catch (err) {
@@ -1993,7 +2000,7 @@
                 const lectorVisible = document.getElementById('subtab-lector').style.display !== 'none';
                 const hatoActivo = document.getElementById('tab-hato').classList.contains('active');
                 const modalAbierto = ['modal-animal', 'modal-masivo', 'modal-subir-doc', 'modal-ficha', 'modal-novedad', 'modal-invoice-vista'].some(
-                    id => document.getElementById(id).style.display === 'flex'
+                    id => document.getElementById(id) && document.getElementById(id).style.display === 'flex'
                 );
 
                 if (hatoActivo && lectorVisible && !esInteractivo && !modalAbierto) {
@@ -2213,6 +2220,18 @@
         const COLECCION_FINANZAS = "finanzas_movimientos";
         let asignacionesCache = [];
 
+        function fechaLocalAlim(fechaObj = new Date()) {
+            if (typeof window.fechaLocalISO === "function") return window.fechaLocalISO(fechaObj);
+            try {
+                return fechaObj.toLocaleDateString("en-CA", { timeZone: "America/Caracas" });
+            } catch (_) {
+                const y = fechaObj.getFullYear();
+                const m = String(fechaObj.getMonth() + 1).padStart(2, "0");
+                const d = String(fechaObj.getDate()).padStart(2, "0");
+                return `${y}-${m}-${d}`;
+            }
+        }
+
         function esperarDbAlim(maxIntentos = 60) {
             return new Promise((resolve) => {
                 if (window.db) return resolve(window.db);
@@ -2275,17 +2294,17 @@
 
         function diasEntreAlim(inicio, fin) {
             if (!inicio || !fin) return 1;
-            const d1 = new Date(inicio + "T00:00:00");
-            const d2 = new Date(fin + "T00:00:00");
+            const d1 = new Date(inicio + "T12:00:00");
+            const d2 = new Date(fin + "T12:00:00");
             const diff = Math.round((d2 - d1) / (1000 * 60 * 60 * 24)) + 1;
             return diff > 0 ? diff : 1;
         }
 
         function sumarDiasAlim(fechaIso, dias) {
             if (!fechaIso) return "";
-            const d = new Date(fechaIso + "T00:00:00");
+            const d = new Date(fechaIso + "T12:00:00");
             d.setDate(d.getDate() + Math.max(0, Number(dias || 1) - 1));
-            return d.toISOString().split("T")[0];
+            return fechaLocalAlim(d);
         }
 
         function estimarAnimalesAlim(destino) {
@@ -2382,7 +2401,7 @@
             const tbody = document.getElementById("tbody-alimentacion");
             const filtroGrupo = document.getElementById("filtro-alim-grupo")?.value || "Todos";
             const filtroEstado = document.getElementById("filtro-alim-estado")?.value || "Todos";
-            const hoyIso = new Date().toISOString().split("T")[0];
+            const hoyIso = fechaLocalAlim();
 
             const filtradas = asignacionesCache.filter((item) => {
                 const estadoReal = item.estado === "Finalizada"
@@ -2571,7 +2590,7 @@
         }
 
         function initFechasAlim() {
-            const hoy = new Date().toISOString().split("T")[0];
+            const hoy = fechaLocalAlim();
             const elIni = document.getElementById("alim-fecha-inicio");
             const elFin = document.getElementById("alim-fecha-fin");
             const elKg = document.getElementById("alim-kg-saco");
@@ -2607,9 +2626,9 @@
         });
     </script>
 
-    <script type="module" src="js/hato.js?v=125"></script>
+    <script type="module" src="js/hato.js?v=126"></script>
     <script src="js/online-sync.js"></script>
-    <script type="module" src="js/lecheria.js?v=101"></script>
+    <script type="module" src="js/lecheria.js?v=102"></script>
     <script type="module" src="js/modulos-erp.js"></script>
     <script type="module" src="js/potreros-palma.js?v=1"></script>
 
