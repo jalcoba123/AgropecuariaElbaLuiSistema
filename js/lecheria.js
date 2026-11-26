@@ -30,10 +30,10 @@ function obtenerFincaDestinoEscritura() {
 
 function escaparHTML(valor) {
     return String(valor ?? '')
-        .replace(/&/g, '&')
-        .replace(/</g, '<')
-        .replace(/>/g, '>')
-        .replace(/"/g, '"');
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
 }
 
 function formatearMoneda(valor) {
@@ -81,6 +81,12 @@ function actualizarTituloFincaLecheria() {
     titulo.textContent = finca === 'Global'
         ? '🥛 Lechería & Raciones (Consolidado)'
         : `🥛 Lechería & Raciones (${finca})`;
+}
+
+function refrescarKPIsGlobales() {
+    if (typeof window.actualizarTodosLosKPIs === 'function') {
+        window.actualizarTodosLosKPIs();
+    }
 }
 
 window.cambiarSubtabLecheria = function(subtab) {
@@ -166,7 +172,7 @@ function renderizarAlertasYMetricas() {
     const margenDia = totalIngresoDia - totalCostoRacionDia;
 
     if (kpiHoy) kpiHoy.textContent = formatearLitros(totalLitrosDia, 1);
-    if (kpiProm) kpiProm.textContent = totalVacasDia > 0 ? formatearLitros(promVacaDia, 1) : 'N/D';
+    if (kpiProm) kpiProm.textContent = totalVacasDia > 0 ? formatearLitros(promVacaDia, 1) : '0.0 L';
     if (kpiIngreso) kpiIngreso.textContent = formatearMoneda(totalIngresoDia);
     if (kpiMargen) {
         kpiMargen.textContent = formatearMoneda(margenDia);
@@ -248,6 +254,7 @@ async function sincronizarIngresoAFinanzas(datosOrdeno, metricas, ordenoRefId) {
             fechaCreacion: serverTimestamp()
         });
         if (window.cargarModulosERP) window.cargarModulosERP();
+        refrescarKPIsGlobales();
     } catch (err) {
         console.error('Error sincronizando venta de leche a Finanzas:', err);
     }
@@ -323,6 +330,7 @@ async function manejarSubmitOrdeno(e) {
         const costoInput = document.getElementById('lech-costo-racion');
         if (litrosInput) litrosInput.value = '';
         if (costoInput) costoInput.value = '0';
+        refrescarKPIsGlobales();
     } catch (err) {
         console.error('Error guardando ordeño:', err);
         if (window.mostrarToast) window.mostrarToast('Error al guardar el ordeño.', 'error');
@@ -346,6 +354,7 @@ window.eliminarOrdeno = async function(id, ordenoRefId = '') {
         await deleteDoc(doc(db, COLECCION_LECHERIA, id));
         if (window.mostrarToast) window.mostrarToast('Registro de ordeño eliminado.', 'info');
         if (window.cargarModulosERP) window.cargarModulosERP();
+        refrescarKPIsGlobales();
     } catch (err) {
         console.error('Error eliminando ordeño:', err);
         if (window.mostrarToast) window.mostrarToast('No se pudo eliminar el registro.', 'error');
@@ -562,6 +571,7 @@ async function manejarSubmitInvoice(e) {
         document.getElementById('inv-litros').value = '';
         document.getElementById('inv-notas').value = '';
         actualizarPreviewTotalInvoice();
+        refrescarKPIsGlobales();
 
         invoicesCache.unshift({ id: docRef.id, ...nuevoInvoice });
         window.verInvoice(docRef.id);
@@ -588,6 +598,7 @@ window.eliminarInvoice = async function(id, invoiceRefId = '') {
         await deleteDoc(doc(db, COLECCION_INVOICES_LECHE, id));
         if (window.mostrarToast) window.mostrarToast('Invoice eliminado.', 'info');
         if (window.cargarModulosERP) window.cargarModulosERP();
+        refrescarKPIsGlobales();
     } catch (err) {
         console.error('Error eliminando invoice:', err);
         if (window.mostrarToast) window.mostrarToast('No se pudo eliminar el invoice.', 'error');
@@ -607,6 +618,7 @@ function suscribirInvoices() {
             invoicesCache.push({ id: docSnap.id, ...docSnap.data() });
         });
         renderizarTablaInvoices();
+        refrescarKPIsGlobales();
     }, (err) => {
         console.error('Error escuchando invoices:', err);
     });
@@ -785,6 +797,7 @@ function suscribirOrdenos() {
         renderizarAlertasYMetricas();
         renderizarTablaOrdenos();
         actualizarComparativaReal();
+        refrescarKPIsGlobales();
     }, (err) => {
         console.error('Error escuchando ordeños:', err);
     });
@@ -849,6 +862,7 @@ window.cargarLecheria = function() {
     renderizarTablaOrdenos();
     renderizarTablaInvoices();
     renderizarProyeccion5Anos();
+    refrescarKPIsGlobales();
 };
 
 window.addEventListener('fincaCambiada', () => {
