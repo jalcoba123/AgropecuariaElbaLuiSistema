@@ -18,6 +18,19 @@ let unsubscribeLecheria = null;
 let unsubscribeProyeccion = null;
 let unsubscribeInvoices = null;
 let invoiceSeleccionadoActual = null;
+const confirmacionesLecheria = new Map();
+
+function confirmarDosPasosLecheria(clave, mensaje, ventanaMs = 3500) {
+    const ahora = Date.now();
+    const expira = confirmacionesLecheria.get(clave) || 0;
+    if (ahora < expira) {
+        confirmacionesLecheria.delete(clave);
+        return true;
+    }
+    confirmacionesLecheria.set(clave, ahora + ventanaMs);
+    if (window.mostrarToast) window.mostrarToast(mensaje, 'info');
+    return false;
+}
 
 function obtenerFincaActiva() {
     return window.fincaActual || 'Agua Clara';
@@ -30,10 +43,10 @@ function obtenerFincaDestinoEscritura() {
 
 function escaparHTML(valor) {
     return String(valor ?? '')
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;');
+        .replace(/&/g, '&')
+        .replace(/</g, '<')
+        .replace(/>/g, '>')
+        .replace(/"/g, '"');
 }
 
 function formatearMoneda(valor) {
@@ -51,11 +64,18 @@ function formatearEntero(valor) {
 }
 
 function obtenerFechaHoyISO() {
-    const hoy = new Date();
-    const yyyy = hoy.getFullYear();
-    const mm = String(hoy.getMonth() + 1).padStart(2, '0');
-    const dd = String(hoy.getDate()).padStart(2, '0');
-    return `${yyyy}-${mm}-${dd}`;
+    if (typeof window.fechaLocalISO === 'function') {
+        return window.fechaLocalISO();
+    }
+    try {
+        return new Date().toLocaleDateString('en-CA', { timeZone: 'America/Caracas' });
+    } catch (_) {
+        const hoy = new Date();
+        const yyyy = hoy.getFullYear();
+        const mm = String(hoy.getMonth() + 1).padStart(2, '0');
+        const dd = String(hoy.getDate()).padStart(2, '0');
+        return `${yyyy}-${mm}-${dd}`;
+    }
 }
 
 function inicializarFechaPorDefecto() {
@@ -71,6 +91,13 @@ function inicializarFechaPorDefecto() {
     const inputInvFecha = document.getElementById('inv-fecha');
     if (inputInvFecha && !inputInvFecha.value) {
         inputInvFecha.value = fechaHoy;
+    }
+
+    // Evitar doble contabilidad por defecto: el ordeño mide producción; el invoice registra la venta facturada
+    const chkOrdenoFin = document.getElementById('lech-sync-finanzas');
+    if (chkOrdenoFin && !chkOrdenoFin.dataset.initSafeguard) {
+        chkOrdenoFin.dataset.initSafeguard = '1';
+        chkOrdenoFin.checked = false;
     }
 }
 
@@ -147,7 +174,10 @@ function renderizarAlertasYMetricas() {
         if (kpiHoy) kpiHoy.textContent = '0.0 L';
         if (kpiProm) kpiProm.textContent = '0.0 L';
         if (kpiIngreso) kpiIngreso.textContent = '$0.00';
-        if (kpiMargen) kpiMargen.textContent = '$0.00';
+        if (kpiMargen) {
+            kpiMargen.textContent = '$0.00';
+            kpiMargen.style.color = '#0f172a';
+        }
         if (panelAlertas) panelAlertas.innerHTML = '';
         return;
     }
@@ -175,8 +205,8 @@ function renderizarAlertasYMetricas() {
     if (kpiProm) kpiProm.textContent = totalVacasDia > 0 ? formatearLitros(promVacaDia, 1) : '0.0 L';
     if (kpiIngreso) kpiIngreso.textContent = formatearMoneda(totalIngresoDia);
     if (kpiMargen) {
-        kpiMargen.textContent = formatearMoneda(totalIngresoDia);
-        kpiMargen.style.color = '#0f172a';
+        kpiMargen.textContent = formatearMoneda(margenDia);
+        kpiMargen.style.color = margenDia < 0 ? '#dc2626' : '#0f172a';
     }
 
     if (panelAlertas) {
@@ -185,7 +215,7 @@ function renderizarAlertasYMetricas() {
             alertas.push(`⚠️ Promedio bajo (${promVacaDia.toFixed(1)} L/vaca el ${escaparHTML(fechaUltimo)}): revisar manejo de potreros, rotación o asignación en Alimentación.`);
         }
         if (totalCostoRacionDia > 0 && margenDia < 0) {
-            alertas.push(`🚨 Margen histórico con ración negativo (${formatearMoneda(margenDia)}) en el registro del día.`);
+            alertas.push(`🚨 Margen diario con ración negativo (${formatearMoneda(margenDia)}) en el registro del día.`);
         }
         panelAlertas.innerHTML = alertas.length
             ? `<div style="background:#fef2f2; border:1px solid #fecaca; color:#991b1b; padding:0.75rem 1rem; border-radius:0.5rem; font-size:0.84rem; display:flex; flex-direction:column; gap:4px;">${alertas.map(a => `<div>${a}</div>`).join('')}</div>`
@@ -233,8 +263,9 @@ function renderizarTablaOrdenos() {
 }
 
 async function sincronizarIngresoAFinanzas(datosOrdeno, metricas, ordenoRefId) {
-    if (!window.fbERP || metricas.ingreso <= 0) return;
-    if ((datosOrdeno.destino || 'Venta') !== 'Venta') return;
+    if (!window.fbERP || metricas.ingreso <= 0) return false;
+    const destino = String(datosOrdeno.destino || 'Venta').toLowerCase();
+    if (!destino.includes('venta')) return false;
 
     try {
         const { db, collection, addDoc, serverTimestamp } = window.fbERP;
@@ -243,6 +274,7 @@ async function sincronizarIngresoAFinanzas(datosOrdeno, metricas, ordenoRefId) {
             fecha: datosOrdeno.fecha,
             tipo: 'Ingreso',
             centro: 'Lechería',
+            centroCosto: 'Lechería',
             concepto: `Venta leche (${metricas.litros.toFixed(1)} L - ${datosOrdeno.turno})`,
             monto: Number(metricas.ingreso.toFixed(2)),
             esPrueba: Boolean(datosOrdeno.esPrueba),
@@ -252,8 +284,10 @@ async function sincronizarIngresoAFinanzas(datosOrdeno, metricas, ordenoRefId) {
         });
         if (window.cargarModulosERP) window.cargarModulosERP();
         refrescarKPIsGlobales();
+        return true;
     } catch (err) {
         console.error('Error sincronizando venta de leche a Finanzas:', err);
+        return false;
     }
 }
 
@@ -304,8 +338,12 @@ async function manejarSubmitOrdeno(e) {
             fechaCreacion: serverTimestamp()
         });
 
+        let sincronizado = false;
         if (syncFinanzas) {
-            await sincronizarIngresoAFinanzas(nuevoRegistro, metricas, ordenoRefId);
+            sincronizado = await sincronizarIngresoAFinanzas(nuevoRegistro, metricas, ordenoRefId);
+            if (!sincronizado && !String(destino).toLowerCase().includes('venta') && window.mostrarToast) {
+                window.mostrarToast(`Destino "${destino}" no genera ingreso comercial en Finanzas.`, 'info');
+            }
         }
 
         if (window.registrarEnBitacora) {
@@ -318,7 +356,12 @@ async function manejarSubmitOrdeno(e) {
         }
 
         if (window.mostrarToast) {
-            window.mostrarToast(`Ordeño guardado (${litros.toFixed(1)} L).`, 'exito');
+            window.mostrarToast(
+                sincronizado
+                    ? `Ordeño guardado (${litros.toFixed(1)} L) y enviado a Finanzas.`
+                    : `Ordeño guardado (${litros.toFixed(1)} L).`,
+                'exito'
+            );
         }
 
         const litrosInput = document.getElementById('lech-litros');
@@ -332,6 +375,10 @@ async function manejarSubmitOrdeno(e) {
 
 window.eliminarOrdeno = async function(id, ordenoRefId = '') {
     if (!id || !window.fbERP) return;
+    if (!confirmarDosPasosLecheria(`del-ord-${id}`, 'Toca de nuevo "Borrar" para eliminar este registro de ordeño.')) {
+        return;
+    }
+
     try {
         const { db, doc, deleteDoc, collection, query, where, getDocs } = window.fbERP;
         const claves = Array.from(new Set([id, ordenoRefId].filter(Boolean)));
@@ -358,8 +405,16 @@ window.eliminarOrdeno = async function(id, ordenoRefId = '') {
 // 🧾 INVOICES DE LECHE (GENERADOR ERP)
 // ==========================================
 function generarNumeroInvoice() {
-    const existentes = invoicesCache.length + 1;
-    return `INV-${String(existentes).padStart(4, '0')}`;
+    let maxNum = 0;
+    invoicesCache.forEach(inv => {
+        const match = String(inv.numero || '').match(/(\d+)/);
+        if (match) {
+            const n = parseInt(match[1], 10);
+            if (!isNaN(n) && n > maxNum) maxNum = n;
+        }
+    });
+    const siguiente = Math.max(maxNum + 1, invoicesCache.length + 1);
+    return `INV-${String(siguiente).padStart(4, '0')}`;
 }
 
 function actualizarPreviewTotalInvoice() {
@@ -457,7 +512,7 @@ window.copiarTextoInvoice = async function() {
     try {
         await navigator.clipboard.writeText(texto);
         if (window.mostrarToast) window.mostrarToast('Invoice copiado para enviar por WhatsApp.', 'exito');
-    } catch (e) {
+    } catch (_) {
         if (window.mostrarToast) window.mostrarToast('No se pudo copiar automáticamente.', 'error');
     }
 };
@@ -538,6 +593,7 @@ async function manejarSubmitInvoice(e) {
                 fecha,
                 tipo: 'Ingreso',
                 centro: 'Lechería',
+                centroCosto: 'Lechería',
                 concepto: `Invoice ${numero} • ${cliente} (${litros.toFixed(1)} L)`,
                 monto: total,
                 esPrueba: Boolean(window.modoTestActivo),
@@ -566,7 +622,9 @@ async function manejarSubmitInvoice(e) {
         actualizarPreviewTotalInvoice();
         refrescarKPIsGlobales();
 
-        invoicesCache.unshift({ id: docRef.id, ...nuevoInvoice });
+        if (!invoicesCache.some(item => item.id === docRef.id)) {
+            invoicesCache.unshift({ id: docRef.id, ...nuevoInvoice });
+        }
         window.verInvoice(docRef.id);
     } catch (err) {
         console.error('Error emitiendo invoice:', err);
@@ -576,6 +634,10 @@ async function manejarSubmitInvoice(e) {
 
 window.eliminarInvoice = async function(id, invoiceRefId = '') {
     if (!id || !window.fbERP) return;
+    if (!confirmarDosPasosLecheria(`del-inv-${id}`, 'Toca de nuevo "Borrar" para eliminar este invoice.')) {
+        return;
+    }
+
     try {
         const { db, doc, deleteDoc, collection, query, where, getDocs } = window.fbERP;
         const claves = Array.from(new Set([id, invoiceRefId].filter(Boolean)));
