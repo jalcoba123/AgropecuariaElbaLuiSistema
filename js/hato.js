@@ -29,6 +29,7 @@ window.obtenerFincaActual = function() {
 
 window.datosHatoCache = [];
 window.catalogoLotesCache = [];
+window.catalogoPotrerosMapaCache = [];
 window.catalogoVacunasCache = [];
 window.metricasHatoActual = {
     totalActivos: 0,
@@ -517,23 +518,91 @@ window.importarCSV = function(event) {
 };
 
 // ==========================================
-// 🔄 SINCRONIZADOR DE SELECTORES (LOTES Y VACUNAS)
+// 🔄 SINCRONIZADOR DE SELECTORES (LOTES, POTREROS Y VACUNAS)
 // ==========================================
+async function cargarPotrerosActivosDesdeFirestore() {
+    if (!window.db) return window.catalogoPotrerosMapaCache;
+    try {
+        const snap = await getDocs(collection(window.db, "lotes_potreros"));
+        const fincaActiva = window.obtenerFincaActual();
+        const modoTest = Boolean(window.modoTestActivo);
+        const activos = [];
+
+        snap.forEach((docSnap) => {
+            const data = docSnap.data();
+            const esSub = (data.estado || "Activo") === "Subdividido";
+            const okFinca = fincaActiva === "Global" || !data.finca || data.finca === fincaActiva;
+            const okTest = modoTest ? true : data.esPrueba !== true;
+            if (!esSub && okFinca && okTest && data.codigo) {
+                activos.push({
+                    id: docSnap.id,
+                    codigo: String(data.codigo).trim(),
+                    nombre: data.nombre || "",
+                    usoActual: data.usoActual || "Pastoreo",
+                    hectareas: Number(data.hectareas || 0)
+                });
+            }
+        });
+
+        activos.sort((a, b) => a.codigo.localeCompare(b.codigo));
+        window.catalogoPotrerosMapaCache = activos;
+    } catch (_) {}
+    return window.catalogoPotrerosMapaCache;
+}
+
 function renderizarSelectoresLotes() {
     const selectLote = document.getElementById('a-lote');
     const selectMasivoLote = document.getElementById('m-nuevo-lote-select');
     const selectFichaLote = document.getElementById('f-lote-select');
 
-    const opcionesHtml = `<option value="General">👉 General / Sin Asignar</option>` +
-        window.catalogoLotesCache.map(l => `<option value="${l.nombre}">${l.nombre}</option>`).join('');
+    const nombresUnicos = new Set();
+    const opciones = [`<option value="General">👉 General / Sin Asignar</option>`];
 
-    if (selectLote) selectLote.innerHTML = opcionesHtml;
-    if (selectMasivoLote) selectMasivoLote.innerHTML = opcionesHtml;
+    window.catalogoPotrerosMapaCache.forEach((p) => {
+        if (!p.codigo || nombresUnicos.has(p.codigo)) return;
+        nombresUnicos.add(p.codigo);
+        const etiqueta = p.nombre
+            ? `🌿 ${p.codigo} — ${p.nombre} (${p.hectareas.toFixed(1)} ha)`
+            : `🌿 ${p.codigo} (${p.hectareas.toFixed(1)} ha)`;
+        opciones.push(`<option value="${p.codigo.replace(/"/g, '&quot;')}">${etiqueta}</option>`);
+    });
+
+    window.catalogoLotesCache.forEach((l) => {
+        if (!l.nombre || nombresUnicos.has(l.nombre)) return;
+        nombresUnicos.add(l.nombre);
+        opciones.push(`<option value="${l.nombre.replace(/"/g, '&quot;')}">${l.nombre}</option>`);
+    });
+
+    const opcionesHtml = opciones.join('');
+
+    if (selectLote) {
+        const prev = selectLote.value;
+        selectLote.innerHTML = opcionesHtml;
+        if (prev && Array.from(selectLote.options).some(o => o.value === prev)) selectLote.value = prev;
+    }
+    if (selectMasivoLote) {
+        const prev = selectMasivoLote.value;
+        selectMasivoLote.innerHTML = opcionesHtml;
+        if (prev && Array.from(selectMasivoLote.options).some(o => o.value === prev)) selectMasivoLote.value = prev;
+    }
     if (selectFichaLote) {
         const valorActual = selectFichaLote.value;
         selectFichaLote.innerHTML = opcionesHtml;
-        if (valorActual) selectFichaLote.value = valorActual;
+        if (valorActual) {
+            if (!Array.from(selectFichaLote.options).some(o => o.value === valorActual)) {
+                const opt = document.createElement('option');
+                opt.value = valorActual;
+                opt.textContent = valorActual;
+                selectFichaLote.appendChild(opt);
+            }
+            selectFichaLote.value = valorActual;
+        }
     }
+}
+
+async function refrescarSelectoresLotesCompletos() {
+    await cargarPotrerosActivosDesdeFirestore();
+    renderizarSelectoresLotes();
 }
 
 function renderizarSelectoresVacunas() {
@@ -584,7 +653,7 @@ window.abrirModalMasivo = async function() {
     }
 
     renderizarSelectoresVacunas();
-    renderizarSelectoresLotes();
+    await refrescarSelectoresLotesCompletos();
 
     document.getElementById('modal-masivo').style.display = 'flex';
 };
@@ -801,6 +870,7 @@ window.cargarHato = function() {
 
     if (window.cargarListaLotes) window.cargarListaLotes();
     if (window.cargarListaVacunas) window.cargarListaVacunas();
+    refrescarSelectoresLotesCompletos();
 
     if (unsubscribeHato) {
         unsubscribeHato();
@@ -918,7 +988,7 @@ window.cargarHato = function() {
 window.abrirFicha = async function(idDoc) {
     if (!window.db) return notificar("Base de datos no inicializada.", "error");
     try {
-        renderizarSelectoresLotes();
+        await refrescarSelectoresLotesCompletos();
         const docRef = doc(window.db, "animales", idDoc);
         const docSnap = await getDoc(docRef);
         if (!docSnap.exists()) return notificar("Expediente no encontrado.", "error");
@@ -1303,7 +1373,7 @@ window.cargarListaLotes = function() {
     if (!listaUI || !window.db) return;
 
     if (unsubscribeLotes) {
-        renderizarSelectoresLotes();
+        refrescarSelectoresLotesCompletos();
         return;
     }
 
@@ -1324,7 +1394,7 @@ window.cargarListaLotes = function() {
                 </li>
             `;
         });
-        renderizarSelectoresLotes();
+        refrescarSelectoresLotesCompletos();
     }, (err) => {
         unsubscribeLotes = null;
         console.error("Error cargando lotes:", err);
@@ -1616,9 +1686,18 @@ document.addEventListener('DOMContentLoaded', async () => {
         btnAddVacuna.onclick = window.agregarVacunaNueva;
     }
 
+    window.addEventListener('fincaCambiada', () => {
+        refrescarSelectoresLotesCompletos();
+    });
+
+    window.addEventListener('kpisActualizados', () => {
+        refrescarSelectoresLotesCompletos();
+    });
+
     const db = await esperarDbHato();
     if (db) {
         if (window.cargarListaLotes) window.cargarListaLotes();
         if (window.cargarListaVacunas) window.cargarListaVacunas();
+        await refrescarSelectoresLotesCompletos();
     }
 });
