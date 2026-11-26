@@ -887,7 +887,7 @@
                                 <option value="Cosecha RFF / Fruto">Cosecha (kg / racimos)</option>
                                 <option value="Control Maleza / Poda">Control Maleza / Poda</option>
                             </select>
-                            <input type="text" id="agro-lote" placeholder="Lote / Sector (ej. 25 ha)" required>
+                         <select id="agro-lote" required><option value="">Cargando potreros...</option></select>
                             <input type="number" id="agro-cantidad" placeholder="Cantidad (kg o unid.)" step="0.1" required>
                             <button type="submit" class="erp-btn-primary">Registrar Labor</button>
                         </form>
@@ -2359,7 +2359,7 @@
                     }
                 }
             });
-        }
+        }<script type="module" src="js/potreros-palma.js?v=1"></script>
     </script>
 </body>
 </html>
