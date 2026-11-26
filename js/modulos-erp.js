@@ -20,10 +20,10 @@ function obtenerFincaDestinoEscritura() {
 
 function escaparHTML(valor) {
     return String(valor ?? '')
-        .replace(/&/g, '&')
-        .replace(/</g, '<')
-        .replace(/>/g, '>')
-        .replace(/"/g, '"');
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
 }
 
 function formatearMoneda(valor) {
@@ -44,6 +44,12 @@ function renderBadgeTest(item) {
     return item.esPrueba
         ? ' <span style="background:#fef3c7;color:#92400e;padding:2px 6px;border-radius:4px;font-size:0.7rem;font-weight:700;">TEST</span>'
         : '';
+}
+
+function refrescarKPIsGlobales() {
+    if (typeof window.actualizarTodosLosKPIs === 'function') {
+        window.actualizarTodosLosKPIs();
+    }
 }
 
 function inicializarFechasFormularios() {
@@ -130,6 +136,7 @@ async function manejarSubmitAgronomia(e) {
         if (window.mostrarToast) window.mostrarToast('Labor agronómica registrada.', 'exito');
         document.getElementById('agro-lote').value = '';
         document.getElementById('agro-cantidad').value = '';
+        refrescarKPIsGlobales();
     } catch (err) {
         console.error('Error guardando agronomía:', err);
         if (window.mostrarToast) window.mostrarToast('Error al guardar labor.', 'error');
@@ -220,6 +227,7 @@ async function manejarSubmitOperaciones(e) {
         document.getElementById('op-horo-ini').value = '';
         document.getElementById('op-horo-fin').value = '';
         document.getElementById('op-gasoil').value = '0';
+        refrescarKPIsGlobales();
     } catch (err) {
         console.error('Error guardando operación:', err);
         if (window.mostrarToast) window.mostrarToast('Error al guardar el registro.', 'error');
@@ -232,6 +240,7 @@ function renderizarFinanzas() {
     const kpiIng = document.getElementById('kpi-fin-ingresos');
     const kpiEgr = document.getElementById('kpi-fin-egresos');
     const kpiBal = document.getElementById('kpi-fin-balance');
+    const kpiMargen = document.getElementById('kpi-fin-margen');
 
     const lista = filtrarPorFinca(finanzasCache);
     let totalIngresos = 0;
@@ -247,12 +256,17 @@ function renderizarFinanzas() {
     });
 
     const balance = totalIngresos - totalEgresos;
+    const margenPct = totalIngresos > 0 ? (balance / totalIngresos) * 100 : 0;
 
     if (kpiIng) kpiIng.textContent = formatearMoneda(totalIngresos);
     if (kpiEgr) kpiEgr.textContent = formatearMoneda(totalEgresos);
     if (kpiBal) {
         kpiBal.textContent = formatearMoneda(balance);
         kpiBal.style.color = balance < 0 ? '#dc2626' : '#065f46';
+    }
+    if (kpiMargen) {
+        kpiMargen.textContent = `${margenPct.toFixed(1)}%`;
+        kpiMargen.style.color = margenPct < 0 ? '#dc2626' : '#1e40af';
     }
 
     if (!tbody) return;
@@ -319,6 +333,7 @@ async function manejarSubmitFinanzas(e) {
         if (window.mostrarToast) window.mostrarToast(`${tipo} registrado en Finanzas.`, 'exito');
         document.getElementById('fin-concepto').value = '';
         document.getElementById('fin-monto').value = '';
+        refrescarKPIsGlobales();
     } catch (err) {
         console.error('Error guardando movimiento financiero:', err);
         if (window.mostrarToast) window.mostrarToast('Error al guardar movimiento.', 'error');
@@ -331,6 +346,7 @@ window.eliminarRegistroERP = async function(coleccion, id) {
         const { db, doc, deleteDoc } = window.fbERP;
         await deleteDoc(doc(db, coleccion, id));
         if (window.mostrarToast) window.mostrarToast('Registro eliminado.', 'info');
+        refrescarKPIsGlobales();
     } catch (err) {
         console.error(`Error eliminando en ${coleccion}:`, err);
         if (window.mostrarToast) window.mostrarToast('No se pudo eliminar el registro.', 'error');
@@ -345,18 +361,21 @@ function suscribirColeccionesERP() {
     unsubAgro = onSnapshot(query(collection(db, COLECCION_AGRONOMIA), orderBy('fecha', 'desc')), snap => {
         agronomiaCache = snap.docs.map(d => ({ id: d.id, ...d.data() }));
         renderizarAgronomia();
+        refrescarKPIsGlobales();
     }, err => console.error('Error escuchando agronomía:', err));
 
     if (unsubOp) unsubOp();
     unsubOp = onSnapshot(query(collection(db, COLECCION_OPERACIONES), orderBy('fecha', 'desc')), snap => {
         operacionesCache = snap.docs.map(d => ({ id: d.id, ...d.data() }));
         renderizarOperaciones();
+        refrescarKPIsGlobales();
     }, err => console.error('Error escuchando operaciones:', err));
 
     if (unsubFin) unsubFin();
     unsubFin = onSnapshot(query(collection(db, COLECCION_FINANZAS_ERP), orderBy('fecha', 'desc')), snap => {
         finanzasCache = snap.docs.map(d => ({ id: d.id, ...d.data() }));
         renderizarFinanzas();
+        refrescarKPIsGlobales();
     }, err => console.error('Error escuchando finanzas:', err));
 }
 
@@ -387,12 +406,14 @@ window.cargarModulosERP = function() {
     renderizarAgronomia();
     renderizarOperaciones();
     renderizarFinanzas();
+    refrescarKPIsGlobales();
 };
 
 window.addEventListener('fincaCambiada', () => {
     renderizarAgronomia();
     renderizarOperaciones();
     renderizarFinanzas();
+    refrescarKPIsGlobales();
 });
 
 document.addEventListener('DOMContentLoaded', () => {
