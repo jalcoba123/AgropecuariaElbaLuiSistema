@@ -30,6 +30,19 @@ window.obtenerFincaActual = function() {
 window.datosHatoCache = [];
 window.catalogoLotesCache = [];
 window.catalogoVacunasCache = [];
+window.metricasHatoActual = {
+    totalActivos: 0,
+    mautes: 0,
+    gestantes: 0,
+    bajas: 0,
+    muertes: 0,
+    tasaMortalidad: 0,
+    natalidad: 0,
+    animalesAborto: 0,
+    totalAbortos: 0,
+    tasaAbortos: 0,
+    gdpPromedio: 0
+};
 
 let unsubscribeHato = null;
 let unsubscribeLotes = null;
@@ -46,6 +59,12 @@ function esperarDbHato(maxIntentos = 50) {
             }
         }, 150);
     });
+}
+
+function refrescarKPIsGlobales() {
+    if (typeof window.actualizarTodosLosKPIs === 'function') {
+        window.actualizarTodosLosKPIs();
+    }
 }
 
 // ==========================================
@@ -352,7 +371,8 @@ window.aplicarFiltroHato = function() {
     const inputBusqueda = document.getElementById('buscador-hato');
     const textoBusqueda = inputBusqueda ? inputBusqueda.value.toUpperCase() : "";
     const filas = document.querySelectorAll('#tabla-hato-body tr');
-    
+    const modoTest = Boolean(window.modoTestActivo);
+
     filas.forEach(fila => {
         if (!fila.hasAttribute('data-categoria')) return;
 
@@ -365,7 +385,7 @@ window.aplicarFiltroHato = function() {
 
         if (filtroValor === 'Pruebas') {
             mostrar = esPrueba;
-        } else if (!esPrueba) {
+        } else if (esPrueba === modoTest) {
             if (filtroValor === 'Todos' && estado !== 'Baja (Vendido/Muerto)') mostrar = true;
             else if (filtroValor === 'Bajas' && estado === 'Baja (Vendido/Muerto)') mostrar = true;
             else if (filtroValor === 'Becerros' && cat.includes('Becerr') && estado !== 'Baja (Vendido/Muerto)') mostrar = true;
@@ -795,9 +815,9 @@ window.cargarHato = function() {
     unsubscribeHato = onSnapshot(q, (snapshot) => {
         tabla.innerHTML = '';
         window.datosHatoCache = []; 
-        let total = 0, mautes = 0, gestantes = 0;
         const conteoSalud = {};
         const hoy = new Date();
+        let filasVisiblesCount = 0;
 
         snapshot.forEach((documento) => {
             const a = documento.data();
@@ -808,13 +828,15 @@ window.cargarHato = function() {
             const esBaja = (a.estado === "Baja (Vendido/Muerto)");
             const esPrueba = Boolean(a.esPrueba);
 
-            if (!esBaja && !esPrueba) {
-                total++;
-                if (a.categoria && (a.categoria.includes("Maute") || a.categoria.includes("Mauta"))) mautes++;
-                if (a.estado === "Gestante") gestantes++;
-                if (!saludActual.includes("Sano")) conteoSalud[saludActual] = (conteoSalud[saludActual] || 0) + 1;
+            if (!esBaja && !esPrueba && !saludActual.includes("Sano")) {
+                conteoSalud[saludActual] = (conteoSalud[saludActual] || 0) + 1;
             }
 
+            if (esPrueba !== Boolean(window.modoTestActivo)) {
+                return;
+            }
+
+            filasVisiblesCount++;
             const escapeStr = (val) => String(val || '').replace(/'/g, "\\'");
             const nombreLote = a.lote ? a.lote : 'General';
             const etiquetaFinca = a.finca || 'Sin finca';
@@ -870,10 +892,7 @@ window.cargarHato = function() {
 
         window.aplicarFiltroHato();
         actualizarDashboard(window.datosHatoCache);
-
-        if (document.getElementById('kpi-total')) document.getElementById('kpi-total').innerText = total;
-        if (document.getElementById('kpi-mautes')) document.getElementById('kpi-mautes').innerText = mautes;
-        if (document.getElementById('kpi-gestantes')) document.getElementById('kpi-gestantes').innerText = gestantes;
+        refrescarKPIsGlobales();
 
         if (panelAlertas) {
             let htmlAlertas = "";
@@ -887,7 +906,9 @@ window.cargarHato = function() {
                 : htmlAlertas;
         }
 
-        if (window.datosHatoCache.length === 0) tabla.innerHTML = `<tr><td colspan="6" style="padding: 15px; text-align: center; color: var(--text-muted);">Sin animales registrados.</td></tr>`;
+        if (filasVisiblesCount === 0) {
+            tabla.innerHTML = `<tr><td colspan="6" style="padding: 15px; text-align: center; color: var(--text-muted);">Sin animales registrados en esta vista.</td></tr>`;
+        }
     }, (err) => console.error("Error Firestore:", err));
 };
 
@@ -1102,6 +1123,7 @@ if (formNuevoRepro) {
                 logExtra = ` (${tercioStr}, FEP: ${fep})`;
             } 
             else if (tipoEvento === 'Palpación (- Vacía)') { nuevoEstado = 'Vacía'; detalle = 'Vacía.'; } 
+            else if (tipoEvento === 'Aborto') { nuevoEstado = 'Vacía'; detalle = 'Aborto registrado.'; }
             else if (tipoEvento === 'Parto') {
                 nuevoEstado = 'Vacía';
                 if (data.categoria === 'Novilla' || data.categoria === 'Vaca Seca / Escampa') nuevaCat = 'Vaca Ordeño';
@@ -1438,11 +1460,26 @@ function actualizarDashboard(datosHato) {
     const baseMort = activos.length + bajas.length;
     const pctMort = baseMort > 0 ? (muertes.length / baseMort) * 100 : 0;
 
+    const mautes = activos.filter(a => a.categoria && (a.categoria.includes('Maute') || a.categoria.includes('Mauta'))).length;
+    const gestantes = activos.filter(a => a.estado === 'Gestante').length;
+
     const vientresActivos = activos.filter(a =>
         a.categoria && (a.categoria.includes('Vaca') || a.categoria === 'Novilla')
     ).length;
     const criasTotal = reales.filter(a => a.categoria && a.categoria.includes('Becerr')).length;
     const pctNat = vientresActivos > 0 ? (criasTotal / vientresActivos) * 100 : 0;
+
+    let animalesAborto = 0;
+    let totalAbortos = 0;
+    reales.forEach(a => {
+        const histRepro = a.historialReproductivo || [];
+        const abortosAnimal = histRepro.filter(ev => ev.tipo === 'Aborto').length;
+        if (abortosAnimal > 0) {
+            animalesAborto++;
+            totalAbortos += abortosAnimal;
+        }
+    });
+    const pctAbortos = vientresActivos > 0 ? (animalesAborto / vientresActivos) * 100 : 0;
 
     let sumaGdp = 0;
     let countGdp = 0;
@@ -1462,6 +1499,20 @@ function actualizarDashboard(datosHato) {
         }
     });
     const gdpProm = countGdp > 0 ? sumaGdp / countGdp : 0;
+
+    window.metricasHatoActual = {
+        totalActivos: activos.length,
+        mautes,
+        gestantes,
+        bajas: bajas.length,
+        muertes: muertes.length,
+        tasaMortalidad: pctMort,
+        natalidad: pctNat,
+        animalesAborto,
+        totalAbortos,
+        tasaAbortos: pctAbortos,
+        gdpPromedio: gdpProm
+    };
 
     if (kpiMort) kpiMort.innerText = `${pctMort.toFixed(1)}%`;
     if (kpiNat) kpiNat.innerText = `${pctNat.toFixed(1)}%`;
