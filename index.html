@@ -128,7 +128,8 @@
         body.modo-oscuro #modal-masivo > div,
         body.modo-oscuro #modal-subir-doc > div,
         body.modo-oscuro #modal-novedad > div,
-        body.modo-oscuro #modal-ficha > div {
+        body.modo-oscuro #modal-ficha > div,
+        body.modo-oscuro #modal-invoice-vista > div {
             background: #111827 !important;
             color: #f1f5f9 !important;
             border: 1px solid #334155 !important;
@@ -137,7 +138,7 @@
         @media print {
             body { background: white; margin: 0; padding: 0; }
             header, .category-nav, .finca-banner, .tabs-hato-container,
-            .btn-action, #offline-status-bar, #test-mode-banner, #modal-animal, #modal-ficha, #modal-novedad, #login-screen,
+            .btn-action, #offline-status-bar, #test-mode-banner, #modal-animal, #modal-ficha, #modal-novedad, #modal-invoice-vista, #login-screen,
             .finca-toggle, button[onclick="window.print()"] { display: none !important; }
             .section-view, #app-container, .modulo-hato { display: block !important; box-shadow: none !important; border: none !important; }
             #tab-dashboard, #tab-lecheria, #tab-palma, #tab-operaciones, #tab-finanzas, #tab-documentos, #tab-bitacora,
@@ -622,7 +623,7 @@
             <div id="tab-lecheria" class="section-view">
                 <div style="background: white; padding: 20px; border-radius: 12px; border: 1px solid var(--border-light);">
                     <h2 id="lech-titulo-finca" style="color: #0369a1; margin-top: 0;">🥛 Lechería & Raciones (Agua Clara)</h2>
-                    <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 0;">Control de producción diaria de leche, raciones de silo Cuba 22 con melaza, nepe de cervecería, gallinaza/pollinaza y proyección de venta a 5 años.</p>
+                    <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 0;">Control de producción diaria de leche, raciones de silo Cuba 22 con melaza, nepe de cervecería, gallinaza/pollinaza, invoices de venta y proyección a 5 años.</p>
 
                     <div class="lech-subtabs">
                         <button type="button" id="btn-lech-subtab-diario" class="lech-subtab-btn active" onclick="window.cambiarSubtabLecheria('diario')">📋 Ordeño Diario & Ración</button>
@@ -659,7 +660,7 @@
                                 <option value="Tarde">Turno Tarde</option>
                                 <option value="Día completo">Día completo</option>
                             </select>
-                            <input type="number" id="lech-vacas" placeholder="Vacas ordeño" min="1" required>
+                            <input type="number" id="lech-vacas" placeholder="Vacas ordeño (opcional)" min="0">
                             <input type="number" id="lech-litros" placeholder="Litros totales" step="0.1" min="0" required>
                             <input type="number" id="lech-precio" placeholder="Precio $/L" step="0.01" value="0.68" required>
                             <select id="lech-destino" title="Destino principal de la leche">
@@ -700,6 +701,76 @@
                                 </thead>
                                 <tbody id="tbody-lecheria"></tbody>
                             </table>
+                        </div>
+
+                        <!-- GENERADOR DE INVOICE / NOTA DE DESPACHO DE LECHE -->
+                        <div style="background: var(--card-bg, #ffffff); border: 1px solid var(--border-light, #e2e8f0); border-radius: 12px; padding: 1.25rem; margin-top: 1.5rem; box-shadow: 0 2px 8px rgba(0,0,0,0.04);">
+                            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom:1rem;">
+                                <div>
+                                    <h3 style="margin:0; font-size:1.05rem; color:var(--green-dark, #064e3b);">🧾 Generar Invoice / Nota de Despacho de Leche</h3>
+                                    <p style="margin:2px 0 0 0; font-size:0.8rem; color:var(--text-muted, #64748b);">Emite el comprobante con cliente, cantidad de leche y precio a pagar.</p>
+                                </div>
+                                <span id="inv-correlativo-preview" style="background:#ecfdf5; color:#065f46; border:1px solid #a7f3d0; padding:4px 10px; border-radius:20px; font-size:0.78rem; font-weight:700;">N° INV-0001</span>
+                            </div>
+
+                            <form id="form-invoice-leche" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; align-items:end;">
+                                <div class="form-field" style="margin:0;">
+                                    <label for="inv-fecha">Fecha</label>
+                                    <input type="date" id="inv-fecha" required>
+                                </div>
+
+                                <div class="form-field" style="margin:0;">
+                                    <label for="inv-cliente">Nombre del Cliente</label>
+                                    <input type="text" id="inv-cliente" placeholder="Ej. Quesera Los Llanos" required>
+                                </div>
+
+                                <div class="form-field" style="margin:0;">
+                                    <label for="inv-litros">Cantidad de Leche (Litros)</label>
+                                    <input type="number" id="inv-litros" step="0.1" min="0.1" placeholder="Ej. 180.0" required>
+                                </div>
+
+                                <div class="form-field" style="margin:0;">
+                                    <label for="inv-precio">Precio por Litro ($)</label>
+                                    <input type="number" id="inv-precio" step="0.01" min="0.01" value="0.68" required>
+                                </div>
+
+                                <div class="form-field" style="margin:0;">
+                                    <label for="inv-total-preview">Precio a Pagar ($)</label>
+                                    <input type="text" id="inv-total-preview" value="$0.00" readonly style="background:#f1f5f9; font-weight:800; color:#065f46;">
+                                </div>
+
+                                <div class="form-field" style="margin:0;">
+                                    <label for="inv-notas">Observación (Opcional)</label>
+                                    <input type="text" id="inv-notas" placeholder="Ej. Pago móvil / Transferencia">
+                                </div>
+
+                                <div style="display:flex; flex-direction:column; gap:6px;">
+                                    <label style="font-size:0.78rem; display:flex; align-items:center; gap:6px; cursor:pointer;">
+                                        <input type="checkbox" id="inv-sync-finanzas" checked style="width:auto;">
+                                        Registrar ingreso en Finanzas
+                                    </label>
+                                    <button type="submit" class="btn-action" style="width:100%;">🧾 Emitir Invoice</button>
+                                </div>
+                            </form>
+
+                            <div style="overflow-x:auto; margin-top:1.25rem;">
+                                <table style="width:100%; border-collapse:collapse; font-size:0.85rem;">
+                                    <thead>
+                                        <tr style="background:#f8fafc; text-align:left; border-bottom:2px solid #e2e8f0;">
+                                            <th style="padding:8px;">Invoice #</th>
+                                            <th style="padding:8px;">Fecha</th>
+                                            <th style="padding:8px;">Cliente</th>
+                                            <th style="padding:8px;">Cantidad (L)</th>
+                                            <th style="padding:8px;">Precio/L</th>
+                                            <th style="padding:8px;">Precio a Pagar</th>
+                                            <th style="padding:8px; text-align:center;">Acciones</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="tbody-invoices-leche">
+                                        <tr><td colspan="7" style="text-align:center; padding:1rem; color:#64748b;">Cargando invoices...</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
                     </div>
 
@@ -941,6 +1012,62 @@
                 </div>
             </div>
 
+        </div>
+    </div>
+
+    <!-- MODAL VISTA PREVIA / IMPRESIÓN DE INVOICE -->
+    <div id="modal-invoice-vista" style="display:none; position:fixed; inset:0; background:rgba(15,23,42,0.65); z-index:9999; justify-content:center; align-items:center; padding:16px;">
+        <div style="background:#ffffff; color:#0f172a; width:100%; max-width:540px; border-radius:12px; padding:24px; box-shadow:0 20px 40px rgba(0,0,0,0.25); max-height:92vh; overflow-y:auto;">
+            <div id="invoice-printable-area" style="border:1px solid #cbd5e1; border-radius:8px; padding:20px; background:#ffffff; color:#0f172a;">
+                <div style="display:flex; justify-content:space-between; align-items:flex-start; border-bottom:2px solid #064e3b; padding-bottom:12px; margin-bottom:14px;">
+                    <div>
+                        <div style="font-size:1.15rem; font-weight:800; color:#064e3b;">AGROPECUARIA ELBALUI</div>
+                        <div id="prev-inv-finca" style="font-size:0.8rem; color:#475569;">Finca Agua Clara • Maturín, Monagas</div>
+                    </div>
+                    <div style="text-align:right;">
+                        <div style="font-size:0.75rem; font-weight:700; color:#64748b; text-transform:uppercase;">Invoice / Nota de Entrega</div>
+                        <div id="prev-inv-numero" style="font-size:1.05rem; font-weight:800; color:#0f172a;">INV-0001</div>
+                        <div id="prev-inv-fecha" style="font-size:0.8rem; color:#475569;">2026-11-25</div>
+                    </div>
+                </div>
+
+                <div style="background:#f8fafc; padding:10px 12px; border-radius:6px; margin-bottom:14px; font-size:0.86rem;">
+                    <strong>Cliente:</strong> <span id="prev-inv-cliente">-</span>
+                </div>
+
+                <table style="width:100%; border-collapse:collapse; font-size:0.86rem; margin-bottom:14px;">
+                    <thead>
+                        <tr style="background:#ecfdf5; color:#064e3b; border-bottom:1px solid #a7f3d0;">
+                            <th style="padding:8px; text-align:left;">Descripción</th>
+                            <th style="padding:8px; text-align:right;">Cantidad</th>
+                            <th style="padding:8px; text-align:right;">Precio Unit.</th>
+                            <th style="padding:8px; text-align:right;">Subtotal</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td style="padding:10px 8px; border-bottom:1px solid #e2e8f0;">Leche Cruda Fresca</td>
+                            <td id="prev-inv-litros" style="padding:10px 8px; border-bottom:1px solid #e2e8f0; text-align:right;">0.0 L</td>
+                            <td id="prev-inv-precio" style="padding:10px 8px; border-bottom:1px solid #e2e8f0; text-align:right;">$0.00</td>
+                            <td id="prev-inv-subtotal" style="padding:10px 8px; border-bottom:1px solid #e2e8f0; text-align:right; font-weight:700;">$0.00</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <div style="display:flex; justify-content:space-between; align-items:center; padding-top:8px;">
+                    <div id="prev-inv-notas" style="font-size:0.78rem; color:#64748b; max-width:60%;"></div>
+                    <div style="text-align:right;">
+                        <div style="font-size:0.75rem; color:#64748b; text-transform:uppercase;">Precio a Pagar</div>
+                        <div id="prev-inv-total" style="font-size:1.35rem; font-weight:800; color:#065f46;">$0.00</div>
+                    </div>
+                </div>
+            </div>
+
+            <div style="display:flex; gap:8px; justify-content:flex-end; margin-top:16px; flex-wrap:wrap;">
+                <button type="button" onclick="window.copiarTextoInvoice()" style="background:#e0f2fe; color:#0369a1; border:1px solid #bae6fd; padding:8px 12px; border-radius:8px; font-weight:600; cursor:pointer;">📋 Copiar para WhatsApp</button>
+                <button type="button" onclick="window.imprimirInvoiceActual()" style="background:#064e3b; color:#ffffff; border:none; padding:8px 14px; border-radius:8px; font-weight:600; cursor:pointer;">🖨️ Imprimir / Guardar PDF</button>
+                <button type="button" onclick="document.getElementById('modal-invoice-vista').style.display='none'" style="background:#f1f5f9; color:#334155; border:1px solid #cbd5e1; padding:8px 12px; border-radius:8px; font-weight:600; cursor:pointer;">Cerrar</button>
+            </div>
         </div>
     </div>
 
@@ -1343,6 +1470,7 @@
             localStorage.setItem('elbalui_modo_test', String(window.modoTestActivo));
             aplicarAparienciaModoTest();
             if (window.cargarHato) window.cargarHato();
+            if (window.cargarLecheria) window.cargarLecheria();
             if (window.mostrarToast) {
                 window.mostrarToast(
                     window.modoTestActivo ? 'Modo TEST activado.' : 'Modo TEST desactivado.',
@@ -1525,7 +1653,7 @@
                 const esInteractivo = target && ['SELECT', 'INPUT', 'TEXTAREA', 'BUTTON'].includes(target.tagName);
                 const lectorVisible = document.getElementById('subtab-lector').style.display !== 'none';
                 const hatoActivo = document.getElementById('tab-hato').classList.contains('active');
-                const modalAbierto = ['modal-animal', 'modal-masivo', 'modal-subir-doc', 'modal-ficha', 'modal-novedad'].some(
+                const modalAbierto = ['modal-animal', 'modal-masivo', 'modal-subir-doc', 'modal-ficha', 'modal-novedad', 'modal-invoice-vista'].some(
                     id => document.getElementById(id).style.display === 'flex'
                 );
 
@@ -1738,7 +1866,7 @@
 
     <script type="module" src="js/hato.js?v=125"></script>
     <script src="js/online-sync.js"></script>
-    <script type="module" src="js/lecheria.js?v=100"></script>
+    <script type="module" src="js/lecheria.js?v=101"></script>
     <script type="module" src="js/modulos-erp.js"></script>
 
     <!-- MOTOR DE SIMULACIÓN DE PLANIFICACIÓN BOVINA -->
