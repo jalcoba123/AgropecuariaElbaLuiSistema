@@ -14,14 +14,14 @@
 
     <style>
         .erp-module-body { margin-top: 1.25rem; }
-        .erp-kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; margin-bottom: 1.25rem; }
+        .erp-kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(175px, 1fr)); gap: 1rem; margin-bottom: 1.25rem; }
         .erp-kpi-card { padding: 1rem; border-radius: 0.5rem; border: 1px solid #e2e8f0; background: #f8fafc; }
         .erp-kpi-card.green { background: #ecfdf5; border-color: #a7f3d0; color: #065f46; }
         .erp-kpi-card.blue { background: #eff6ff; border-color: #bfdbfe; color: #1e40af; }
         .erp-kpi-card.amber { background: #fffbeb; border-color: #fde68a; color: #92400e; }
         .erp-kpi-card.red { background: #fef2f2; border-color: #fecaca; color: #991b1b; }
         .erp-kpi-label { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; display: block; margin-bottom: 0.25rem; }
-        .erp-kpi-val { font-size: 1.5rem; font-weight: 800; margin: 0; }
+        .erp-kpi-val { font-size: 1.45rem; font-weight: 800; margin: 0; }
         .erp-form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 0.75rem; margin-bottom: 1.5rem; padding: 1rem; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 0.5rem; }
         .erp-form-grid input, .erp-form-grid select { width: 100%; padding: 0.55rem 0.75rem; border: 1px solid #cbd5e1; border-radius: 0.375rem; font-size: 0.875rem; box-sizing: border-box; background: #ffffff; }
         .erp-btn-primary { background: #15803d; color: #fff; font-weight: 600; border: none; border-radius: 0.375rem; padding: 0.6rem 1rem; cursor: pointer; font-size: 0.875rem; }
@@ -231,19 +231,34 @@
 
             <!-- MÓDULO 1: TORRE DE CONTROL -->
             <div id="tab-dashboard" class="section-view active">
-                <!-- KPIs ZOOTÉCNICOS REALES DEL HATO -->
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; margin-bottom: 20px;">
-                    <div style="background: white; padding: 14px; border-radius: 10px; border: 1px solid var(--border-light);">
-                        <div style="font-size: 0.72rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase;">% Mortalidad</div>
-                        <div id="kpi-mortalidad" style="font-size: 1.5rem; font-weight: 800; color: #dc2626;">0.0%</div>
+                <div class="erp-kpi-grid">
+                    <div class="erp-kpi-card red">
+                        <span class="erp-kpi-label">% Mortalidad</span>
+                        <p id="kpi-mortalidad" class="erp-kpi-val">0.0%</p>
                     </div>
-                    <div style="background: white; padding: 14px; border-radius: 10px; border: 1px solid var(--border-light);">
-                        <div style="font-size: 0.72rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase;">% Natalidad</div>
-                        <div id="kpi-natalidad" style="font-size: 1.5rem; font-weight: 800; color: #15803d;">0.0%</div>
+                    <div class="erp-kpi-card green">
+                        <span class="erp-kpi-label">% Natalidad</span>
+                        <p id="kpi-natalidad" class="erp-kpi-val">0.0%</p>
                     </div>
-                    <div style="background: white; padding: 14px; border-radius: 10px; border: 1px solid var(--border-light);">
-                        <div style="font-size: 0.72rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase;">GDP Promedio</div>
-                        <div id="kpi-gdp-promedio" style="font-size: 1.5rem; font-weight: 800; color: #0369a1;">0.000 kg/d</div>
+                    <div class="erp-kpi-card blue">
+                        <span class="erp-kpi-label">GDP Promedio</span>
+                        <p id="kpi-gdp-promedio" class="erp-kpi-val">0.000 kg/d</p>
+                    </div>
+                    <div class="erp-kpi-card red">
+                        <span class="erp-kpi-label">% Animales que Abortaron</span>
+                        <p id="kpi-dash-animales-aborto" class="erp-kpi-val">0.0%</p>
+                    </div>
+                    <div class="erp-kpi-card amber">
+                        <span class="erp-kpi-label">Tasa de Abortos</span>
+                        <p id="kpi-dash-tasa-abortos" class="erp-kpi-val">0.0%</p>
+                    </div>
+                    <div class="erp-kpi-card green">
+                        <span class="erp-kpi-label">% Preñez / Gestación</span>
+                        <p id="kpi-dash-prenez" class="erp-kpi-val">0.0%</p>
+                    </div>
+                    <div class="erp-kpi-card blue">
+                        <span class="erp-kpi-label">Margen Neto Finanzas</span>
+                        <p id="kpi-dash-margen-fin" class="erp-kpi-val">0.0%</p>
                     </div>
                 </div>
 
@@ -303,18 +318,46 @@
 
                 <!-- SUB-PÁGINA 1: INVENTARIO COMPLETO -->
                 <div id="subtab-inventario" class="modulo-hato" style="display: block;">
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-bottom: 20px;">
-                        <div style="background: white; padding: 15px; border-radius: 8px; border: 1px solid var(--border-light);">
-                            <div style="font-size: 0.75rem; color: var(--text-muted); font-weight: bold;">Censo Total Activo</div>
-                            <div id="kpi-total" style="font-size: 1.8rem; font-weight: bold;">0</div>
+                    <div class="erp-kpi-grid">
+                        <div class="erp-kpi-card">
+                            <span class="erp-kpi-label">Censo Total Activo</span>
+                            <p id="kpi-total" class="erp-kpi-val">0</p>
                         </div>
-                        <div style="background: white; padding: 15px; border-radius: 8px; border: 1px solid var(--border-light);">
-                            <div style="font-size: 0.75rem; color: var(--text-muted); font-weight: bold;">Mautes/Mautas</div>
-                            <div id="kpi-mautes" style="font-size: 1.8rem; font-weight: bold;">0</div>
+                        <div class="erp-kpi-card">
+                            <span class="erp-kpi-label">Mautes/Mautas</span>
+                            <p id="kpi-mautes" class="erp-kpi-val">0</p>
                         </div>
-                        <div style="background: white; padding: 15px; border-radius: 8px; border: 1px solid var(--border-light);">
-                            <div style="font-size: 0.75rem; color: var(--text-muted); font-weight: bold;">Vientres Gestantes</div>
-                            <div id="kpi-gestantes" style="font-size: 1.8rem; font-weight: bold;">0</div>
+                        <div class="erp-kpi-card green">
+                            <span class="erp-kpi-label">Vientres Gestantes</span>
+                            <p id="kpi-gestantes" class="erp-kpi-val">0</p>
+                        </div>
+                        <div class="erp-kpi-card blue">
+                            <span class="erp-kpi-label">Becerros / Becerras</span>
+                            <p id="kpi-hato-becerros" class="erp-kpi-val">0</p>
+                        </div>
+                        <div class="erp-kpi-card green">
+                            <span class="erp-kpi-label">Vacas en Ordeño</span>
+                            <p id="kpi-hato-ordeno" class="erp-kpi-val">0</p>
+                        </div>
+                        <div class="erp-kpi-card">
+                            <span class="erp-kpi-label">Toros Reproductores</span>
+                            <p id="kpi-hato-toros" class="erp-kpi-val">0</p>
+                        </div>
+                        <div class="erp-kpi-card amber">
+                            <span class="erp-kpi-label">Bajas (Muertos/Vend.)</span>
+                            <p id="kpi-hato-bajas" class="erp-kpi-val">0</p>
+                        </div>
+                        <div class="erp-kpi-card red">
+                            <span class="erp-kpi-label">Tasa Mortalidad</span>
+                            <p id="kpi-hato-tasa-mortalidad" class="erp-kpi-val">0.0%</p>
+                        </div>
+                        <div class="erp-kpi-card red">
+                            <span class="erp-kpi-label">% Animales que Abortaron</span>
+                            <p id="kpi-hato-animales-aborto" class="erp-kpi-val">0.0%</p>
+                        </div>
+                        <div class="erp-kpi-card amber">
+                            <span class="erp-kpi-label">Tasa de Abortos</span>
+                            <p id="kpi-hato-tasa-abortos" class="erp-kpi-val">0.0%</p>
                         </div>
                     </div>
 
@@ -649,6 +692,14 @@
                                 <span class="erp-kpi-label">Margen s/ Ración (IOFC)</span>
                                 <p id="kpi-leche-margen" class="erp-kpi-val">$0.00</p>
                             </div>
+                            <div class="erp-kpi-card green">
+                                <span class="erp-kpi-label">Facturado en Invoices</span>
+                                <p id="kpi-lech-facturado" class="erp-kpi-val">$0.00</p>
+                            </div>
+                            <div class="erp-kpi-card blue">
+                                <span class="erp-kpi-label">Litros Facturados</span>
+                                <p id="kpi-lech-litros-inv" class="erp-kpi-val">0.0 L</p>
+                            </div>
                         </div>
 
                         <div id="lech-alertas-panel" style="margin-bottom: 1rem;"></div>
@@ -914,6 +965,10 @@
                             <div class="erp-kpi-card">
                                 <span class="erp-kpi-label">Balance Neto</span>
                                 <p id="kpi-fin-balance" class="erp-kpi-val">$0.00</p>
+                            </div>
+                            <div class="erp-kpi-card blue">
+                                <span class="erp-kpi-label">Margen Neto (%)</span>
+                                <p id="kpi-fin-margen" class="erp-kpi-val">0.0%</p>
                             </div>
                         </div>
 
@@ -1389,7 +1444,7 @@
     <!-- CONTENEDOR FLOTANTE DE NOTIFICACIONES TOAST -->
     <div id="toast-container" style="position: fixed; bottom: 20px; right: 20px; z-index: 99999; display: flex; flex-direction: column; gap: 10px;"></div>
 
-    <!-- SCRIPTS DE FIREBASE, MODO TEST / OSCURO Y NAVEGACIÓN -->
+    <!-- SCRIPTS DE FIREBASE, MODO TEST / OSCURO, NAVEGACIÓN Y MOTOR DE KPIs -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
         import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
@@ -1449,6 +1504,183 @@
         window.modoTestActivo = localStorage.getItem('elbalui_modo_test') === 'true';
         window.modoOscuroActivo = localStorage.getItem('elbalui_modo_oscuro') === 'true';
 
+        function setText(id, val) {
+            const el = document.getElementById(id);
+            if (el) el.innerText = val;
+        }
+
+        function perteneceAFinca(item) {
+            const fincaActiva = window.fincaActual || 'Agua Clara';
+            if (fincaActiva === 'Global') return true;
+            if (!item || !item.finca) return true;
+            return item.finca === fincaActiva;
+        }
+
+        function incluirPorModoTest(item) {
+            if (window.modoTestActivo) return true;
+            return !item || item.esPrueba !== true;
+        }
+
+        function esAbortoEvento(ev) {
+            if (!ev) return false;
+            const texto = `${ev.tipo || ''} ${ev.evento || ''} ${ev.detalle || ''} ${ev.observacion || ''}`.toLowerCase();
+            return texto.includes('abort');
+        }
+
+        function esGestacionEvento(ev) {
+            if (!ev) return false;
+            const texto = `${ev.tipo || ''} ${ev.evento || ''} ${ev.detalle || ''}`.toLowerCase();
+            return texto.includes('preñ') || texto.includes('gestant') || texto.includes('parto') || esAbortoEvento(ev);
+        }
+
+        window.actualizarTodosLosKPIs = async function() {
+            if (!window.db) return;
+
+            try {
+                // 1. HATO, MORTALIDAD, NATALIDAD, ABORTOS Y GDP
+                const snapAnimales = await getDocs(collection(window.db, 'animales'));
+                const animales = [];
+                snapAnimales.forEach((d) => {
+                    const data = d.data();
+                    if (perteneceAFinca(data) && incluirPorModoTest(data)) {
+                        animales.push({ id: d.id, ...data });
+                    }
+                });
+
+                let totalActivos = 0;
+                let totalMautes = 0;
+                let totalGestantes = 0;
+                let totalBecerros = 0;
+                let totalOrdeno = 0;
+                let totalToros = 0;
+                let totalBajas = 0;
+                let totalMuertes = 0;
+                let totalHembrasRepro = 0;
+                let animalesConAborto = 0;
+                let totalEventosAborto = 0;
+                let totalEventosRepro = 0;
+                let gdpSum = 0;
+                let gdpCount = 0;
+
+                animales.forEach((a) => {
+                    const cat = String(a.categoria || '').toLowerCase();
+                    const estado = String(a.estado || '').toLowerCase();
+                    const salud = String(a.estadoSalud || '').toLowerCase();
+                    const esBaja = estado.includes('baja') || estado.includes('muerto') || estado.includes('vendido');
+
+                    if (esBaja) {
+                        totalBajas++;
+                        if (estado.includes('muerto') || salud.includes('muert') || estado.includes('muert')) {
+                            totalMuertes++;
+                        }
+                    } else {
+                        totalActivos++;
+                        if (cat.includes('maut')) totalMautes++;
+                        if (cat.includes('becerr')) totalBecerros++;
+                        if (cat.includes('ordeñ') || cat.includes('ordeno')) totalOrdeno++;
+                        if (cat.includes('toro')) totalToros++;
+                        if (estado.includes('gestant') || estado.includes('preñ')) totalGestantes++;
+                    }
+
+                    const esHembraPosible = cat.includes('vaca') || cat.includes('novill') || cat.includes('maut') || cat.includes('becerr') || estado.includes('gestant') || estado.includes('vacía') || estado.includes('vacia');
+                    if (esHembraPosible) totalHembrasRepro++;
+
+                    const histRepro = Array.isArray(a.historialReproductivo) ? a.historialReproductivo : [];
+                    let abortosAnimal = 0;
+                    histRepro.forEach((ev) => {
+                        if (esGestacionEvento(ev)) totalEventosRepro++;
+                        if (esAbortoEvento(ev)) {
+                            abortosAnimal++;
+                            totalEventosAborto++;
+                        }
+                    });
+
+                    if (abortosAnimal === 0 && (salud.includes('abort') || estado.includes('abort'))) {
+                        abortosAnimal = 1;
+                        totalEventosAborto++;
+                    }
+                    if (abortosAnimal > 0) animalesConAborto++;
+
+                    const pesajes = Array.isArray(a.pesajes) ? a.pesajes : [];
+                    pesajes.forEach((p) => {
+                        const valGdp = parseFloat(p.gdp);
+                        if (!Number.isNaN(valGdp) && valGdp > 0 && valGdp < 4) {
+                            gdpSum += valGdp;
+                            gdpCount++;
+                        }
+                    });
+                });
+
+                const poblacionBaseMortalidad = totalActivos + totalBajas;
+                const tasaMortalidad = poblacionBaseMortalidad > 0 ? (totalMuertes / poblacionBaseMortalidad) * 100 : 0;
+                const tasaNatalidad = totalActivos > 0 ? (totalBecerros / totalActivos) * 100 : 0;
+                const gdpPromedio = gdpCount > 0 ? (gdpSum / gdpCount) : 0;
+                const pctAnimalesAbortaron = totalHembrasRepro > 0 ? (animalesConAborto / totalHembrasRepro) * 100 : 0;
+                const denomAbortos = totalEventosRepro > 0 ? totalEventosRepro : (totalHembrasRepro > 0 ? totalHembrasRepro : 1);
+                const tasaAbortos = (totalEventosAborto > 0 && denomAbortos > 0) ? (totalEventosAborto / denomAbortos) * 100 : 0;
+                const pctPrenez = totalHembrasRepro > 0 ? (totalGestantes / totalHembrasRepro) * 100 : 0;
+
+                setText('kpi-total', totalActivos);
+                setText('kpi-mautes', totalMautes);
+                setText('kpi-gestantes', totalGestantes);
+                setText('kpi-hato-becerros', totalBecerros);
+                setText('kpi-hato-ordeno', totalOrdeno);
+                setText('kpi-hato-toros', totalToros);
+                setText('kpi-hato-bajas', totalBajas);
+                setText('kpi-hato-tasa-mortalidad', `${tasaMortalidad.toFixed(1)}%`);
+                setText('kpi-hato-animales-aborto', `${pctAnimalesAbortaron.toFixed(1)}%`);
+                setText('kpi-hato-tasa-abortos', `${tasaAbortos.toFixed(1)}%`);
+
+                setText('kpi-mortalidad', `${tasaMortalidad.toFixed(1)}%`);
+                setText('kpi-natalidad', `${tasaNatalidad.toFixed(1)}%`);
+                setText('kpi-gdp-promedio', `${gdpPromedio.toFixed(3)} kg/d`);
+                setText('kpi-dash-animales-aborto', `${pctAnimalesAbortaron.toFixed(1)}%`);
+                setText('kpi-dash-tasa-abortos', `${tasaAbortos.toFixed(1)}%`);
+                setText('kpi-dash-prenez', `${pctPrenez.toFixed(1)}%`);
+
+                // 2. INVOICES DE LECHE
+                let totalFacturadoInv = 0;
+                let totalLitrosInv = 0;
+                try {
+                    const snapInv = await getDocs(collection(window.db, 'invoices_leche'));
+                    snapInv.forEach((d) => {
+                        const inv = d.data();
+                        if (perteneceAFinca(inv) && incluirPorModoTest(inv)) {
+                            totalFacturadoInv += parseFloat(inv.total || 0) || 0;
+                            totalLitrosInv += parseFloat(inv.litros || 0) || 0;
+                        }
+                    });
+                } catch (_) {}
+                setText('kpi-lech-facturado', `$${totalFacturadoInv.toFixed(2)}`);
+                setText('kpi-lech-litros-inv', `${totalLitrosInv.toFixed(1)} L`);
+
+                // 3. FINANZAS
+                let ingresosFin = 0;
+                let egresosFin = 0;
+                try {
+                    const snapFin = await getDocs(collection(window.db, 'finanzas'));
+                    snapFin.forEach((d) => {
+                        const f = d.data();
+                        if (perteneceAFinca(f) && incluirPorModoTest(f)) {
+                            const monto = parseFloat(f.monto || 0) || 0;
+                            if (String(f.tipo).toLowerCase() === 'ingreso') ingresosFin += monto;
+                            else egresosFin += monto;
+                        }
+                    });
+                } catch (_) {}
+                const balanceFin = ingresosFin - egresosFin;
+                const margenFinPct = ingresosFin > 0 ? (balanceFin / ingresosFin) * 100 : 0;
+
+                setText('kpi-fin-ingresos', `$${ingresosFin.toFixed(2)}`);
+                setText('kpi-fin-egresos', `$${egresosFin.toFixed(2)}`);
+                setText('kpi-fin-balance', `$${balanceFin.toFixed(2)}`);
+                setText('kpi-fin-margen', `${margenFinPct.toFixed(1)}%`);
+                setText('kpi-dash-margen-fin', `${margenFinPct.toFixed(1)}%`);
+            } catch (err) {
+                console.error('Error actualizando KPIs:', err);
+            }
+        };
+
         function aplicarAparienciaModoTest() {
             const banner = document.getElementById('test-mode-banner');
             const btn = document.getElementById('btn-toggle-test');
@@ -1471,6 +1703,7 @@
             aplicarAparienciaModoTest();
             if (window.cargarHato) window.cargarHato();
             if (window.cargarLecheria) window.cargarLecheria();
+            window.actualizarTodosLosKPIs();
             if (window.mostrarToast) {
                 window.mostrarToast(
                     window.modoTestActivo ? 'Modo TEST activado.' : 'Modo TEST desactivado.',
@@ -1504,6 +1737,7 @@
                 }
 
                 if (window.mostrarToast) window.mostrarToast(`Se purgaron ${borrados} registros TEST.`, 'exito');
+                window.actualizarTodosLosKPIs();
                 if (document.getElementById('tab-bitacora').classList.contains('active') && window.cargarBitacoraGeneral) {
                     window.cargarBitacoraGeneral();
                 }
@@ -1566,6 +1800,7 @@
             if (window.cargarHato) window.cargarHato();
             if (window.cargarLecheria) window.cargarLecheria();
             if (window.cargarModulosERP) window.cargarModulosERP();
+            window.actualizarTodosLosKPIs();
             cargarBibliotecaDocumentos();
         }
 
@@ -1609,6 +1844,7 @@
                 if (chip) chip.classList.add('active');
             }
 
+            window.actualizarTodosLosKPIs();
             if (tabId === 'documentos') cargarBibliotecaDocumentos();
             if (tabId === 'bitacora') window.cargarBitacoraGeneral();
             if (tabId === 'lecheria' && window.cargarLecheria) window.cargarLecheria();
@@ -1640,6 +1876,7 @@
             if (window.cargarHato) window.cargarHato();
             if (window.cargarLecheria) window.cargarLecheria();
             if (window.cargarModulosERP) window.cargarModulosERP();
+            window.actualizarTodosLosKPIs();
             if (document.getElementById('tab-bitacora').classList.contains('active')) {
                 window.cargarBitacoraGeneral();
             }
@@ -1678,6 +1915,7 @@
                     fechaSubida: serverTimestamp(),
                     usuario: usuarioActual
                 });
+                window.actualizarTodosLosKPIs();
             } catch (error) {
                 console.error("Error registrando en bitácora:", error);
             }
