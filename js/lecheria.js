@@ -79,8 +79,8 @@ function actualizarTituloFincaLecheria() {
     if (!titulo) return;
     const finca = obtenerFincaActiva();
     titulo.textContent = finca === 'Global'
-        ? '🥛 Lechería & Raciones (Consolidado)'
-        : `🥛 Lechería & Raciones (${finca})`;
+        ? '🥛 Lechería & Producción (Consolidado)'
+        : `🥛 Lechería & Producción (${finca})`;
 }
 
 function refrescarKPIsGlobales() {
@@ -175,17 +175,17 @@ function renderizarAlertasYMetricas() {
     if (kpiProm) kpiProm.textContent = totalVacasDia > 0 ? formatearLitros(promVacaDia, 1) : '0.0 L';
     if (kpiIngreso) kpiIngreso.textContent = formatearMoneda(totalIngresoDia);
     if (kpiMargen) {
-        kpiMargen.textContent = formatearMoneda(margenDia);
-        kpiMargen.style.color = margenDia < 0 ? '#dc2626' : '#0f172a';
+        kpiMargen.textContent = formatearMoneda(totalIngresoDia);
+        kpiMargen.style.color = '#0f172a';
     }
 
     if (panelAlertas) {
         const alertas = [];
         if (promVacaDia > 0 && promVacaDia < 4.0) {
-            alertas.push(`⚠️ Promedio bajo (${promVacaDia.toFixed(1)} L/vaca el ${escaparHTML(fechaUltimo)}): revisar oferta de Silo Cuba 22, melaza, nepe o gallinaza.`);
+            alertas.push(`⚠️ Promedio bajo (${promVacaDia.toFixed(1)} L/vaca el ${escaparHTML(fechaUltimo)}): revisar manejo de potreros, rotación o asignación en Alimentación.`);
         }
         if (totalCostoRacionDia > 0 && margenDia < 0) {
-            alertas.push(`🚨 Margen sobre ración negativo (${formatearMoneda(margenDia)}): el costo diario de suplementación supera el ingreso estimado del día.`);
+            alertas.push(`🚨 Margen histórico con ración negativo (${formatearMoneda(margenDia)}) en el registro del día.`);
         }
         panelAlertas.innerHTML = alertas.length
             ? `<div style="background:#fef2f2; border:1px solid #fecaca; color:#991b1b; padding:0.75rem 1rem; border-radius:0.5rem; font-size:0.84rem; display:flex; flex-direction:column; gap:4px;">${alertas.map(a => `<div>${a}</div>`).join('')}</div>`
@@ -199,7 +199,7 @@ function renderizarTablaOrdenos() {
 
     const listaFinca = filtrarOrdenosPorFinca();
     if (listaFinca.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="10" style="text-align:center; padding:1.5rem; color:#64748b;">No hay registros de ordeño para ${escaparHTML(obtenerFincaActiva())}.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="8" style="text-align:center; padding:1.5rem; color:#64748b;">No hay registros de ordeño para ${escaparHTML(obtenerFincaActiva())}.</td></tr>`;
         return;
     }
 
@@ -211,7 +211,6 @@ function renderizarTablaOrdenos() {
         const badgeTest = reg.esPrueba
             ? ' <span style="background:#fef3c7;color:#92400e;padding:2px 6px;border-radius:4px;font-size:0.7rem;font-weight:700;">TEST</span>'
             : '';
-        const margenColor = m.margen < 0 ? 'color:#dc2626; font-weight:700;' : 'color:#15803d; font-weight:700;';
         const refBorrado = reg.ordenoRefId || reg.id;
         const vacasTxt = m.vacas > 0 ? formatearEntero(m.vacas) : '<span style="color:#94a3b8;">N/D</span>';
         const promTxt = m.vacas > 0 ? formatearLitros(m.promVaca, 1) : '<span style="color:#94a3b8;">N/D</span>';
@@ -224,9 +223,7 @@ function renderizarTablaOrdenos() {
                 <td><strong>${formatearLitros(m.litros, 1)}</strong></td>
                 <td>${promTxt}</td>
                 <td>${escaparHTML(reg.destino || 'Venta')}</td>
-                <td>${escaparHTML(reg.racion || '-')}</td>
-                <td>${formatearMoneda(m.ingreso)}</td>
-                <td style="${margenColor}">${formatearMoneda(m.margen)}</td>
+                <td style="color:#15803d; font-weight:700;">${formatearMoneda(m.ingreso)}</td>
                 <td>
                     <button type="button" class="erp-btn-del" onclick="window.eliminarOrdeno('${escaparHTML(reg.id)}', '${escaparHTML(refBorrado)}')">Borrar</button>
                 </td>
@@ -274,8 +271,6 @@ async function manejarSubmitOrdeno(e) {
     const litros = Number(document.getElementById('lech-litros')?.value);
     const precio = Number(document.getElementById('lech-precio')?.value);
     const destino = document.getElementById('lech-destino')?.value || 'Venta';
-    const racion = document.getElementById('lech-racion')?.value || 'Silo Cuba 22 + Melaza';
-    const costoRacion = Number(document.getElementById('lech-costo-racion')?.value) || 0;
     const syncFinanzas = Boolean(document.getElementById('lech-sync-finanzas')?.checked);
 
     if (!fecha || isNaN(litros) || litros <= 0 || isNaN(precio) || precio < 0) {
@@ -293,8 +288,8 @@ async function manejarSubmitOrdeno(e) {
         litros,
         precio,
         destino,
-        racion,
-        costoRacion,
+        racion: '',
+        costoRacion: 0,
         syncFinanzas,
         esPrueba: Boolean(window.modoTestActivo),
         ordenoRefId
@@ -318,7 +313,7 @@ async function manejarSubmitOrdeno(e) {
             await window.registrarEnBitacora(
                 finca,
                 'Lecheria',
-                `Ordeño ${turno} (${fecha}): ${litros.toFixed(1)} L${infoVacas} • Ración: ${racion}`
+                `Ordeño ${turno} (${fecha}): ${litros.toFixed(1)} L${infoVacas} • Destino: ${destino}`
             );
         }
 
@@ -327,9 +322,7 @@ async function manejarSubmitOrdeno(e) {
         }
 
         const litrosInput = document.getElementById('lech-litros');
-        const costoInput = document.getElementById('lech-costo-racion');
         if (litrosInput) litrosInput.value = '';
-        if (costoInput) costoInput.value = '0';
         refrescarKPIsGlobales();
     } catch (err) {
         console.error('Error guardando ordeño:', err);
